@@ -18,10 +18,10 @@
 
 package org.apache.atlas.query
 
-import javax.script.{Bindings, ScriptEngine, ScriptEngineManager}
+import javax.script.{ Bindings, ScriptEngine, ScriptEngineManager }
 
-import com.thinkaurelius.titan.core.TitanGraph
-import com.tinkerpop.pipes.util.structures.Row
+import org.apache.atlas.repository.graphdb.AAGraph
+
 import org.apache.atlas.query.TypeUtils.ResultWithPathStruct
 import org.apache.atlas.typesystem.json._
 import org.apache.atlas.typesystem.types._
@@ -31,17 +31,17 @@ import org.json4s.native.Serialization._
 import scala.language.existentials
 
 case class GremlinQueryResult(query: String,
-                              resultDataType: IDataType[_],
-                              rows: List[_]) {
+        resultDataType: IDataType[_],
+        rows: List[_]) {
     def toJson = JsonHelper.toJson(this)
 }
 
-class GremlinEvaluator(qry: GremlinQuery, persistenceStrategy: GraphPersistenceStrategies, g: TitanGraph) {
+class GremlinEvaluator[V, E](qry: GremlinQuery, persistenceStrategy: GraphPersistenceStrategies, g: AAGraph[V, E]) {
 
     val manager: ScriptEngineManager = new ScriptEngineManager
     val engine: ScriptEngine = manager.getEngineByName("gremlin-groovy")
     val bindings: Bindings = engine.createBindings
-    bindings.put("g", g)
+    g.injectBinding(bindings, "g");
 
     /**
      *
@@ -49,32 +49,33 @@ class GremlinEvaluator(qry: GremlinQuery, persistenceStrategy: GraphPersistenceS
      * @param qryResultObj is the object constructed for the output w/o the Path.
      * @return a ResultWithPathStruct
      */
-    def addPathStruct(gResultObj : AnyRef, qryResultObj : Any) : Any = {
-      if ( !qry.isPathExpresion) {
-        qryResultObj
-      } else {
-        import scala.collection.JavaConversions._
-        import scala.collection.JavaConverters._
-        val iPaths = gResultObj.asInstanceOf[java.util.List[AnyRef]].init
+    def addPathStruct(gResultObj: AnyRef, qryResultObj: Any): Any = {
+        if (!qry.isPathExpresion) {
+            qryResultObj
+        } else {
+            import scala.collection.JavaConversions._
+            import scala.collection.JavaConverters._
+            val iPaths = gResultObj.asInstanceOf[java.util.List[AnyRef]].init
 
-        val oPaths = iPaths.map { p =>
-          persistenceStrategy.constructInstance(TypeSystem.getInstance().getIdType.getStructType, p)
-        }.toList.asJava
-        val sType = qry.expr.dataType.asInstanceOf[StructType]
-        val sInstance = sType.createInstance()
-        sInstance.set(ResultWithPathStruct.pathAttrName, oPaths)
-        sInstance.set(ResultWithPathStruct.resultAttrName, qryResultObj)
-        sInstance
-      }
+            val oPaths = iPaths.map { p =>
+                var atlasValue = g.convertGremlinValue(p);
+                persistenceStrategy.constructInstance(TypeSystem.getInstance().getIdType.getStructType, atlasValue)
+            }.toList.asJava
+            val sType = qry.expr.dataType.asInstanceOf[StructType]
+            val sInstance = sType.createInstance()
+            sInstance.set(ResultWithPathStruct.pathAttrName, oPaths)
+            sInstance.set(ResultWithPathStruct.resultAttrName, qryResultObj)
+            sInstance
+        }
     }
 
-    def instanceObject(v : AnyRef) : AnyRef = {
-      if ( qry.isPathExpresion ) {
-        import scala.collection.JavaConversions._
-        v.asInstanceOf[java.util.List[AnyRef]].last
-      } else {
-        v
-      }
+    def instanceObject(v: AnyRef): AnyRef = {
+        if (qry.isPathExpresion) {
+            import scala.collection.JavaConversions._
+            v.asInstanceOf[java.util.List[AnyRef]].last
+        } else {
+            v
+        }
     }
 
     def evaluate(): GremlinQueryResult = {
@@ -86,25 +87,26 @@ class GremlinEvaluator(qry: GremlinQuery, persistenceStrategy: GraphPersistenceS
         if (!qry.hasSelectList) {
             val rows = rawRes.asInstanceOf[java.util.List[AnyRef]].map { v =>
                 val iV = instanceObject(v)
-                val o = persistenceStrategy.constructInstance(oType, iV)
-              addPathStruct(v, o)
+                val atlasValue = g.convertGremlinValue(iV)
+                val o = persistenceStrategy.constructInstance(oType, atlasValue)
+                addPathStruct(v, o)
             }
             GremlinQueryResult(qry.expr.toString, rType, rows.toList)
         } else {
             val sType = oType.asInstanceOf[StructType]
             val rows = rawRes.asInstanceOf[java.util.List[AnyRef]].map { r =>
-              val rV = instanceObject(r).asInstanceOf[Row[java.util.List[AnyRef]]]
+                val rV = instanceObject(r)
                 val sInstance = sType.createInstance()
                 val selExpr =
-                  (if (qry.isPathExpresion) qry.expr.children(0) else qry.expr).
-                    asInstanceOf[Expressions.SelectExpression]
+                    (if (qry.isPathExpresion) qry.expr.children(0) else qry.expr).
+                        asInstanceOf[Expressions.SelectExpression]
                 selExpr.selectListWithAlias.foreach { aE =>
                     val cName = aE.alias
                     val (src, idx) = qry.resultMaping(cName)
-                    val v = rV.getColumn(src).get(idx)
+                    val v = g.getGremlinColumnValue(rV, src, idx)
                     sInstance.set(cName, persistenceStrategy.constructInstance(aE.dataType, v))
                 }
-              addPathStruct(r, sInstance)
+                addPathStruct(r, sInstance)
             }
             GremlinQueryResult(qry.expr.toString, rType, rows.toList)
         }
@@ -115,7 +117,7 @@ class GremlinEvaluator(qry: GremlinQuery, persistenceStrategy: GraphPersistenceS
 object JsonHelper {
 
     class GremlinQueryResultSerializer()
-        extends Serializer[GremlinQueryResult] {
+            extends Serializer[GremlinQueryResult] {
         def deserialize(implicit format: Formats) = {
             throw new UnsupportedOperationException("Deserialization of GremlinQueryResult not supported")
         }
@@ -124,8 +126,7 @@ object JsonHelper {
             case GremlinQueryResult(query, rT, rows) =>
                 JObject(JField("query", JString(query)),
                     JField("dataType", TypesSerialization.toJsonValue(rT)(f)),
-                    JField("rows", Extraction.decompose(rows)(f))
-                )
+                    JField("rows", Extraction.decompose(rows)(f)))
         }
     }
 

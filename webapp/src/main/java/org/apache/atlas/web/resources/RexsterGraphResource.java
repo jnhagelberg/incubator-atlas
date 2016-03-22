@@ -18,24 +18,9 @@
 
 package org.apache.atlas.web.resources;
 
-import com.thinkaurelius.titan.core.TitanGraph;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Element;
-import com.tinkerpop.blueprints.Graph;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.VertexQuery;
-import com.tinkerpop.blueprints.util.io.graphson.GraphSONMode;
-import com.tinkerpop.blueprints.util.io.graphson.GraphSONUtility;
-import org.apache.atlas.AtlasClient;
-import org.apache.atlas.repository.graph.GraphProvider;
-import org.apache.atlas.web.util.Servlets;
-import org.apache.commons.lang.StringUtils;
-import org.codehaus.jettison.json.JSONArray;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -47,9 +32,29 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+
+import org.apache.atlas.AtlasClient;
+import org.apache.atlas.repository.graph.GraphProvider;
+import org.apache.atlas.repository.graphdb.AADirection;
+import org.apache.atlas.repository.graphdb.AAEdge;
+import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.repository.graphdb.AAVertexQuery;
+import org.apache.atlas.repository.graphdb.ElementType;
+import org.apache.atlas.web.util.Servlets;
+import org.apache.commons.lang.StringUtils;
+import org.codehaus.jettison.json.JSONArray;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Element;
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.util.io.graphson.GraphSONMode;
+import com.tinkerpop.blueprints.util.io.graphson.GraphSONUtility;
 
 /**
  * Jersey Resource for lineage metadata operations.
@@ -76,10 +81,10 @@ public class RexsterGraphResource {
     public static final String BOTH_IDS = "bothIds";
     private static final Logger LOG = LoggerFactory.getLogger(RexsterGraphResource.class);
 
-    private TitanGraph graph;
+    private AAGraph<?,?> graph;
 
     @Inject
-    public RexsterGraphResource(GraphProvider<TitanGraph> graphProvider) {
+    public RexsterGraphResource(GraphProvider<AAGraph> graphProvider) {
         this.graph = graphProvider.get();
     }
 
@@ -92,16 +97,16 @@ public class RexsterGraphResource {
         }
     }
 
-    protected Graph getGraph() {
+    protected AAGraph getGraph() {
         return graph;
     }
 
     protected Set<String> getVertexIndexedKeys() {
-        return graph.getIndexedKeys(Vertex.class);
+        return graph.getIndexedKeys(ElementType.VERTEX);
     }
 
     protected Set<String> getEdgeIndexedKeys() {
-        return graph.getIndexedKeys(Edge.class);
+        return graph.getIndexedKeys(ElementType.EDGE);
     }
 
     /**
@@ -117,19 +122,18 @@ public class RexsterGraphResource {
         LOG.info("Get vertex for vertexId= {}", vertexId);
         validateInputs("Invalid argument: vertex id passed is null or empty.", vertexId);
         try {
-            Vertex vertex = findVertex(vertexId);
+            AAVertex<?,?> vertex = findVertex(vertexId);
 
             JSONObject response = new JSONObject();
-            response.put(AtlasClient.RESULTS,
-                    GraphSONUtility.jsonFromElement(vertex, getVertexIndexedKeys(), GraphSONMode.NORMAL));
+            response.put(AtlasClient.RESULTS, vertex.toJson(getVertexIndexedKeys(), GraphSONMode.NORMAL));
             return Response.ok(response).build();
         } catch (JSONException e) {
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.INTERNAL_SERVER_ERROR));
         }
     }
 
-    private Vertex findVertex(String vertexId) {
-        Vertex vertex = getGraph().getVertex(vertexId);
+    private AAVertex<?,?> findVertex(String vertexId) {
+        AAVertex<?,?> vertex = getGraph().getVertex(vertexId);
         if (vertex == null) {
             String message = "Vertex with [" + vertexId + "] cannot be found.";
             LOG.info(message);
@@ -153,7 +157,7 @@ public class RexsterGraphResource {
         LOG.info("Get vertex for vertexId= {}", vertexId);
         validateInputs("Invalid argument: vertex id passed is null or empty.", vertexId);
         try {
-            Vertex vertex = findVertex(vertexId);
+            AAVertex<?,?> vertex = findVertex(vertexId);
 
             Map<String, String> vertexProperties = getVertexProperties(vertex);
 
@@ -166,7 +170,7 @@ public class RexsterGraphResource {
         }
     }
 
-    private Map<String, String> getVertexProperties(Vertex vertex) {
+    private Map<String, String> getVertexProperties(AAVertex<?,?> vertex) {
         Map<String, String> vertexProperties = new HashMap<>();
         for (String key : vertex.getPropertyKeys()) {
             vertexProperties.put(key, vertex.<String>getProperty(key));
@@ -213,7 +217,7 @@ public class RexsterGraphResource {
         // Validate vertex id. Direction is validated in VertexQueryArguments.
         validateInputs("Invalid argument: vertex id or direction passed is null or empty.", vertexId, direction);
         try {
-            Vertex vertex = findVertex(vertexId);
+            AAVertex<?,?> vertex = findVertex(vertexId);
 
             return getVertexEdges(vertex, direction);
 
@@ -222,7 +226,7 @@ public class RexsterGraphResource {
         }
     }
 
-    private Response getVertexEdges(Vertex vertex, String direction) throws JSONException {
+    private Response getVertexEdges(AAVertex<?,?> vertex, String direction) throws JSONException {
         // break out the segment into the return and the direction
         VertexQueryArguments queryArguments = new VertexQueryArguments(direction);
         // if this is a query and the _return is "count" then we don't bother to send back the
@@ -232,26 +236,26 @@ public class RexsterGraphResource {
         // identifiers)
         ReturnType returnType = queryArguments.getReturnType();
         // the query direction (both, out, in)
-        Direction queryDirection = queryArguments.getQueryDirection();
-
-        VertexQuery query = vertex.query().direction(queryDirection);
+        AADirection queryDirection = queryArguments.getQueryDirection();
+        
+        AAVertexQuery query = vertex.query().direction(queryDirection);
 
         JSONArray elementArray = new JSONArray();
         long counter = 0;
         if (returnType == ReturnType.VERTICES || returnType == ReturnType.VERTEX_IDS) {
-            Iterable<Vertex> vertexQueryResults = query.vertices();
-            for (Vertex v : vertexQueryResults) {
+            Iterable<AAVertex<?,?>> vertexQueryResults = query.vertices();
+            for (AAVertex<?,?> v : vertexQueryResults) {
                 if (returnType.equals(ReturnType.VERTICES)) {
-                    elementArray.put(GraphSONUtility.jsonFromElement(v, getVertexIndexedKeys(), GraphSONMode.NORMAL));
+                    elementArray.put(v.toJson(getVertexIndexedKeys(), GraphSONMode.NORMAL));
                 } else {
                     elementArray.put(v.getId());
                 }
                 counter++;
             }
         } else if (returnType == ReturnType.EDGES) {
-            Iterable<Edge> edgeQueryResults = query.edges();
-            for (Edge e : edgeQueryResults) {
-                elementArray.put(GraphSONUtility.jsonFromElement(e, getEdgeIndexedKeys(), GraphSONMode.NORMAL));
+            Iterable<AAEdge<?,?>> edgeQueryResults = query.edges();
+            for (AAEdge<?,?> e : edgeQueryResults) {
+                elementArray.put(e.toJson(getEdgeIndexedKeys(), GraphSONMode.NORMAL));
                 counter++;
             }
         } else if (returnType == ReturnType.COUNT) {
@@ -279,7 +283,7 @@ public class RexsterGraphResource {
         LOG.info("Get vertex for edgeId= {}", edgeId);
         validateInputs("Invalid argument: edge id passed is null or empty.", edgeId);
         try {
-            Edge edge = getGraph().getEdge(edgeId);
+            AAEdge<?,?> edge = getGraph().getEdge(edgeId);
             if (edge == null) {
                 String message = "Edge with [" + edgeId + "] cannot be found.";
                 LOG.info(message);
@@ -288,8 +292,7 @@ public class RexsterGraphResource {
             }
 
             JSONObject response = new JSONObject();
-            response.put(AtlasClient.RESULTS,
-                    GraphSONUtility.jsonFromElement(edge, getEdgeIndexedKeys(), GraphSONMode.NORMAL));
+            response.put(AtlasClient.RESULTS, edge.toJson(getEdgeIndexedKeys(), GraphSONMode.NORMAL));
             return Response.ok(response).build();
         } catch (JSONException e) {
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.INTERNAL_SERVER_ERROR));
@@ -318,58 +321,58 @@ public class RexsterGraphResource {
      */
     public static final class VertexQueryArguments {
 
-        private final Direction queryDirection;
+        private final AADirection queryDirection;
         private final ReturnType returnType;
         private final boolean countOnly;
 
         public VertexQueryArguments(String directionSegment) {
             if (OUT_E.equals(directionSegment)) {
                 returnType = ReturnType.EDGES;
-                queryDirection = Direction.OUT;
+                queryDirection = AADirection.OUT;
                 countOnly = false;
             } else if (IN_E.equals(directionSegment)) {
                 returnType = ReturnType.EDGES;
-                queryDirection = Direction.IN;
+                queryDirection = AADirection.IN;
                 countOnly = false;
             } else if (BOTH_E.equals(directionSegment)) {
                 returnType = ReturnType.EDGES;
-                queryDirection = Direction.BOTH;
+                queryDirection = AADirection.BOTH;
                 countOnly = false;
             } else if (OUT.equals(directionSegment)) {
                 returnType = ReturnType.VERTICES;
-                queryDirection = Direction.OUT;
+                queryDirection = AADirection.OUT;
                 countOnly = false;
             } else if (IN.equals(directionSegment)) {
                 returnType = ReturnType.VERTICES;
-                queryDirection = Direction.IN;
+                queryDirection = AADirection.IN;
                 countOnly = false;
             } else if (BOTH.equals(directionSegment)) {
                 returnType = ReturnType.VERTICES;
-                queryDirection = Direction.BOTH;
+                queryDirection = AADirection.BOTH;
                 countOnly = false;
             } else if (BOTH_COUNT.equals(directionSegment)) {
                 returnType = ReturnType.COUNT;
-                queryDirection = Direction.BOTH;
+                queryDirection = AADirection.BOTH;
                 countOnly = true;
             } else if (IN_COUNT.equals(directionSegment)) {
                 returnType = ReturnType.COUNT;
-                queryDirection = Direction.IN;
+                queryDirection = AADirection.IN;
                 countOnly = true;
             } else if (OUT_COUNT.equals(directionSegment)) {
                 returnType = ReturnType.COUNT;
-                queryDirection = Direction.OUT;
+                queryDirection = AADirection.OUT;
                 countOnly = true;
             } else if (BOTH_IDS.equals(directionSegment)) {
                 returnType = ReturnType.VERTEX_IDS;
-                queryDirection = Direction.BOTH;
+                queryDirection = AADirection.BOTH;
                 countOnly = false;
             } else if (IN_IDS.equals(directionSegment)) {
                 returnType = ReturnType.VERTEX_IDS;
-                queryDirection = Direction.IN;
+                queryDirection = AADirection.IN;
                 countOnly = false;
             } else if (OUT_IDS.equals(directionSegment)) {
                 returnType = ReturnType.VERTEX_IDS;
-                queryDirection = Direction.OUT;
+                queryDirection = AADirection.OUT;
                 countOnly = false;
             } else {
                 throw new WebApplicationException(Response.status(Response.Status.BAD_REQUEST)
@@ -377,7 +380,7 @@ public class RexsterGraphResource {
             }
         }
 
-        public Direction getQueryDirection() {
+        public AADirection getQueryDirection() {
             return queryDirection;
         }
 

@@ -18,12 +18,12 @@
 
 package org.apache.atlas.discovery;
 
-import com.thinkaurelius.titan.core.TitanGraph;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.GraphTransaction;
-import org.apache.atlas.typesystem.exception.EntityNotFoundException;
-import org.apache.atlas.utils.ParamChecker;
 import org.apache.atlas.discovery.graph.DefaultGraphPersistenceStrategy;
 import org.apache.atlas.discovery.graph.GraphBackedDiscoveryService;
 import org.apache.atlas.query.Expressions;
@@ -31,23 +31,24 @@ import org.apache.atlas.query.GremlinQueryResult;
 import org.apache.atlas.query.HiveLineageQuery;
 import org.apache.atlas.query.HiveWhereUsedQuery;
 import org.apache.atlas.repository.MetadataRepository;
-import org.apache.atlas.repository.graph.GraphProvider;
+import org.apache.atlas.repository.graph.AtlasGraphProvider;
+import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.typesystem.exception.EntityNotFoundException;
 import org.apache.atlas.typesystem.persistence.ReferenceableInstance;
+import org.apache.atlas.utils.ParamChecker;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import scala.Option;
 import scala.Some;
 import scala.collection.immutable.List;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 /**
  * Hive implementation of Lineage service interface.
  */
 @Singleton
-public class HiveLineageService implements LineageService {
+public class HiveLineageService<V,E> implements LineageService {
 
     private static final Logger LOG = LoggerFactory.getLogger(HiveLineageService.class);
 
@@ -82,14 +83,14 @@ public class HiveLineageService implements LineageService {
     }
 
 
-    private final TitanGraph titanGraph;
+    private final AAGraph<V,E> graph;
     private final DefaultGraphPersistenceStrategy graphPersistenceStrategy;
     private final GraphBackedDiscoveryService discoveryService;
 
     @Inject
-    HiveLineageService(GraphProvider<TitanGraph> graphProvider, MetadataRepository metadataRepository,
+    HiveLineageService(AtlasGraphProvider graphProvider, MetadataRepository metadataRepository,
             GraphBackedDiscoveryService discoveryService) throws DiscoveryException {
-        this.titanGraph = graphProvider.get();
+        this.graph = (AAGraph<V,E>)graphProvider.get();
         this.graphPersistenceStrategy = new DefaultGraphPersistenceStrategy(metadataRepository);
         this.discoveryService = discoveryService;
     }
@@ -110,7 +111,7 @@ public class HiveLineageService implements LineageService {
         HiveWhereUsedQuery outputsQuery =
                 new HiveWhereUsedQuery(HIVE_TABLE_TYPE_NAME, tableName, HIVE_PROCESS_TYPE_NAME,
                         HIVE_PROCESS_INPUT_ATTRIBUTE_NAME, HIVE_PROCESS_OUTPUT_ATTRIBUTE_NAME, Option.empty(),
-                        SELECT_ATTRIBUTES, true, graphPersistenceStrategy, titanGraph);
+                        SELECT_ATTRIBUTES, true, graphPersistenceStrategy, graph);
 
         Expressions.Expression expression = outputsQuery.expr();
         LOG.debug("Expression is [" + expression.toString() + "]");
@@ -137,7 +138,7 @@ public class HiveLineageService implements LineageService {
         HiveWhereUsedQuery outputsQuery =
                 new HiveWhereUsedQuery(HIVE_TABLE_TYPE_NAME, tableName, HIVE_PROCESS_TYPE_NAME,
                         HIVE_PROCESS_INPUT_ATTRIBUTE_NAME, HIVE_PROCESS_OUTPUT_ATTRIBUTE_NAME, Option.empty(),
-                        SELECT_ATTRIBUTES, true, graphPersistenceStrategy, titanGraph);
+                        SELECT_ATTRIBUTES, true, graphPersistenceStrategy, graph);
         return outputsQuery.graph().toInstanceJson();
     }
 
@@ -156,7 +157,7 @@ public class HiveLineageService implements LineageService {
 
         HiveLineageQuery inputsQuery = new HiveLineageQuery(HIVE_TABLE_TYPE_NAME, tableName, HIVE_PROCESS_TYPE_NAME,
                 HIVE_PROCESS_INPUT_ATTRIBUTE_NAME, HIVE_PROCESS_OUTPUT_ATTRIBUTE_NAME, Option.empty(),
-                SELECT_ATTRIBUTES, true, graphPersistenceStrategy, titanGraph);
+                SELECT_ATTRIBUTES, true, graphPersistenceStrategy, graph);
 
         Expressions.Expression expression = inputsQuery.expr();
         LOG.debug("Expression is [" + expression.toString() + "]");
@@ -182,7 +183,7 @@ public class HiveLineageService implements LineageService {
 
         HiveLineageQuery inputsQuery = new HiveLineageQuery(HIVE_TABLE_TYPE_NAME, tableName, HIVE_PROCESS_TYPE_NAME,
                 HIVE_PROCESS_INPUT_ATTRIBUTE_NAME, HIVE_PROCESS_OUTPUT_ATTRIBUTE_NAME, Option.empty(),
-                SELECT_ATTRIBUTES, true, graphPersistenceStrategy, titanGraph);
+                SELECT_ATTRIBUTES, true, graphPersistenceStrategy, graph);
         return inputsQuery.graph().toInstanceJson();
     }
 

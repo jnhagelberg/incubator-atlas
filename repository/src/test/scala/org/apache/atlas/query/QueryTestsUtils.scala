@@ -52,7 +52,7 @@ trait GraphUtils {
     }
 
 
-    def titanGraph(conf: Configuration) = {
+    def graph(conf: Configuration) = {
         try {
             val g = TitanFactory.open(conf)
             val mgmt = g.getManagementSystem

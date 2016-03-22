@@ -16,33 +16,36 @@
  * limitations under the License.
  */
 
-package org.apache.atlas.repository.graph;
+package org.apache.atlas.repository.graphdb.titan0;
 
-import com.google.common.collect.ImmutableMap;
-import com.google.inject.Provides;
-import com.thinkaurelius.titan.core.TitanFactory;
-import com.thinkaurelius.titan.core.TitanGraph;
-import com.thinkaurelius.titan.core.schema.TitanManagement;
-import com.thinkaurelius.titan.diskstorage.StandardIndexProvider;
-import com.thinkaurelius.titan.diskstorage.solr.Solr5Index;
-import org.apache.atlas.ApplicationProperties;
-import org.apache.atlas.AtlasException;
-import org.apache.commons.configuration.Configuration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.inject.Singleton;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.atlas.ApplicationProperties;
+import org.apache.atlas.AtlasException;
+import org.apache.atlas.repository.graph.GraphProviderPlugin;
+import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.commons.configuration.Configuration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.ImmutableMap;
+import com.thinkaurelius.titan.core.TitanFactory;
+import com.thinkaurelius.titan.core.TitanGraph;
+import com.thinkaurelius.titan.core.schema.TitanManagement;
+import com.thinkaurelius.titan.diskstorage.StandardIndexProvider;
+import com.thinkaurelius.titan.diskstorage.solr.Solr5Index;
+import com.tinkerpop.blueprints.Edge;
+import com.tinkerpop.blueprints.Vertex;
+
 /**
  * Default implementation for Graph Provider that doles out Titan Graph.
  */
-public class TitanGraphProvider implements GraphProvider<TitanGraph> {
+public class Titan0GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(TitanGraphProvider.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Titan0GraphPlugin.class);
 
     /**
      * Constant for the configuration property that indicates the prefix.
@@ -93,7 +96,7 @@ public class TitanGraphProvider implements GraphProvider<TitanGraph> {
 
     public static TitanGraph getGraphInstance() {
         if (graphInstance == null) {
-            synchronized (TitanGraphProvider.class) {
+            synchronized (Titan0GraphPlugin.class) {
                 if (graphInstance == null) {
                     Configuration config;
                     try {
@@ -111,7 +114,7 @@ public class TitanGraphProvider implements GraphProvider<TitanGraph> {
     }
 
     public static void clear() {
-        synchronized (TitanGraphProvider.class) {
+        synchronized (Titan0GraphPlugin.class) {
             graphInstance.shutdown();
             graphInstance = null;
         }
@@ -130,10 +133,20 @@ public class TitanGraphProvider implements GraphProvider<TitanGraph> {
 
     }
 
+
     @Override
-    @Singleton
-    @Provides
-    public TitanGraph get() {
-        return getGraphInstance();
+    public void initialize() {
+      
+        
+    }
+
+    @Override
+    public AAGraph<Vertex, Edge> createGraph() {
+       return new Titan0Graph(getGraphInstance());
+    }
+
+    @Override
+    public void cleanup() {
+       clear();        
     }
 }

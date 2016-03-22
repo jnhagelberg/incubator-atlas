@@ -21,8 +21,9 @@ package org.apache.atlas.query
 import java.util
 import java.util.Date
 
-import com.thinkaurelius.titan.core.TitanVertex
-import com.tinkerpop.blueprints.{Vertex, Direction}
+import org.apache.atlas.repository.graphdb.AAVertex
+import org.apache.atlas.repository.graphdb.AADirection
+
 import org.apache.atlas.AtlasException
 import org.apache.atlas.query.Expressions.{ComparisonExpression, ExpressionException}
 import org.apache.atlas.query.TypeUtils.FieldInfo
@@ -88,7 +89,7 @@ trait GraphPersistenceStrategies {
      * @param v
      * @return
      */
-    def traitNames(v: TitanVertex): java.util.List[String]
+    def traitNames[V,E](v: AAVertex[V,E]): java.util.List[String]
 
     def edgeLabel(fInfo: FieldInfo): String = fInfo match {
         case FieldInfo(dataType, aInfo, null, null) => edgeLabel(dataType, aInfo)
@@ -104,9 +105,9 @@ trait GraphPersistenceStrategies {
      * @param v
      * @return
      */
-    def getIdFromVertex(dataTypeNm: String, v: TitanVertex): Id
+    def getIdFromVertex[V,E](dataTypeNm: String, v: AAVertex[V,E]): Id
 
-    def constructInstance[U](dataType: IDataType[U], v: java.lang.Object): U
+    def constructInstance[U,V,E](dataType: IDataType[U], v: java.lang.Object): U
 
     def gremlinCompOp(op: ComparisonExpression) = op.symbol match {
         case "=" => "T.eq"
@@ -186,7 +187,7 @@ trait GraphPersistenceStrategies {
     }
 }
 
-object GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
+object GraphPersistenceStrategy1  extends GraphPersistenceStrategies {
     val typeAttributeName = "typeName"
     val superTypeAttributeName = "superTypeNames"
     val idAttributeName = "guid"
@@ -201,10 +202,10 @@ object GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
 
     def fieldNameInVertex(dataType: IDataType[_], aInfo: AttributeInfo) = GraphHelper.getQualifiedFieldName(dataType, aInfo.name)
 
-    def getIdFromVertex(dataTypeNm: String, v: TitanVertex): Id =
+    def getIdFromVertex[V,E](dataTypeNm: String, v: AAVertex[V,E]): Id =
         new Id(v.getId.toString, 0, dataTypeNm)
 
-    def traitNames(v: TitanVertex): java.util.List[String] = {
+    def traitNames[V,E](v: AAVertex[V,E]): java.util.List[String] = {
         val s = v.getProperty[String]("traitNames")
         if (s != null) {
             Seq[String](s.split(","): _*)
@@ -213,7 +214,7 @@ object GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
         }
     }
 
-    def constructInstance[U](dataType: IDataType[U], v: AnyRef): U = {
+    def constructInstance[U,V,E](dataType: IDataType[U], v: AnyRef): U = {
         dataType.getTypeCategory match {
             case DataTypes.TypeCategory.PRIMITIVE => dataType.convert(v, Multiplicity.OPTIONAL)
             case DataTypes.TypeCategory.ARRAY =>
@@ -222,7 +223,7 @@ object GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
               if dataType.getName == TypeSystem.getInstance().getIdType.getName => {
               val sType = dataType.asInstanceOf[StructType]
               val sInstance = sType.createInstance()
-              val tV = v.asInstanceOf[TitanVertex]
+              val tV = v.asInstanceOf[AAVertex[V,E]]
               sInstance.set(TypeSystem.getInstance().getIdType.typeNameAttrName,
                 tV.getProperty[java.lang.String](typeAttributeName))
               sInstance.set(TypeSystem.getInstance().getIdType.idAttrName,
@@ -232,7 +233,7 @@ object GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
             case DataTypes.TypeCategory.STRUCT => {
                 val sType = dataType.asInstanceOf[StructType]
                 val sInstance = sType.createInstance()
-                loadStructInstance(sType, sInstance, v.asInstanceOf[TitanVertex])
+                loadStructInstance(sType, sInstance, v.asInstanceOf[AAVertex[V,E]])
                 dataType.convert(sInstance, Multiplicity.OPTIONAL)
             }
             case DataTypes.TypeCategory.TRAIT => {
@@ -242,12 +243,12 @@ object GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
                  * this is not right, we should load the Instance associated with this trait.
                  * for now just loading the trait struct.
                  */
-                loadStructInstance(tType, tInstance, v.asInstanceOf[TitanVertex])
+                loadStructInstance(tType, tInstance, v.asInstanceOf[AAVertex[V,E]])
                 dataType.convert(tInstance, Multiplicity.OPTIONAL)
             }
             case DataTypes.TypeCategory.CLASS => {
                 val cType = dataType.asInstanceOf[ClassType]
-                val cInstance = constructClassInstance(dataType.asInstanceOf[ClassType], v.asInstanceOf[TitanVertex])
+                val cInstance = constructClassInstance(dataType.asInstanceOf[ClassType], v.asInstanceOf[AAVertex[V,E]])
                 dataType.convert(cInstance, Multiplicity.OPTIONAL)
             }
             case DataTypes.TypeCategory.ENUM => dataType.convert(v, Multiplicity.OPTIONAL)
@@ -255,8 +256,8 @@ object GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
         }
     }
 
-    def loadStructInstance(dataType: IConstructableType[_, _ <: ITypedInstance],
-                           typInstance: ITypedInstance, v: TitanVertex): Unit = {
+    def loadStructInstance[V,E](dataType: IConstructableType[_, _ <: ITypedInstance],
+                           typInstance: ITypedInstance, v: AAVertex[V,E]): Unit = {
         import scala.collection.JavaConversions._
         dataType.fieldMapping().fields.foreach { t =>
             val fName = t._1
@@ -265,15 +266,15 @@ object GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
         }
     }
 
-    def constructClassInstance(dataType: ClassType, v: TitanVertex): ITypedReferenceableInstance = {
+    def constructClassInstance[V,E](dataType: ClassType, v: AAVertex[V,E]): ITypedReferenceableInstance = {
         val id = getIdFromVertex(dataType.name, v)
         val tNms = traitNames(v)
         val cInstance = dataType.createInstance(id, tNms: _*)
         // load traits
         tNms.foreach { tNm =>
             val tLabel = traitLabel(dataType, tNm)
-            val edges = v.getEdges(Direction.OUT, tLabel)
-            val tVertex = edges.iterator().next().getVertex(Direction.IN).asInstanceOf[TitanVertex]
+            val edges = v.getEdges(AADirection.OUT, tLabel)
+            val tVertex = edges.iterator().next().getVertex(AADirection.IN).asInstanceOf[AAVertex[V,E]]
             val tType = TypeSystem.getInstance().getDataType[TraitType](classOf[TraitType], tNm)
             val tInstance = cInstance.getTrait(tNm).asInstanceOf[ITypedInstance]
             loadStructInstance(tType, tInstance, tVertex)
@@ -282,7 +283,7 @@ object GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
         cInstance
     }
 
-    def loadAttribute(dataType: IDataType[_], aInfo: AttributeInfo, i: ITypedInstance, v: TitanVertex): Unit = {
+    def loadAttribute[V,E](dataType: IDataType[_], aInfo: AttributeInfo, i: ITypedInstance, v: AAVertex[V,E]): Unit = {
         aInfo.dataType.getTypeCategory match {
             case DataTypes.TypeCategory.PRIMITIVE => loadPrimitiveAttribute(dataType, aInfo, i, v)
             case DataTypes.TypeCategory.ENUM => loadEnumAttribute(dataType, aInfo, i, v)
@@ -297,14 +298,14 @@ object GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
         }
     }
 
-    private def loadEnumAttribute(dataType: IDataType[_], aInfo: AttributeInfo, i: ITypedInstance, v: TitanVertex)
+    private def loadEnumAttribute[V,E](dataType: IDataType[_], aInfo: AttributeInfo, i: ITypedInstance, v: AAVertex[V,E])
     : Unit = {
         val fName = fieldNameInVertex(dataType, aInfo)
         i.setInt(aInfo.name, v.getProperty[java.lang.Integer](fName))
     }
 
-    private def loadPrimitiveAttribute(dataType: IDataType[_], aInfo: AttributeInfo,
-                                       i: ITypedInstance, v: TitanVertex): Unit = {
+    private def loadPrimitiveAttribute[V,E](dataType: IDataType[_], aInfo: AttributeInfo,
+                                       i: ITypedInstance, v: AAVertex[V,E]): Unit = {
         val fName = fieldNameInVertex(dataType, aInfo)
         aInfo.dataType() match {
             case x: BooleanType => i.setBoolean(aInfo.name, v.getProperty[java.lang.Boolean](fName))
@@ -324,8 +325,8 @@ object GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
     }
 
 
-    private def loadArrayAttribute[T](dataType: IDataType[_], aInfo: AttributeInfo,
-                                    i: ITypedInstance, v: TitanVertex): Unit = {
+    private def loadArrayAttribute[T,V,E](dataType: IDataType[_], aInfo: AttributeInfo,
+                                    i: ITypedInstance, v: AAVertex[V,E]): Unit = {
         import scala.collection.JavaConversions._
         val list: java.util.List[_] = v.getProperty(aInfo.name)
         val arrayType: DataTypes.ArrayType = aInfo.dataType.asInstanceOf[ArrayType]
@@ -337,14 +338,14 @@ object GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
         i.set(aInfo.name, values)
     }
 
-    private def loadStructAttribute(dataType: IDataType[_], aInfo: AttributeInfo,
-                                    i: ITypedInstance, v: TitanVertex, edgeLbl: Option[String] = None): Unit = {
+    private def loadStructAttribute[V,E](dataType: IDataType[_], aInfo: AttributeInfo,
+                                    i: ITypedInstance, v: AAVertex[V,E], edgeLbl: Option[String] = None): Unit = {
         val eLabel = edgeLbl match {
             case Some(x) => x
             case None => edgeLabel(FieldInfo(dataType, aInfo, null))
         }
-        val edges = v.getEdges(Direction.OUT, eLabel)
-        val sVertex = edges.iterator().next().getVertex(Direction.IN).asInstanceOf[TitanVertex]
+        val edges = v.getEdges(AADirection.OUT, eLabel)
+        val sVertex = edges.iterator().next().getVertex(AADirection.IN).asInstanceOf[AAVertex[V,E]]
         if (aInfo.dataType().getTypeCategory == DataTypes.TypeCategory.STRUCT) {
             val sType = aInfo.dataType().asInstanceOf[StructType]
             val sInstance = sType.createInstance()
@@ -358,7 +359,7 @@ object GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
 
 
 
-    private def mapVertexToCollectionEntry(instanceVertex: TitanVertex, attributeInfo: AttributeInfo, elementType: IDataType[_], i: ITypedInstance,  value: Any): Any = {
+    private def mapVertexToCollectionEntry[V,E](instanceVertex: AAVertex[V,E], attributeInfo: AttributeInfo, elementType: IDataType[_], i: ITypedInstance,  value: Any): Any = {
         elementType.getTypeCategory match {
             case DataTypes.TypeCategory.PRIMITIVE => value
             case DataTypes.TypeCategory.ENUM => value

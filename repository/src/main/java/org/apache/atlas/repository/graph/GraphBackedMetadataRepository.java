@@ -18,18 +18,24 @@
 
 package org.apache.atlas.repository.graph;
 
-import com.google.common.base.Preconditions;
-import com.thinkaurelius.titan.core.TitanGraph;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.GraphQuery;
-import com.tinkerpop.blueprints.Vertex;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.GraphTransaction;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.RepositoryException;
+import org.apache.atlas.repository.graphdb.AADirection;
+import org.apache.atlas.repository.graphdb.AAEdge;
+import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AAGraphQuery;
+import org.apache.atlas.repository.graphdb.AAVertex;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.ITypedStruct;
 import org.apache.atlas.typesystem.exception.EntityExistsException;
@@ -43,38 +49,32 @@ import org.apache.atlas.typesystem.types.TypeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import com.google.common.base.Preconditions;
 
 /**
  * An implementation backed by a Graph database provided
  * as a Graph Service.
  */
 @Singleton
-public class GraphBackedMetadataRepository implements MetadataRepository {
+public class GraphBackedMetadataRepository<V,E> implements MetadataRepository {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphBackedMetadataRepository.class);
 
-    private final GraphToTypedInstanceMapper graphToInstanceMapper;
+    private final GraphToTypedInstanceMapper<V,E> graphToInstanceMapper;
 
     private static TypeSystem typeSystem = TypeSystem.getInstance();
 
     private static final GraphHelper graphHelper = GraphHelper.getInstance();
 
-    private final TitanGraph titanGraph;
+    private final AAGraph<V,E> graph;
 
     @Inject
-    public GraphBackedMetadataRepository(GraphProvider<TitanGraph> graphProvider) {
-        this.titanGraph = graphProvider.get();
-        this.graphToInstanceMapper = new GraphToTypedInstanceMapper(titanGraph);
+    public GraphBackedMetadataRepository(AtlasGraphProvider graphProvider) {
+        this.graph = (AAGraph<V,E>)graphProvider.get();
+        this.graphToInstanceMapper = new GraphToTypedInstanceMapper<V,E>(graph);
     }
 
-    public GraphToTypedInstanceMapper getGraphToInstanceMapper() {
+    public GraphToTypedInstanceMapper<V,E> getGraphToInstanceMapper() {
         return graphToInstanceMapper;
     }
 
@@ -120,7 +120,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
     @GraphTransaction
     public List<String> createEntities(ITypedReferenceableInstance... entities) throws RepositoryException,
         EntityExistsException {
-        LOG.info("adding entities={}", entities);
+        LOG.info("adding entities={}", (Object[])entities);
         try {
             TypedInstanceToGraphMapper instanceToGraphMapper = new TypedInstanceToGraphMapper(graphToInstanceMapper);
             TypeUtils.Pair<List<String>, List<String>> idPair =
@@ -138,7 +138,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
     public ITypedReferenceableInstance getEntityDefinition(String guid) throws RepositoryException, EntityNotFoundException {
         LOG.info("Retrieving entity with guid={}", guid);
 
-        Vertex instanceVertex = graphHelper.getVertexForGUID(guid);
+        AAVertex<V,E> instanceVertex = graphHelper.getVertexForGUID(guid);
 
         try {
             return graphToInstanceMapper.mapGraphToTypedInstance(guid, instanceVertex);
@@ -154,7 +154,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         LOG.info("Retrieving entity with type={} and {}={}", entityType, attribute, value);
         IDataType type = typeSystem.getDataType(IDataType.class, entityType);
         String propertyKey = getFieldNameInVertex(type, attribute);
-        Vertex instanceVertex = graphHelper.getVertexForProperty(propertyKey, value);
+        AAVertex<V,E> instanceVertex = graphHelper.getVertexForProperty(propertyKey, value);
 
         String guid = instanceVertex.getProperty(Constants.GUID_PROPERTY_KEY);
         return graphToInstanceMapper.mapGraphToTypedInstance(guid, instanceVertex);
@@ -164,15 +164,15 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
     @GraphTransaction
     public List<String> getEntityList(String entityType) throws RepositoryException {
         LOG.info("Retrieving entity list for type={}", entityType);
-        GraphQuery query = titanGraph.query().has(Constants.ENTITY_TYPE_PROPERTY_KEY, entityType);
-        Iterator<Vertex> results = query.vertices().iterator();
+        AAGraphQuery<V,E> query = graph.query().has(Constants.ENTITY_TYPE_PROPERTY_KEY, entityType);
+        Iterator<AAVertex<V,E>> results = query.vertices().iterator();
         if (!results.hasNext()) {
             return Collections.emptyList();
         }
 
         ArrayList<String> entityList = new ArrayList<>();
         while (results.hasNext()) {
-            Vertex vertex = results.next();
+            AAVertex<V,E> vertex = results.next();
             entityList.add(vertex.<String>getProperty(Constants.GUID_PROPERTY_KEY));
         }
 
@@ -190,7 +190,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
     @GraphTransaction
     public List<String> getTraitNames(String guid) throws AtlasException {
         LOG.info("Retrieving trait names for entity={}", guid);
-        Vertex instanceVertex = graphHelper.getVertexForGUID(guid);
+        AAVertex instanceVertex = graphHelper.getVertexForGUID(guid);
         return GraphHelper.getTraitNames(instanceVertex);
     }
 
@@ -210,7 +210,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         LOG.info("Adding a new trait={} for entity={}", traitName, guid);
 
         try {
-            Vertex instanceVertex = graphHelper.getVertexForGUID(guid);
+            AAVertex instanceVertex = graphHelper.getVertexForGUID(guid);
 
             // add the trait instance as a new vertex
             final String typeName = GraphHelper.getTypeName(instanceVertex);
@@ -243,7 +243,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
     public void deleteTrait(String guid, String traitNameToBeDeleted) throws TraitNotFoundException, EntityNotFoundException, RepositoryException {
         LOG.info("Deleting trait={} from entity={}", traitNameToBeDeleted, guid);
         
-        Vertex instanceVertex = graphHelper.getVertexForGUID(guid);
+        AAVertex instanceVertex = graphHelper.getVertexForGUID(guid);
 
         List<String> traitNames = GraphHelper.getTraitNames(instanceVertex);
         if (!traitNames.contains(traitNameToBeDeleted)) {
@@ -256,13 +256,13 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
 
             final String entityTypeName = GraphHelper.getTypeName(instanceVertex);
             String relationshipLabel = GraphHelper.getTraitLabel(entityTypeName, traitNameToBeDeleted);
-            Iterator<Edge> results = instanceVertex.getEdges(Direction.OUT, relationshipLabel).iterator();
+            Iterator<AAEdge> results = instanceVertex.getEdges(AADirection.OUT, relationshipLabel).iterator();
             if (results.hasNext()) { // there should only be one edge for this label
-                final Edge traitEdge = results.next();
-                final Vertex traitVertex = traitEdge.getVertex(Direction.IN);
+                final AAEdge traitEdge = results.next();
+                final AAVertex traitVertex = traitEdge.getVertex(AADirection.IN);
 
                 // remove the edge to the trait instance from the repository
-                titanGraph.removeEdge(traitEdge);
+                graph.removeEdge(traitEdge);
 
                 if (traitVertex != null) { // remove the trait instance from the repository
                     TypedInstanceToGraphMapper instanceToGraphMapper = new TypedInstanceToGraphMapper(graphToInstanceMapper);
@@ -279,7 +279,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
     }
 
     
-    private void updateTraits(Vertex instanceVertex, List<String> traitNames) {
+    private void updateTraits(AAVertex instanceVertex, List<String> traitNames) {
         // remove the key
         instanceVertex.removeProperty(Constants.TRAIT_NAMES_PROPERTY_KEY);
 
@@ -293,7 +293,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
     @Override
     @GraphTransaction
     public TypeUtils.Pair<List<String>, List<String>> updateEntities(ITypedReferenceableInstance... entitiesUpdated) throws RepositoryException {
-        LOG.info("updating entity {}", entitiesUpdated);
+        LOG.info("updating entity {}", (Object[])entitiesUpdated);
         try {
             TypedInstanceToGraphMapper instanceToGraphMapper = new TypedInstanceToGraphMapper(graphToInstanceMapper);
             return instanceToGraphMapper.mapTypedInstanceToGraph(TypedInstanceToGraphMapper.Operation.UPDATE_FULL,
@@ -323,14 +323,14 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
             throw new IllegalArgumentException("guids must be non-null and non-empty");
         }
         
-        TypedInstanceToGraphMapper instanceToGraphMapper = new TypedInstanceToGraphMapper(graphToInstanceMapper);
+        TypedInstanceToGraphMapper<V,E> instanceToGraphMapper = new TypedInstanceToGraphMapper<V,E>(graphToInstanceMapper);
         for (String guid : guids) {
             if (guid == null) {
                 LOG.warn("deleteEntities: Ignoring null guid");
                 continue;
             }
             try {
-                Vertex instanceVertex = graphHelper.getVertexForGUID(guid);
+                AAVertex<V,E> instanceVertex = graphHelper.getVertexForGUID(guid);
                 String typeName = GraphHelper.getTypeName(instanceVertex);
                 instanceToGraphMapper.deleteEntity(typeName, instanceVertex);
             } catch (EntityNotFoundException e) {

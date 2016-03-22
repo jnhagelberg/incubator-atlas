@@ -329,6 +329,8 @@
     </developers>
 
     <properties>
+        <!-- for now in POC -->
+        <maven.test.skip>true</maven.test.skip>
         <!-- platform encoding override -->
         <skipTests>false</skipTests>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -429,6 +431,7 @@
         <module>client</module>
         <module>titan</module>
         <module>repository</module>
+        <module>graphdb-titan0</module>
         <module>dashboard</module>
         <module>webapp</module>
         <module>docs</module>

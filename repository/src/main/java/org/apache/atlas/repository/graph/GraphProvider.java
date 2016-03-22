@@ -19,9 +19,9 @@
 package org.apache.atlas.repository.graph;
 
 import com.google.inject.throwingproviders.CheckedProvider;
-import com.tinkerpop.blueprints.Graph;
+import org.apache.atlas.repository.graphdb.AAGraph;
 
-public interface GraphProvider<T extends Graph> extends CheckedProvider<T> {
+public interface GraphProvider<T extends AAGraph> extends CheckedProvider<T> {
     @Override
-    T get();
+    T get();   
 }

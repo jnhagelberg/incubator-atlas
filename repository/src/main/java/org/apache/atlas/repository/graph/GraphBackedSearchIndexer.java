@@ -18,20 +18,24 @@
 
 package org.apache.atlas.repository.graph;
 
-import com.thinkaurelius.titan.core.Cardinality;
-import com.thinkaurelius.titan.core.PropertyKey;
-import com.thinkaurelius.titan.core.TitanGraph;
-import com.thinkaurelius.titan.core.schema.Mapping;
-import com.thinkaurelius.titan.core.schema.TitanGraphIndex;
-import com.thinkaurelius.titan.core.schema.TitanManagement;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Vertex;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.discovery.SearchIndexer;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.IndexCreationException;
 import org.apache.atlas.repository.IndexException;
 import org.apache.atlas.repository.RepositoryException;
+import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.ElementType;
+import org.apache.atlas.repository.graphdb.GraphDatabaseManager;
 import org.apache.atlas.typesystem.types.AttributeInfo;
 import org.apache.atlas.typesystem.types.ClassType;
 import org.apache.atlas.typesystem.types.DataTypes;
@@ -42,44 +46,36 @@ import org.apache.atlas.typesystem.types.TraitType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 /**
  * Adds index for properties of a given type when its added before any instances are added.
  */
-public class GraphBackedSearchIndexer implements SearchIndexer {
+public class GraphBackedSearchIndexer<V,E> implements SearchIndexer {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphBackedSearchIndexer.class);
 
-    private final TitanGraph titanGraph;
+    private final AAGraph<V,E> graph;
 
-    private TitanManagement management;
-
-    List<Class> MIXED_INDEX_EXCLUSIONS = new ArrayList() {{
+    private GraphDatabaseManager management;
+    
+    List<Class> MIXED_INDEX_EXCLUSIONS = new ArrayList<Class>() {{
             add(Boolean.class);
             add(BigDecimal.class);
             add(BigInteger.class);
         }};
 
     @Inject
-    public GraphBackedSearchIndexer(GraphProvider<TitanGraph> graphProvider) throws RepositoryException {
+    public GraphBackedSearchIndexer(AtlasGraphProvider graphProvider) throws RepositoryException {
 
-        this.titanGraph = graphProvider.get();
+        this.graph = (AAGraph<V,E>)graphProvider.get();
 
         /* Create the transaction for indexing.
          */
-        management = titanGraph.getManagementSystem();
+        management = graph.getManagementSystem();
         initialize();
     }
 
     /**
-     * Initializes the indices for the graph - create indices for Global Vertex Keys
+     * Initializes the indices for the graph - create indices for Global AAVertex Keys
      */
     private void initialize() {
         if (management.containsPropertyKey(Constants.VERTEX_TYPE_PROPERTY_KEY)) {
@@ -88,22 +84,22 @@ public class GraphBackedSearchIndexer implements SearchIndexer {
         }
 
         /* This is called only once, which is the first time Atlas types are made indexable .*/
-        LOG.info("Indexes do not exist, Creating indexes for titanGraph.");
-        management.buildIndex(Constants.VERTEX_INDEX, Vertex.class).buildMixedIndex(Constants.BACKING_INDEX);
-        management.buildIndex(Constants.EDGE_INDEX, Edge.class).buildMixedIndex(Constants.BACKING_INDEX);
+        LOG.info("Indexes do not exist, Creating indexes for graph.");
+        management.buildMixedIndex(Constants.VERTEX_INDEX, ElementType.VERTEX, Constants.BACKING_INDEX);
+        management.buildMixedIndex(Constants.EDGE_INDEX, ElementType.EDGE, Constants.BACKING_INDEX);
 
         // create a composite index for guid as its unique
-        createCompositeAndMixedIndex(Constants.GUID_PROPERTY_KEY, String.class, true, Cardinality.SINGLE, true);
+        createCompositeAndMixedIndex(Constants.GUID_PROPERTY_KEY, String.class, true, Multiplicity.OPTIONAL, true);
 
         // create a composite and mixed index for type since it can be combined with other keys
-        createCompositeAndMixedIndex(Constants.ENTITY_TYPE_PROPERTY_KEY, String.class, false, Cardinality.SINGLE, true);
+        createCompositeAndMixedIndex(Constants.ENTITY_TYPE_PROPERTY_KEY, String.class, false,  Multiplicity.OPTIONAL, true);
 
         // create a composite and mixed index for type since it can be combined with other keys
-        createCompositeAndMixedIndex(Constants.SUPER_TYPES_PROPERTY_KEY, String.class, false, Cardinality.SET, true);
+        createCompositeAndMixedIndex(Constants.SUPER_TYPES_PROPERTY_KEY, String.class, false, Multiplicity.SET, true);
 
         // create a composite and mixed index for traitNames since it can be combined with other
         // keys. Traits must be a set and not a list.
-        createCompositeAndMixedIndex(Constants.TRAIT_NAMES_PROPERTY_KEY, String.class, false, Cardinality.SET, true);
+        createCompositeAndMixedIndex(Constants.TRAIT_NAMES_PROPERTY_KEY, String.class, false, Multiplicity.SET, true);
 
         // Index for full text search
         createFullTextIndex();
@@ -113,27 +109,22 @@ public class GraphBackedSearchIndexer implements SearchIndexer {
 
         management.commit();
         //Make sure we acquire another transaction after commit for subsequent indexing
-        management = titanGraph.getManagementSystem();
+        management = graph.getManagementSystem();
 
         LOG.info("Index creation for global keys complete.");
     }
 
     private void createFullTextIndex() {
-        PropertyKey fullText =
-                management.makePropertyKey(Constants.ENTITY_TEXT_PROPERTY_KEY).dataType(String.class).make();
-
-        management.buildIndex(Constants.FULLTEXT_INDEX, Vertex.class)
-                .addKey(fullText, com.thinkaurelius.titan.core.schema.Parameter.of("mapping", Mapping.TEXT))
-                .buildMixedIndex(Constants.BACKING_INDEX);
+        management.createFullTextIndex(Constants.FULLTEXT_INDEX, Constants.ENTITY_TEXT_PROPERTY_KEY, Constants.BACKING_INDEX);
         LOG.info("Created mixed index for {}", Constants.ENTITY_TEXT_PROPERTY_KEY);
     }
 
     private void createTypeStoreIndexes() {
         //Create unique index on typeName
-        createCompositeAndMixedIndex(Constants.TYPENAME_PROPERTY_KEY, String.class, true, Cardinality.SINGLE, true);
+        createCompositeAndMixedIndex(Constants.TYPENAME_PROPERTY_KEY, String.class, true, Multiplicity.OPTIONAL, true);
 
         //create index on vertex type
-        createCompositeAndMixedIndex(Constants.VERTEX_TYPE_PROPERTY_KEY, String.class, false, Cardinality.SINGLE, true);
+        createCompositeAndMixedIndex(Constants.VERTEX_TYPE_PROPERTY_KEY, String.class, false, Multiplicity.OPTIONAL, true);
     }
 
     /**
@@ -208,14 +199,12 @@ public class GraphBackedSearchIndexer implements SearchIndexer {
         final String propertyName = typeName + "." + field.name;
         switch (field.dataType().getTypeCategory()) {
         case PRIMITIVE:
-            Cardinality cardinality = getCardinality(field.multiplicity);
             createCompositeAndMixedIndex(propertyName, getPrimitiveClass(field.dataType()), field.isUnique,
-                    cardinality, false);
+                    field.multiplicity, false);
             break;
 
         case ENUM:
-            cardinality = getCardinality(field.multiplicity);
-            createCompositeAndMixedIndex(propertyName, String.class, field.isUnique, cardinality, false);
+            createCompositeAndMixedIndex(propertyName, String.class, field.isUnique, field.multiplicity, false);
             break;
 
         case ARRAY:
@@ -275,58 +264,36 @@ public class GraphBackedSearchIndexer implements SearchIndexer {
     }
 
 
-    private Cardinality getCardinality(Multiplicity multiplicity) {
-        if (multiplicity == Multiplicity.OPTIONAL || multiplicity == Multiplicity.REQUIRED) {
-            return Cardinality.SINGLE;
-        } else if (multiplicity == Multiplicity.COLLECTION) {
-            return Cardinality.LIST;
-        } else if (multiplicity == Multiplicity.SET) {
-            return Cardinality.SET;
+    private void createCompositeAndMixedIndex(String propertyName, Class propertyClass,
+            boolean isUnique, Multiplicity cardinality, boolean force) {
+
+        if(management.containsPropertyKey(propertyName)) {
+            //index was already created
+            return;            
+        }
+        
+        if (checkIfMixedIndexApplicable(propertyClass, cardinality)) {
+            //Use backing index
+            LOG.debug("Creating backing index for property {} of type {} ", propertyName, propertyClass.getName());
+            management.createBackingIndex(propertyName, Constants.VERTEX_INDEX, propertyClass, cardinality);
+            LOG.debug("Created backing index for property {} of type {} ", propertyName, propertyClass.getName());
         }
 
-        // todo - default to LIST as this is the most forgiving
-        return Cardinality.LIST;
-    }
-
-
-    private PropertyKey createCompositeAndMixedIndex(String propertyName, Class propertyClass,
-            boolean isUnique, Cardinality cardinality, boolean force) {
-
-        PropertyKey propertyKey = management.getPropertyKey(propertyName);
-        if (propertyKey == null) {
-            propertyKey = management.makePropertyKey(propertyName).dataType(propertyClass).cardinality(cardinality)
-                    .make();
-
-            if (checkIfMixedIndexApplicable(propertyClass, cardinality)) {
-                //Use backing index
-                LOG.debug("Creating backing index for property {} of type {} ", propertyName, propertyClass.getName());
-                TitanGraphIndex vertexIndex = management.getGraphIndex(Constants.VERTEX_INDEX);
-                management.addIndexKey(vertexIndex, propertyKey);
-                LOG.debug("Created backing index for property {} of type {} ", propertyName, propertyClass.getName());
-            }
-
-            //Create mixed index only for meta properties and unique constraints:
-            //Unique can't be achieved with backing/mixed index
-            //Creating composite index for every attribute will bloat up the index
-            if (force || isUnique) {
-                LOG.debug("Creating composite index for property {} of type {} ", propertyName,
-                        propertyClass.getName());
-                TitanManagement.IndexBuilder indexBuilder =
-                        management.buildIndex(propertyName, Vertex.class).addKey(propertyKey);
-                if (isUnique) {
-                    indexBuilder.unique();
-                }
-                indexBuilder.buildCompositeIndex();
-                LOG.debug("Created composite index for property {} of type {} ", propertyName, propertyClass.getName());
-            }
+        //Create mixed index only for meta properties and unique constraints:
+        //Unique can't be achieved with backing/mixed index
+        //Creating composite index for every attribute will bloat up the index
+        if (force || isUnique) {
+            LOG.debug("Creating composite index for property {} of type {} ", propertyName,
+                    propertyClass.getName());
+            
+            management.createCompositeIndex(propertyName, propertyClass, cardinality, isUnique);
+            LOG.debug("Created composite index for property {} of type {} ", propertyName, propertyClass.getName());
         }
 
-        return propertyKey;
     }
 
-    private boolean checkIfMixedIndexApplicable(Class propertyClass, Cardinality cardinality) {
-        return !(MIXED_INDEX_EXCLUSIONS.contains(propertyClass) || cardinality == Cardinality.LIST || cardinality ==
-                Cardinality.SET);
+    private boolean checkIfMixedIndexApplicable(Class propertyClass, Multiplicity cardinality) {
+        return !(MIXED_INDEX_EXCLUSIONS.contains(propertyClass) || cardinality.isMany());
     }
 
     public void commit() throws IndexException {
@@ -352,7 +319,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer {
         EdgeLabel edgeLabel = management.getEdgeLabel(propertyName);
         if (edgeLabel == null) {
             edgeLabel = management.makeEdgeLabel(propertyName).make();
-            management.buildEdgeIndex(edgeLabel, propertyName, Direction.BOTH, Order.DEFAULT);
+            management.buildEdgeIndex(edgeLabel, propertyName, AADirection.BOTH, Order.DEFAULT);
             LOG.info("Created index for edge label {}", propertyName);
         }
     }*/

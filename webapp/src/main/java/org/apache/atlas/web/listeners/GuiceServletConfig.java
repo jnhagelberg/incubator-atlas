@@ -18,17 +18,11 @@
 
 package org.apache.atlas.web.listeners;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.Provider;
-import com.google.inject.TypeLiteral;
-import com.google.inject.servlet.GuiceServletContextListener;
-import com.sun.jersey.api.core.PackagesResourceConfig;
-import com.sun.jersey.guice.JerseyServletModule;
-import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
-import com.thinkaurelius.titan.core.TitanGraph;
-import com.tinkerpop.blueprints.Graph;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.servlet.ServletContextEvent;
+
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasClient;
 import org.apache.atlas.AtlasException;
@@ -37,6 +31,7 @@ import org.apache.atlas.notification.NotificationInterface;
 import org.apache.atlas.notification.NotificationModule;
 import org.apache.atlas.notification.entity.NotificationEntityChangeListener;
 import org.apache.atlas.repository.graph.GraphProvider;
+import org.apache.atlas.repository.graphdb.AAGraph;
 import org.apache.atlas.service.Services;
 import org.apache.atlas.services.MetadataService;
 import org.apache.atlas.typesystem.types.TypeSystem;
@@ -48,9 +43,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
-import javax.servlet.ServletContextEvent;
-import java.util.HashMap;
-import java.util.Map;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.Provider;
+import com.google.inject.TypeLiteral;
+import com.google.inject.servlet.GuiceServletContextListener;
+import com.sun.jersey.api.core.PackagesResourceConfig;
+import com.sun.jersey.guice.JerseyServletModule;
+import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
+import com.tinkerpop.blueprints.Graph;
 
 public class GuiceServletConfig extends GuiceServletContextListener {
 
@@ -145,9 +147,12 @@ public class GuiceServletConfig extends GuiceServletContextListener {
     public void contextDestroyed(ServletContextEvent servletContextEvent) {
         super.contextDestroyed(servletContextEvent);
         if(injector != null) {
-            TypeLiteral<GraphProvider<TitanGraph>> graphProviderType = new TypeLiteral<GraphProvider<TitanGraph>>() {};
-            Provider<GraphProvider<TitanGraph>> graphProvider = injector.getProvider(Key.get(graphProviderType));
-            final Graph graph = graphProvider.get().get();
+            TypeLiteral<GraphProvider<AAGraph>> graphProviderType = new TypeLiteral<GraphProvider<AAGraph>>() {};
+            Provider<GraphProvider<AAGraph>> graphProviderProvider = injector.getProvider(Key.get(graphProviderType));
+            
+            GraphProvider<AAGraph> graphProvider = graphProviderProvider.get();
+            
+            final AAGraph<?,?> graph = graphProvider.get();
             graph.shutdown();
 
             //stop services

@@ -17,34 +17,35 @@
 
 package org.apache.atlas;
 
-import com.google.inject.Inject;
-import com.thinkaurelius.titan.core.TitanGraph;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.atlas.repository.graph.GraphProvider;
+import org.apache.atlas.repository.graphdb.AAGraph;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.inject.Inject;
+
 public class GraphTransactionInterceptor implements MethodInterceptor {
     private static final Logger LOG = LoggerFactory.getLogger(GraphTransactionInterceptor.class);
-    private TitanGraph titanGraph;
+    private AAGraph<?,?> graph;
 
     @Inject
-    GraphProvider<TitanGraph> graphProvider;
+    GraphProvider<AAGraph> graphProvider;
 
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
-        if (titanGraph == null) {
-            titanGraph = graphProvider.get();
+        if (graph == null) {
+            graph = (AAGraph<?,?>)graphProvider.get();
         }
 
         try {
             Object response = invocation.proceed();
-            titanGraph.commit();
+            graph.commit();
             LOG.debug("graph commit");
             return response;
         } catch (Throwable t) {
-            titanGraph.rollback();
+            graph.rollback();
             LOG.error("graph rollback due to exception ", t);
             throw t;
         }

@@ -18,9 +18,10 @@
 
 package org.apache.atlas.discovery.graph;
 
-import com.google.common.collect.ImmutableCollection;
-import com.google.common.collect.ImmutableList;
-import com.thinkaurelius.titan.core.TitanVertex;
+import java.util.List;
+
+import javax.inject.Inject;
+
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.query.Expressions;
 import org.apache.atlas.query.GraphPersistenceStrategies;
@@ -31,6 +32,7 @@ import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.graph.GraphBackedMetadataRepository;
 import org.apache.atlas.repository.graph.GraphHelper;
+import org.apache.atlas.repository.graphdb.AAVertex;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.ITypedStruct;
 import org.apache.atlas.typesystem.persistence.Id;
@@ -44,10 +46,14 @@ import org.apache.atlas.typesystem.types.TypeSystem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
-import java.util.List;
+import com.google.common.collect.ImmutableCollection;
+import com.google.common.collect.ImmutableList;
+
 
 /**
+ * TBD - where should templates be - class or method level?  Right now
+ * using method level to be consistent with superclass.
+ * 
  * Default implementation of GraphPersistenceStrategy.
  */
 public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategies {
@@ -95,7 +101,7 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
     }
 
     @Override
-    public List<String> traitNames(TitanVertex vertex) {
+    public <V,E> List<String> traitNames(AAVertex<V,E> vertex) {
         return GraphHelper.getTraitNames(vertex);
     }
 
@@ -105,12 +111,12 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
     }
 
     @Override
-    public Id getIdFromVertex(String dataTypeName, TitanVertex vertex) {
+    public <V,E> Id getIdFromVertex(String dataTypeName, AAVertex<V,E> vertex) {
         return GraphHelper.getIdFromVertex(dataTypeName, vertex);
     }
 
     @Override
-    public <U> U constructInstance(IDataType<U> dataType, Object value) {
+    public <U,V,E> U constructInstance(IDataType<U> dataType, Object value) {
         try {
             switch (dataType.getTypeCategory()) {
             case PRIMITIVE:
@@ -133,7 +139,7 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
                 break;
 
             case STRUCT:
-                TitanVertex structVertex = (TitanVertex) value;
+                AAVertex<V,E> structVertex = (AAVertex) value;
                 StructType structType = (StructType) dataType;
                 ITypedStruct structInstance = structType.createInstance();
 
@@ -150,7 +156,7 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
                 return dataType.convert(structInstance, Multiplicity.OPTIONAL);
 
             case TRAIT:
-                TitanVertex traitVertex = (TitanVertex) value;
+                AAVertex<V,E> traitVertex = (AAVertex<V,E>) value;
                 TraitType traitType = (TraitType) dataType;
                 ITypedStruct traitInstance = traitType.createInstance();
                 // todo - this is not right, we should load the Instance associated with this
@@ -162,7 +168,7 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
                 break;
 
             case CLASS:
-                TitanVertex classVertex = (TitanVertex) value;
+                AAVertex<V,E> classVertex = (AAVertex<V,E>) value;
                 ITypedReferenceableInstance classInstance = metadataRepository.getGraphToInstanceMapper()
                     .mapGraphToTypedInstance(classVertex.<String>getProperty(Constants.GUID_PROPERTY_KEY),
                         classVertex);

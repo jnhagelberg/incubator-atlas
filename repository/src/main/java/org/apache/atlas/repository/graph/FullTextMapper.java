@@ -17,7 +17,7 @@
  */
 package org.apache.atlas.repository.graph;
 
-import com.tinkerpop.blueprints.Vertex;
+import org.apache.atlas.repository.graphdb.AAVertex;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.typesystem.ITypedInstance;
@@ -31,19 +31,19 @@ import org.apache.commons.lang.StringUtils;
 import java.util.List;
 import java.util.Map;
 
-public class FullTextMapper {
+public class FullTextMapper<V,E> {
 
-    private final GraphToTypedInstanceMapper graphToTypedInstanceMapper;
+    private final GraphToTypedInstanceMapper<V,E> graphToTypedInstanceMapper;
 
-    private static final GraphHelper graphHelper = GraphHelper.getInstance();
+    private static final GraphHelper<?,?> graphHelper = GraphHelper.getInstance();
 
     private static final String FULL_TEXT_DELIMITER = " ";
 
-    FullTextMapper(GraphToTypedInstanceMapper graphToTypedInstanceMapper) {
+    FullTextMapper(GraphToTypedInstanceMapper<V,E> graphToTypedInstanceMapper) {
         this.graphToTypedInstanceMapper = graphToTypedInstanceMapper;
     }
 
-    public String mapRecursive(Vertex instanceVertex, boolean followReferences) throws AtlasException {
+    public String mapRecursive(AAVertex<V,E> instanceVertex, boolean followReferences) throws AtlasException {
         String guid = instanceVertex.getProperty(Constants.GUID_PROPERTY_KEY);
         ITypedReferenceableInstance typedReference =
             graphToTypedInstanceMapper.mapGraphToTypedInstance(guid, instanceVertex);
@@ -107,7 +107,7 @@ public class FullTextMapper {
         case CLASS:
             if (followReferences) {
                 String refGuid = ((ITypedReferenceableInstance) value).getId()._getId();
-                Vertex refVertex = graphHelper.getVertexForGUID(refGuid);
+                AAVertex refVertex = graphHelper.getVertexForGUID(refGuid);
                 return mapRecursive(refVertex, false);
             }
             break;

@@ -20,7 +20,7 @@ package org.apache.atlas.query
 
 import java.util
 
-import com.thinkaurelius.titan.core.TitanGraph
+import org.apache.atlas.repository.graphdb.AAGraph
 import org.apache.atlas.query.Expressions._
 import org.apache.atlas.typesystem.ITypedStruct
 import org.apache.atlas.typesystem.json.{InstanceSerialization, Serialization}
@@ -65,7 +65,7 @@ import org.apache.atlas.typesystem.types.{DataTypes, StructType, TypeSystem}
  *
  * Given these 5 things the ClosureQuery can be executed, it returns a GremlinQueryResult of the Closure Query.
  */
-trait ClosureQuery {
+trait ClosureQuery[V,E] {
 
   val SRC_PREFIX = TypeUtils.GraphResultStruct.SRC_PREFIX
   val DEST_PREFIX = TypeUtils.GraphResultStruct.DEST_PREFIX
@@ -116,7 +116,7 @@ trait ClosureQuery {
   def withPath : Boolean
 
   def persistenceStrategy: GraphPersistenceStrategies
-  def g: TitanGraph
+  def g: AAGraph[V,E]
 
   def pathExpr : Expressions.Expression = {
     closureRelation.tail.foldLeft(closureRelation.head.toExpr)((b,a) => b.field(a.toFieldName))
@@ -228,7 +228,7 @@ trait ClosureQuery {
  *
  * @tparam T
  */
-trait SingleInstanceClosureQuery[T] extends ClosureQuery {
+trait SingleInstanceClosureQuery[T,V,E] extends ClosureQuery[V,E] {
 
   def attributeToSelectInstance : String
 
@@ -256,7 +256,7 @@ trait SingleInstanceClosureQuery[T] extends ClosureQuery {
  * @param persistenceStrategy as needed to evaluate the Closure Query.
  * @param g as needed to evaluate the Closure Query.
  */
-case class HiveLineageQuery(tableTypeName : String,
+case class HiveLineageQuery[V,E](tableTypeName : String,
                            tableName : String,
                         ctasTypeName : String,
                       ctasInputTableAttribute : String,
@@ -265,8 +265,8 @@ case class HiveLineageQuery(tableTypeName : String,
                       selectAttributes : Option[List[String]],
                       withPath : Boolean,
                         persistenceStrategy: GraphPersistenceStrategies,
-                        g: TitanGraph
-                        ) extends SingleInstanceClosureQuery[String] {
+                        g: AAGraph[V,E]
+                        ) extends SingleInstanceClosureQuery[String,V,E] {
 
   val closureType : String = tableTypeName
 
@@ -296,7 +296,7 @@ case class HiveLineageQuery(tableTypeName : String,
  * @param persistenceStrategy as needed to evaluate the Closure Query.
  * @param g as needed to evaluate the Closure Query.
  */
-case class HiveWhereUsedQuery(tableTypeName : String,
+case class HiveWhereUsedQuery[V,E](tableTypeName : String,
                               tableName : String,
                             ctasTypeName : String,
                             ctasInputTableAttribute : String,
@@ -305,8 +305,8 @@ case class HiveWhereUsedQuery(tableTypeName : String,
                             selectAttributes : Option[List[String]],
                             withPath : Boolean,
                             persistenceStrategy: GraphPersistenceStrategies,
-                            g: TitanGraph
-                             ) extends SingleInstanceClosureQuery[String] {
+                            g: AAGraph[V,E]
+                             ) extends SingleInstanceClosureQuery[String,V,E] {
 
   val closureType : String = tableTypeName
 

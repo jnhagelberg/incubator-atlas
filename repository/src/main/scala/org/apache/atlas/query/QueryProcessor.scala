@@ -18,14 +18,14 @@
 
 package org.apache.atlas.query
 
-import com.thinkaurelius.titan.core.TitanGraph
+import org.apache.atlas.repository.graphdb.AAGraph
 import org.apache.atlas.query.Expressions._
 import org.slf4j.{Logger, LoggerFactory}
 
 object QueryProcessor {
     val LOG : Logger = LoggerFactory.getLogger("org.apache.atlas.query.QueryProcessor")
 
-    def evaluate(e: Expression, g: TitanGraph, gP : GraphPersistenceStrategies = GraphPersistenceStrategy1):
+    def evaluate[V,E](e: Expression, g: AAGraph[V,E], gP : GraphPersistenceStrategies = GraphPersistenceStrategy1):
     GremlinQueryResult = {
         val e1 = validate(e)
         val q = new GremlinTranslator(e1, gP).translate()

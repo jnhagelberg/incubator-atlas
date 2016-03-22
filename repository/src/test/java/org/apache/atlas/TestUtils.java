@@ -66,22 +66,22 @@ public final class TestUtils {
     /**
      * Dumps the graph in GSON format in the path returned.
      *
-     * @param titanGraph handle to graph
+     * @param graph handle to graph
      * @return path to the dump file
      * @throws Exception
      */
-    public static String dumpGraph(TitanGraph titanGraph) throws Exception {
+    public static String dumpGraph(TitanGraph graph) throws Exception {
         File tempFile = File.createTempFile("graph", ".gson");
         System.out.println("tempFile.getPath() = " + tempFile.getPath());
-        GraphSONWriter.outputGraph(titanGraph, tempFile.getPath());
+        GraphSONWriter.outputGraph(graph, tempFile.getPath());
 
         System.out.println("Vertices:");
-        for (Vertex vertex : titanGraph.getVertices()) {
+        for (Vertex vertex : graph.getVertices()) {
             System.out.println(GraphHelper.vertexString(vertex));
         }
 
         System.out.println("Edges:");
-        for (Edge edge : titanGraph.getEdges()) {
+        for (Edge edge : graph.getEdges()) {
             System.out.println(GraphHelper.edgeString(edge));
         }
 

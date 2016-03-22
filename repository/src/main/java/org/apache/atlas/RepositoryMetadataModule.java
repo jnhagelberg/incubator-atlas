@@ -18,23 +18,18 @@
 
 package org.apache.atlas;
 
-import com.google.inject.Singleton;
-import com.google.inject.matcher.Matchers;
-import com.google.inject.multibindings.Multibinder;
-import com.google.inject.throwingproviders.ThrowingProviderBinder;
-import com.thinkaurelius.titan.core.TitanGraph;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.apache.atlas.discovery.DiscoveryService;
 import org.apache.atlas.discovery.HiveLineageService;
 import org.apache.atlas.discovery.LineageService;
-import org.apache.atlas.discovery.SearchIndexer;
 import org.apache.atlas.discovery.graph.GraphBackedDiscoveryService;
 import org.apache.atlas.listener.TypesChangeListener;
 import org.apache.atlas.repository.MetadataRepository;
+import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.repository.graph.GraphBackedMetadataRepository;
 import org.apache.atlas.repository.graph.GraphBackedSearchIndexer;
 import org.apache.atlas.repository.graph.GraphProvider;
-import org.apache.atlas.repository.graph.TitanGraphProvider;
+import org.apache.atlas.repository.graphdb.AAGraph;
 import org.apache.atlas.repository.typestore.GraphBackedTypeStore;
 import org.apache.atlas.repository.typestore.ITypeStore;
 import org.apache.atlas.services.DefaultMetadataService;
@@ -42,6 +37,11 @@ import org.apache.atlas.services.IBootstrapTypesRegistrar;
 import org.apache.atlas.services.MetadataService;
 import org.apache.atlas.services.ReservedTypesRegistrar;
 import org.apache.atlas.typesystem.types.TypeSystem;
+
+import com.google.inject.Singleton;
+import com.google.inject.matcher.Matchers;
+import com.google.inject.multibindings.Multibinder;
+import com.google.inject.throwingproviders.ThrowingProviderBinder;
 
 /**
  * Guice module for Repository module.
@@ -53,8 +53,8 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
         // special wiring for Titan Graph
 
 
-
-        ThrowingProviderBinder.create(binder()).bind(GraphProvider.class, TitanGraph.class).to(TitanGraphProvider.class)
+        //todo - move class resolution here, bind to actual plugin impl class
+        ThrowingProviderBinder.create(binder()).bind(GraphProvider.class, AAGraph.class).to(AtlasGraphProvider.class)
                 .asEagerSingleton();
 
         // allow for dynamic binding of the metadata repo & graph service

@@ -18,17 +18,20 @@
 
 package org.apache.atlas.repository.graph;
 
-import com.thinkaurelius.titan.core.TitanGraph;
-import com.thinkaurelius.titan.core.TitanProperty;
-import com.thinkaurelius.titan.core.TitanVertex;
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Graph;
-import com.tinkerpop.blueprints.GraphQuery;
-import com.tinkerpop.blueprints.Vertex;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.repository.Constants;
+import org.apache.atlas.repository.graphdb.AADirection;
+import org.apache.atlas.repository.graphdb.AAEdge;
+import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AAGraphQuery;
+import org.apache.atlas.repository.graphdb.AAVertex;
 import org.apache.atlas.typesystem.IReferenceableInstance;
 import org.apache.atlas.typesystem.ITypedInstance;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
@@ -44,39 +47,32 @@ import org.apache.atlas.typesystem.types.TypeUtils.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
-
 /**
  * Utility class for graph operations.
  */
-public final class GraphHelper {
+public final class GraphHelper<V,E> {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphHelper.class);
     public static final String EDGE_LABEL_PREFIX = "__";
 
     private static final TypeSystem typeSystem = TypeSystem.getInstance();
 
-    private static final GraphHelper INSTANCE = new GraphHelper(TitanGraphProvider.getGraphInstance());
+    private static final GraphHelper<?,?> INSTANCE = new GraphHelper<Object,Object>(AtlasGraphProvider.getGraphInstance());
 
-    private TitanGraph titanGraph;
+    private AAGraph<V,E> graph;
 
-    private GraphHelper(TitanGraph titanGraph) {
-        this.titanGraph = titanGraph;
+    private GraphHelper(AAGraph<V,E> graph) {
+        this.graph = graph;
     }
 
-    public static GraphHelper getInstance() {
+    public static GraphHelper<?,?> getInstance() {
         return INSTANCE;
     }
 
-    public Vertex createVertexWithIdentity(ITypedReferenceableInstance typedInstance, Set<String> superTypeNames) {
+    public AAVertex<V,E> createVertexWithIdentity(ITypedReferenceableInstance typedInstance, Set<String> superTypeNames) {
         final String guid = UUID.randomUUID().toString();
 
-        final Vertex vertexWithIdentity = createVertexWithoutIdentity(typedInstance.getTypeName(),
+        final AAVertex<V,E> vertexWithIdentity = createVertexWithoutIdentity(typedInstance.getTypeName(),
                 new Id(guid, 0 , typedInstance.getTypeName()), superTypeNames);
 
         // add identity
@@ -88,10 +84,10 @@ public final class GraphHelper {
         return vertexWithIdentity;
     }
 
-    public Vertex createVertexWithoutIdentity(String typeName, Id typedInstanceId, Set<String> superTypeNames) {
+    public AAVertex<V,E> createVertexWithoutIdentity(String typeName, Id typedInstanceId, Set<String> superTypeNames) {
         LOG.debug("Creating vertex for type {} id {}", typeName,
                 typedInstanceId != null ? typedInstanceId._getId() : null);
-        final Vertex vertexWithoutIdentity = titanGraph.addVertex(null);
+        final AAVertex<V,E> vertexWithoutIdentity = graph.addVertex(null);
 
         // add type information
         setProperty(vertexWithoutIdentity, Constants.ENTITY_TYPE_PROPERTY_KEY, typeName);
@@ -107,37 +103,38 @@ public final class GraphHelper {
         return vertexWithoutIdentity;
     }
 
-    public Edge addEdge(Vertex fromVertex, Vertex toVertex, String edgeLabel) {
+    public AAEdge<V,E> addEdge(AAVertex<V,E> fromVertex, AAVertex<V,E> toVertex, String edgeLabel) {
         LOG.debug("Adding edge for {} -> label {} -> {}", fromVertex, edgeLabel, toVertex);
-        Edge edge = titanGraph.addEdge(null, fromVertex, toVertex, edgeLabel);
+        AAEdge<V,E> edge = graph.addEdge(null, fromVertex, toVertex, edgeLabel);
         LOG.debug("Added edge for {} -> label {}, id {} -> {}", fromVertex, edgeLabel, edge.getId(), toVertex);
         return edge;
     }
 
-    public Vertex findVertex(String propertyKey, Object value) {
+    public AAVertex<V,E> findVertex(String propertyKey, Object value) {
         LOG.debug("Finding vertex for {}={}", propertyKey, value);
 
-        GraphQuery query = titanGraph.query().has(propertyKey, value);
-        Iterator<Vertex> results = query.vertices().iterator();
+        AAGraphQuery<V,E> query = graph.query().has(propertyKey, value);
+      
+        Iterator<AAVertex<V,E>> results = query.vertices().iterator();
         // returning one since entityType, qualifiedName should be unique
         return results.hasNext() ? results.next() : null;
     }
 
-    public static Iterable<Edge> getOutGoingEdgesByLabel(Vertex instanceVertex, String edgeLabel) {
+    public static <V,E> Iterable<AAEdge<V,E>> getOutGoingEdgesByLabel(AAVertex<V,E> instanceVertex, String edgeLabel) {
         if(instanceVertex != null && edgeLabel != null) {
-            return instanceVertex.getEdges(Direction.OUT, edgeLabel);
+            return instanceVertex.getEdges(AADirection.OUT, edgeLabel);
         }
         return null;
     }
 
-    public Edge getOutGoingEdgeById(String edgeId) {
+    public AAEdge<V,E> getOutGoingEdgeById(String edgeId) {
         if(edgeId != null) {
-            return titanGraph.getEdge(edgeId);
+            return graph.getEdge(edgeId);
         }
         return null;
     }
 
-    public static String vertexString(final Vertex vertex) {
+    public static String vertexString(final AAVertex<?,?> vertex) {
         StringBuilder properties = new StringBuilder();
         for (String propertyKey : vertex.getPropertyKeys()) {
             properties.append(propertyKey).append("=").append(vertex.getProperty(propertyKey).toString()).append(", ");
@@ -146,12 +143,12 @@ public final class GraphHelper {
         return "v[" + vertex.getId() + "], Properties[" + properties + "]";
     }
 
-    public static String edgeString(final Edge edge) {
-        return "e[" + edge.getLabel() + "], [" + edge.getVertex(Direction.OUT) + " -> " + edge.getLabel() + " -> "
-                + edge.getVertex(Direction.IN) + "]";
+    public static String edgeString(final AAEdge<?,?> edge) {
+        return "e[" + edge.getLabel() + "], [" + edge.getVertex(AADirection.OUT) + " -> " + edge.getLabel() + " -> "
+                + edge.getVertex(AADirection.IN) + "]";
     }
 
-    public static void setProperty(Vertex vertex, String propertyName, Object value) {
+    public static void setProperty(AAVertex<?,?> vertex, String propertyName, Object value) {
         LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, vertex);
         Object existValue = vertex.getProperty(propertyName);
         if(value == null || (value instanceof Collection && ((Collection) value).isEmpty())) {
@@ -167,18 +164,18 @@ public final class GraphHelper {
         }
     }
 
-    public static void addProperty(Vertex vertex, String propertyName, Object value) {
+    public static void addProperty(AAVertex<?,?> vertex, String propertyName, Object value) {
         LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, vertex);
-        ((TitanVertex)vertex).addProperty(propertyName, value);
+        vertex.addProperty(propertyName, value);
     }
 
-    public Edge removeRelation(String edgeId, boolean cascade) {
+    public AAEdge<V,E> removeRelation(String edgeId, boolean cascade) {
         LOG.debug("Removing edge with id {}", edgeId);
-        final Edge edge = titanGraph.getEdge(edgeId);
-        titanGraph.removeEdge(edge);
+        final AAEdge<V,E> edge = graph.getEdge(edgeId);
+        graph.removeEdge(edge);
         LOG.info("Removed edge {}", edge);
         if (cascade) {
-           Vertex referredVertex = edge.getVertex(Direction.IN);
+           AAVertex<V,E> referredVertex = edge.getVertex(AADirection.IN);
            removeVertex(referredVertex);
         }
         return edge;
@@ -189,9 +186,9 @@ public final class GraphHelper {
      * 
      * @param edge
      */
-    public void removeEdge(Edge edge) {
+    public void removeEdge(AAEdge<V,E> edge) {
         LOG.debug("Removing edge {}", edge);
-        titanGraph.removeEdge(edge);
+        graph.removeEdge(edge);
         LOG.info("Removed edge {}", edge);
     }
     
@@ -201,9 +198,9 @@ public final class GraphHelper {
      * @param edgeId
      * @return edge and target vertex
      */
-    public Pair<Edge, Vertex> getEdgeAndTargetVertex(String edgeId) {
-        final Edge edge = titanGraph.getEdge(edgeId);
-        Vertex referredVertex = edge.getVertex(Direction.IN);
+    public Pair<AAEdge<V,E>, AAVertex<V,E>> getEdgeAndTargetVertex(String edgeId) {
+        final AAEdge<V,E> edge = graph.getEdge(edgeId);
+        AAVertex<V,E> referredVertex = edge.getVertex(AADirection.IN);
         return Pair.of(edge, referredVertex);
     }
     
@@ -212,19 +209,19 @@ public final class GraphHelper {
      * 
      * @param vertex
      */
-    public void removeVertex(Vertex vertex) {
+    public void removeVertex(AAVertex<V,E> vertex) {
         LOG.debug("Removing vertex {}", vertex);
-        titanGraph.removeVertex(vertex);
+        graph.removeVertex(vertex);
         LOG.info("Removed vertex {}", vertex);
     }
 
-    public Vertex getVertexForGUID(String guid) throws EntityNotFoundException {
+    public AAVertex<V,E> getVertexForGUID(String guid) throws EntityNotFoundException {
         return getVertexForProperty(Constants.GUID_PROPERTY_KEY, guid);
     }
 
 
-    public Vertex getVertexForProperty(String propertyKey, Object value) throws EntityNotFoundException {
-        Vertex instanceVertex = findVertex(propertyKey, value);
+    public AAVertex<V,E> getVertexForProperty(String propertyKey, Object value) throws EntityNotFoundException {
+        AAVertex<V,E> instanceVertex = findVertex(propertyKey, value);
         if (instanceVertex == null) {
             LOG.debug("Could not find a vertex with {}={}", propertyKey, value);
             throw new EntityNotFoundException("Could not find an entity in the repository with " + propertyKey + "="
@@ -251,12 +248,11 @@ public final class GraphHelper {
         return typeName + "." + attrName;
     }
 
-    public static List<String> getTraitNames(Vertex entityVertex) {
+    public static List<String> getTraitNames(AAVertex<?,?> entityVertex) {
         ArrayList<String> traits = new ArrayList<>();
-        for (TitanProperty property : ((TitanVertex) entityVertex).getProperties(Constants.TRAIT_NAMES_PROPERTY_KEY)) {
-            traits.add((String) property.getValue());
-        }
-
+        for(String value : entityVertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY)) {
+            traits.add(value);
+        }        
         return traits;
     }
 
@@ -269,12 +265,12 @@ public final class GraphHelper {
         return GraphHelper.EDGE_LABEL_PREFIX + getQualifiedFieldName(dataType, aInfo.name);
     }
 
-    public static Id getIdFromVertex(String dataTypeName, Vertex vertex) {
+    public static Id getIdFromVertex(String dataTypeName, AAVertex<?,?> vertex) {
         return new Id(vertex.<String>getProperty(Constants.GUID_PROPERTY_KEY),
             vertex.<Integer>getProperty(Constants.VERSION_PROPERTY_KEY), dataTypeName);
     }
 
-    public static String getTypeName(Vertex instanceVertex) {
+    public static String getTypeName(AAVertex<?,?> instanceVertex) {
         return instanceVertex.getProperty(Constants.ENTITY_TYPE_PROPERTY_KEY);
     }
 
@@ -287,10 +283,10 @@ public final class GraphHelper {
      * @return
      * @throws AtlasException
      */
-    public Vertex getVertexForInstanceByUniqueAttribute(ClassType classType, IReferenceableInstance instance)
+    public AAVertex getVertexForInstanceByUniqueAttribute(ClassType classType, IReferenceableInstance instance)
         throws AtlasException {
         LOG.debug("Checking if there is an instance with the same unique attributes for instance {}", instance);
-        Vertex result = null;
+        AAVertex result = null;
         for (AttributeInfo attributeInfo : classType.fieldMapping().fields.values()) {
             if (attributeInfo.isUnique) {
                 String propertyKey = getQualifiedFieldName(classType, attributeInfo.name);
@@ -306,15 +302,15 @@ public final class GraphHelper {
         return result;
     }
 
-    public static void dumpToLog(final Graph graph) {
+    public static <V,E> void dumpToLog(final AAGraph<V,E> graph) {
         LOG.debug("*******************Graph Dump****************************");
         LOG.debug("Vertices of {}", graph);
-        for (Vertex vertex : graph.getVertices()) {
+        for (AAVertex<V,E> vertex : graph.getVertices()) {
             LOG.debug(vertexString(vertex));
         }
 
         LOG.debug("Edges of {}", graph);
-        for (Edge edge : graph.getEdges()) {
+        for (AAEdge<V,E> edge : graph.getEdges()) {
             LOG.debug(edgeString(edge));
         }
         LOG.debug("*******************Graph Dump****************************");

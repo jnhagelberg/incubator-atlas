@@ -18,11 +18,19 @@
 
 package org.apache.atlas.discovery.graph;
 
-import com.thinkaurelius.titan.core.TitanGraph;
-import com.thinkaurelius.titan.core.TitanIndexQuery;
-import com.thinkaurelius.titan.core.TitanProperty;
-import com.thinkaurelius.titan.core.TitanVertex;
-import com.tinkerpop.blueprints.Vertex;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import javax.script.Bindings;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
+
 import org.apache.atlas.AtlasClient;
 import org.apache.atlas.GraphTransaction;
 import org.apache.atlas.discovery.DiscoveryException;
@@ -36,26 +44,20 @@ import org.apache.atlas.query.QueryParser;
 import org.apache.atlas.query.QueryProcessor;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.MetadataRepository;
-import org.apache.atlas.repository.graph.GraphProvider;
+import org.apache.atlas.repository.graph.AtlasGraphProvider;
+import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.repository.graphdb.AAIndexQuery;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+
+
 import scala.util.Either;
 import scala.util.parsing.combinator.Parsers;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
-import javax.script.Bindings;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-import javax.script.ScriptException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Graph backed implementation of Search.
@@ -65,15 +67,15 @@ public class GraphBackedDiscoveryService implements DiscoveryService {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphBackedDiscoveryService.class);
 
-    private final TitanGraph titanGraph;
+    private final AAGraph graph;
     private final DefaultGraphPersistenceStrategy graphPersistenceStrategy;
 
     public final static String SCORE = "score";
 
     @Inject
-    GraphBackedDiscoveryService(GraphProvider<TitanGraph> graphProvider, MetadataRepository metadataRepository)
+    GraphBackedDiscoveryService(AtlasGraphProvider graphProvider, MetadataRepository metadataRepository)
     throws DiscoveryException {
-        this.titanGraph = graphProvider.get();
+        this.graph = (AAGraph<?,?>)graphProvider.get();
         this.graphPersistenceStrategy = new DefaultGraphPersistenceStrategy(metadataRepository);
     }
 
@@ -85,13 +87,13 @@ public class GraphBackedDiscoveryService implements DiscoveryService {
     public String searchByFullText(String query) throws DiscoveryException {
         String graphQuery = String.format("v.%s:(%s)", Constants.ENTITY_TEXT_PROPERTY_KEY, query);
         LOG.debug("Full text query: {}", graphQuery);
-        Iterator<TitanIndexQuery.Result<Vertex>> results =
-                titanGraph.indexQuery(Constants.FULLTEXT_INDEX, graphQuery).vertices().iterator();
+        Iterator<AAIndexQuery.Result<?, ?>> results =
+                graph.indexQuery(Constants.FULLTEXT_INDEX, graphQuery).vertices();
         JSONArray response = new JSONArray();
 
         while (results.hasNext()) {
-            TitanIndexQuery.Result<Vertex> result = results.next();
-            Vertex vertex = result.getElement();
+            AAIndexQuery.Result<?,?> result = results.next();
+            AAVertex<?,?> vertex = result.getVertex();
 
             JSONObject row = new JSONObject();
             String guid = vertex.getProperty(Constants.GUID_PROPERTY_KEY);
@@ -146,7 +148,7 @@ public class GraphBackedDiscoveryService implements DiscoveryService {
         LOG.debug("Query = {}", validatedExpression);
         LOG.debug("Expression Tree = {}", validatedExpression.treeString());
         LOG.debug("Gremlin Query = {}", gremlinQuery.queryStr());
-        return new GremlinEvaluator(gremlinQuery, graphPersistenceStrategy, titanGraph).evaluate();
+        return new GremlinEvaluator(gremlinQuery, graphPersistenceStrategy, graph).evaluate();
     }
 
     /**
@@ -165,7 +167,8 @@ public class GraphBackedDiscoveryService implements DiscoveryService {
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine engine = manager.getEngineByName("gremlin-groovy");
         Bindings bindings = engine.createBindings();
-        bindings.put("g", titanGraph);
+        graph.injectBinding(bindings, "g");
+     
 
         try {
             Object o = engine.eval(gremlinQuery, bindings);
@@ -192,13 +195,12 @@ public class GraphBackedDiscoveryService implements DiscoveryService {
                     Object v = e.getValue();
                     oRow.put(k.toString(), v.toString());
                 }
-            } else if (r instanceof TitanVertex) {
-                Iterable<TitanProperty> ps = ((TitanVertex) r).getProperties();
-                for (TitanProperty tP : ps) {
-                    String pName = tP.getPropertyKey().getName();
-                    Object pValue = ((TitanVertex) r).getProperty(pName);
-                    if (pValue != null) {
-                        oRow.put(pName, pValue.toString());
+            } else if (r instanceof AAVertex) {
+                AAVertex<?,?> vertex = (AAVertex<?,?>)r;               
+                for (String key : vertex.getPropertyKeys()) {
+                    Object value = vertex.getProperty(key);
+                    if (value != null) {
+                        oRow.put(key, value.toString());
                     }
                 }
 
