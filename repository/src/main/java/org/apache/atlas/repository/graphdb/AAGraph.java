@@ -8,6 +8,7 @@ import javax.script.Bindings;
 //TODO: rename to graphdatabase?
 public interface AAGraph<V,E> {
 
+    //TODO: remove id parameter, Atlas always passes null
 	AAEdge<V,E> addEdge(Object id, AAVertex<V,E> outVertex, AAVertex<V,E> inVertex, String label);
 
 	AAGraphQuery<V,E> query();
@@ -22,6 +23,7 @@ public interface AAGraph<V,E> {
 
 	Iterable<AAVertex<V,E>> getVertices();
 
+	//TODO: remove id parameter, Atlas always passes null
 	AAVertex<V,E> addVertex(Object id);
 
     void commit();
@@ -45,4 +47,6 @@ public interface AAGraph<V,E> {
     Object getGremlinColumnValue(Object rowValue, String colName, int idx);
 
     Object convertGremlinValue(Object rawVTalue);
+    
+    GremlinVersion getSupportedGremlinVersion();
 }

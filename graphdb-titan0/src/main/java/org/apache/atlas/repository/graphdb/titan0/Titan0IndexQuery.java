@@ -3,10 +3,10 @@ package org.apache.atlas.repository.graphdb.titan0;
 
 import java.util.Iterator;
 
-import org.apache.atlas.repository.graph.util.IteratorAdapter;
-import org.apache.atlas.repository.graph.util.Mapper;
 import org.apache.atlas.repository.graphdb.AAIndexQuery;
 import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.utils.IteratorAdapter;
+import org.apache.atlas.utils.Mapper;
 
 import com.thinkaurelius.titan.core.TitanIndexQuery;
 import com.tinkerpop.blueprints.Edge;

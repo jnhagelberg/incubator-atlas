@@ -22,9 +22,9 @@ import org.apache.atlas.query.Expressions._
 import org.apache.atlas.typesystem.types.{TypeSystem, DataTypes}
 import org.apache.atlas.typesystem.types.DataTypes.TypeCategory
 import org.joda.time.format.ISODateTimeFormat
-
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import org.apache.atlas.repository.graphdb.GremlinVersion
 
 trait IntSequence {
     def next: Int
@@ -202,7 +202,7 @@ class GremlinTranslator(expr: Expression,
         stats.last
     }
 
-    private def genQuery(expr: Expression, inSelect: Boolean): String = expr match {
+    protected def genQuery(expr: Expression, inSelect: Boolean): String = expr match {
         case ClassExpression(clsName) =>
             typeTestExpression(clsName)
         case TraitExpression(clsName) =>
@@ -239,7 +239,7 @@ class GremlinTranslator(expr: Expression,
           val fieldGremlinExpr = s"${gPersistenceBehavior.fieldNameInVertex(fInfo.dataType, fInfo.attrInfo)}"
             ch match {
                 case Some(child) => {
-                  s"""${genQuery(child, inSelect)}.has("$fieldGremlinExpr", ${gPersistenceBehavior.gremlinCompOp(c)}, $l)"""
+                  s"""${genQuery(child, inSelect)}.${genHasPredicate(fieldGremlinExpr,c, l)}"""
                 }
                 case None => {
                     if (fInfo.attrInfo.dataType == DataTypes.DATE_TYPE) {
@@ -247,7 +247,7 @@ class GremlinTranslator(expr: Expression,
                             //Accepts both date, datetime formats
                             val dateStr = l.toString.stripPrefix(QUOTE).stripSuffix(QUOTE)
                             val dateVal = ISODateTimeFormat.dateOptionalTimeParser().parseDateTime(dateStr).getMillis
-                            s"""has("$fieldGremlinExpr", ${gPersistenceBehavior.gremlinCompOp(c)},${dateVal})"""
+                            return genHasPredicate(fieldGremlinExpr, c, dateVal);
                         } catch {
                             case pe: java.text.ParseException =>
                                 throw new GremlinTranslationException(c,
@@ -255,8 +255,9 @@ class GremlinTranslator(expr: Expression,
 
                         }
                     }
-                    else
-                        s"""has("$fieldGremlinExpr", ${gPersistenceBehavior.gremlinCompOp(c)}, $l)"""
+                    else {
+                        return genHasPredicate(fieldGremlinExpr, c, l);
+                    }                    
                 }
             }
         }
@@ -264,7 +265,21 @@ class GremlinTranslator(expr: Expression,
             s"${genQuery(child, inSelect)}.${genQuery(condExpr, inSelect)}"
         }
         case l@LogicalExpression(symb, children) => {
-            s"""$symb${children.map("_()." + genQuery(_, inSelect)).mkString("(", ",", ")")}"""
+            if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.THREE) {
+                    if(children.length == 1) {
+                        //gremlin 3 treats one element expressions as 'false'.  Avoid
+                        //creating a boolean expression in this case.  Inline the expression.
+                        var child : Expression = children.head;
+                        return genQuery(child, inSelect);
+                    }
+                    else {
+                        // Gremlin 3 does not support _() syntax
+                       return s"""$symb${children.map( genQuery(_, inSelect)).mkString("(", ",", ")")}"""
+                    }
+           }
+           else {          
+                s"""$symb${children.map("_()." + genQuery(_, inSelect)).mkString("(", ",", ")")}"""
+           }           
         }
         case sel@SelectExpression(child, selList) => {
             val m = groupSelectExpressionsBySrc(sel)
@@ -326,7 +341,17 @@ class GremlinTranslator(expr: Expression,
         }
         case x => throw new GremlinTranslationException(x, "expression not yet supported")
     }
-
+    
+    def genHasPredicate(fieldGremlinExpr: String, c: ComparisonExpression, expr2: Any) : String = {
+        
+        if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
+            return s"""has("${fieldGremlinExpr}", ${gPersistenceBehavior.gremlin2CompOp(c)}, $expr2)""";
+        }
+        else {
+            return s"""has("${fieldGremlinExpr}", ${gPersistenceBehavior.gremlin3CompOp(c)}($expr2))""";
+        }
+    }
+    
     def genFullQuery(expr: Expression): String = {
         var q = genQuery(expr, false)
 

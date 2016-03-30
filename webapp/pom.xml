@@ -66,6 +66,55 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>titan0</id>
+            <properties>
+                <plugin.class>org.apache.atlas.repository.graphdb.titan0.Titan0GraphPlugin</plugin.class>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.atlas</groupId>
+                    <artifactId>atlas-graphdb-titan0</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+                <!--
+                <dependency>
+                    <groupId>com.tinkerpop.blueprints</groupId>
+                    <artifactId>blueprints-core</artifactId>
+                </dependency>
+                
+                <dependency>
+                    <groupId>com.thinkaurelius.titan</groupId>
+                    <artifactId>titan-core</artifactId>
+                </dependency>
+                -->
+            </dependencies>
+        </profile>
+        <profile>
+            <id>titan1</id>
+            <properties>
+                <plugin.class>org.apache.atlas.repository.graphdb.titan1.Titan1GraphPlugin</plugin.class>
+            </properties>
+            <dependencies>
+                <!--
+                <dependency>
+                    <groupId>org.apache.tinkerpop</groupId>
+                    <artifactId>gremlin-core</artifactId>
+                </dependency> 
+                
+                <dependency>
+                    <groupId>org.apache.tinkerpop</groupId>
+                    <artifactId>tinkergraph-gremlin</artifactId>
+                </dependency>
+                -->
+                <dependency>
+                    <groupId>org.apache.atlas</groupId>
+                    <artifactId>atlas-graphdb-titan1</artifactId>
+                    <version>${project.version}</version>
+                </dependency>
+
+            </dependencies>
+        </profile>
     </profiles>
 
     <dependencies>
@@ -77,12 +126,6 @@
         <dependency>
             <groupId>org.apache.atlas</groupId>
             <artifactId>atlas-typesystem</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.atlas</groupId>
-            <artifactId>atlas-graphdb-titan0</artifactId>
-            <version>${project.version}</version>
         </dependency>
 
         <dependency>
@@ -140,18 +183,7 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
-        <!--
-        <dependency>
-            <groupId>com.tinkerpop.blueprints</groupId>
-            <artifactId>blueprints-core</artifactId>
-        </dependency>
-        -->
-        <!--
-        <dependency>
-            <groupId>com.thinkaurelius.titan</groupId>
-            <artifactId>titan-core</artifactId>
-        </dependency>
-        -->
+       
         <dependency>
             <groupId>com.googlecode.json-simple</groupId>
             <artifactId>json-simple</artifactId>
@@ -372,7 +404,7 @@
                         </systemProperty>
                         <systemProperty>
                             <name>atlas.graphdb.backend</name>
-                            <value>org.apache.atlas.repository.graphdb.titan0.Titan0GraphPlugin</value>
+                            <value>${plugin.class}</value>
                         </systemProperty>
                         <systemProperty>
                             <name>keystore.file</name>

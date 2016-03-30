@@ -32,7 +32,7 @@ CONF = "conf"
 LOG="logs"
 WEBAPP="server" + os.sep + "webapp"
 DATA="data"
-ENV_KEYS = ["JAVA_HOME", "ATLAS_OPTS", "ATLAS_LOG_DIR", "ATLAS_PID_DIR", "ATLAS_CONF", "ATLASCPPATH", "ATLAS_DATA_DIR", "ATLAS_HOME_DIR", "ATLAS_EXPANDED_WEBAPP_DIR", "HBASE_CONF_DIR"]
+ENV_KEYS = ["ATLAS_JAVA_HOME", "JAVA_HOME", "ATLAS_OPTS", "ATLAS_LOG_DIR", "ATLAS_PID_DIR", "ATLAS_CONF", "ATLASCPPATH", "ATLAS_DATA_DIR", "ATLAS_HOME_DIR", "ATLAS_EXPANDED_WEBAPP_DIR", "HBASE_CONF_DIR"]
 ATLAS_CONF = "ATLAS_CONF"
 ATLAS_LOG = "ATLAS_LOG_DIR"
 ATLAS_PID = "ATLAS_PID_DIR"
@@ -120,7 +120,9 @@ def executeEnvSh(confDir):
         proc.communicate()
 
 def java(classname, args, classpath, jvm_opts_list, logdir=None):
-    java_home = os.environ.get("JAVA_HOME", None)
+    java_home = os.environ.get("ATLAS_JAVA_HOME", None)
+    if not java_home:
+        java_home = os.environ.get("JAVA_HOME", None)
     if java_home:
         prg = os.path.join(java_home, "bin", "java")
     else:
@@ -138,7 +140,9 @@ def java(classname, args, classpath, jvm_opts_list, logdir=None):
     return runProcess(commandline, logdir)
 
 def jar(path):
-    java_home = os.environ.get("JAVA_HOME", None)
+    java_home = os.environ.get("ATLAS_JAVA_HOME", None)
+    if not java_home:
+        java_home = os.environ.get("JAVA_HOME", None)
     if java_home:
         prg = os.path.join(java_home, "bin", "jar")
     else:

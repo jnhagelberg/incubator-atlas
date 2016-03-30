@@ -1,21 +1,21 @@
 <?xml version="1.0"?>
 <!--
-  ~ Licensed to the Apache Software Foundation (ASF) under one
-  ~ or more contributor license agreements.  See the NOTICE file
-  ~ distributed with this work for additional information
-  ~ regarding copyright ownership.  The ASF licenses this file
-  ~ to you under the Apache License, Version 2.0 (the
-  ~ "License"); you may not use this file except in compliance
-  ~ with the License.  You may obtain a copy of the License at
-  ~
-  ~     http://www.apache.org/licenses/LICENSE-2.0
-  ~
-  ~ Unless required by applicable law or agreed to in writing, software
-  ~ distributed under the License is distributed on an "AS IS" BASIS,
-  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-  ~ See the License for the specific language governing permissions and
-  ~ limitations under the License.
-  -->
+~ Licensed to the Apache Software Foundation (ASF) under one
+~ or more contributor license agreements.  See the NOTICE file
+~ distributed with this work for additional information
+~ regarding copyright ownership.  The ASF licenses this file
+~ to you under the Apache License, Version 2.0 (the
+~ "License"); you may not use this file except in compliance
+~ with the License.  You may obtain a copy of the License at
+~
+~     http://www.apache.org/licenses/LICENSE-2.0
+~
+~ Unless required by applicable law or agreed to in writing, software
+~ distributed under the License is distributed on an "AS IS" BASIS,
+~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+~ See the License for the specific language governing permissions and
+~ limitations under the License.
+-->
 
 <project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"
@@ -37,7 +37,7 @@
     <url>http://atlas.incubator.apache.org</url>
 
     <prerequisites>
-        <maven>3.0.4</maven>
+        <maven>3.1.0</maven>
     </prerequisites>
 
     <licenses>
@@ -340,8 +340,7 @@
         <jetty.version>9.2.12.v20150709</jetty.version>
         <jersey.version>1.19</jersey.version>
         <jackson.version>1.8.3</jackson.version>
-        <tinkerpop.version>2.6.0</tinkerpop.version>
-        <titan.version>0.5.4</titan.version>
+
         <hadoop.version>2.7.0</hadoop.version>
         <hbase.version>1.1.2</hbase.version>
         <solr.version>5.1.0</solr.version>
@@ -390,7 +389,7 @@
             </activation>
             <properties>
                 <titan.storage.backend>hbase</titan.storage.backend>
-                <titan.index.backend>solr5</titan.index.backend>
+                <titan.index.backend>solr</titan.index.backend>
                 <solr.zk.address>localhost:9983</solr.zk.address>
                 <titan.storage.hostname>localhost</titan.storage.hostname>
             </properties>
@@ -421,6 +420,21 @@
                 <skipDocs>false</skipDocs>
             </properties>
         </profile>
+
+        <profile>
+            <id>titan0</id>                      
+            <modules>
+                <module>graphdb-titan0</module>
+            </modules>
+        </profile>
+
+        <profile>
+            <id>titan1</id>
+            <modules>
+                <module>graphdb-titan1</module>
+            </modules>
+        </profile>
+
     </profiles>
 
     <modules>
@@ -429,9 +443,7 @@
         <module>server-api</module>
         <module>notification</module>
         <module>client</module>
-        <module>titan</module>
         <module>repository</module>
-        <module>graphdb-titan0</module>
         <module>dashboard</module>
         <module>webapp</module>
         <module>docs</module>
@@ -801,59 +813,7 @@
                 <version>1.3.2</version>
             </dependency>
 
-            <!-- Graph DB -->
-            <dependency>
-                <groupId>com.tinkerpop.blueprints</groupId>
-                <artifactId>blueprints-core</artifactId>
-                <version>${tinkerpop.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.thinkaurelius.titan</groupId>
-                <artifactId>titan-core</artifactId>
-                <version>${titan.version}</version>
-                <exclusions>
-                    <!-- rexster does not work with servlet-api -->
-                    <exclusion>
-                        <groupId>com.tinkerpop.rexster</groupId>
-                        <artifactId>rexster-core</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>com.tinkerpop.rexster</groupId>
-                        <artifactId>rexster-server</artifactId>
-                    </exclusion>
-                    <!-- asm 4.0 does not work with jersey asm 3.1 -->
-                    <exclusion>
-                        <groupId>com.tinkerpop</groupId>
-                        <artifactId>frames</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>com.esotericsoftware.reflectasm</groupId>
-                        <artifactId>reflectasm</artifactId>
-                    </exclusion>
-                    <exclusion>
-                        <groupId>org.ow2.asm</groupId>
-                        <artifactId>asm</artifactId>
-                    </exclusion>
-                    <exclusion> <!-- GPL license imported from ganglia -->
-                        <groupId>org.acplt</groupId>
-                        <artifactId>oncrpc</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-
-            <dependency>
-                <groupId>com.thinkaurelius.titan</groupId>
-                <artifactId>titan-berkeleyje</artifactId>
-                <version>${titan.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>com.thinkaurelius.titan</groupId>
-                <artifactId>titan-hbase</artifactId>
-                <version>${titan.version}</version>
-            </dependency>
-
+            
             <dependency>
                 <groupId>org.apache.hbase</groupId>
                 <artifactId>hbase-client</artifactId>
@@ -969,12 +929,6 @@
             <dependency>
                 <groupId>org.apache.atlas</groupId>
                 <artifactId>atlas-typesystem</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.apache.atlas</groupId>
-                <artifactId>atlas-titan</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -1410,22 +1364,22 @@
                             <jvmArg>-XX:MaxPermSize=128m</jvmArg>
                         </jvmArgs>
                         <!--
-                        <javacArgs>
+                            <javacArgs>
                             <javacArg>-source</javacArg>
                             <javacArg>${java.version}</javacArg>
                             <javacArg>-target</javacArg>
                             <javacArg>${java.version}</javacArg>
-                        </javacArgs>
+                            </javacArgs>
                         -->
                         <!-- The following plugin is required to use quasiquotes in Scala 2.10 and is used
                              by Spark SQL for code generation. -->
                         <!--<compilerPlugins>
                             <compilerPlugin>
-                                <groupId>org.scalamacros</groupId>
-                                <artifactId>paradise_${scala.version}</artifactId>
-                                <version>${scala.macros.version}</version>
+                            <groupId>org.scalamacros</groupId>
+                            <artifactId>paradise_${scala.version}</artifactId>
+                            <version>${scala.macros.version}</version>
                             </compilerPlugin>
-                        </compilerPlugins>-->
+                            </compilerPlugins>-->
                     </configuration>
                 </plugin>
 
@@ -1480,8 +1434,8 @@
                     <forkMode>always</forkMode>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <argLine>-Djava.awt.headless=true -Dproject.version=${project.version}
-                        -Dhadoop.tmp.dir="${project.build.directory}/tmp-hadoop-${user.name}"
-                        -Xmx1024m -XX:MaxPermSize=512m -Djava.net.preferIPv4Stack=true
+                    -Dhadoop.tmp.dir="${project.build.directory}/tmp-hadoop-${user.name}"
+                    -Xmx1024m -XX:MaxPermSize=512m -Djava.net.preferIPv4Stack=true
                     </argLine>
                     <skip>${skipUTs}</skip>
                     <excludes>
@@ -1509,8 +1463,8 @@
                     </systemPropertyVariables>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <argLine>-Djava.awt.headless=true -Dproject.version=${project.version}
-                        -Dhadoop.tmp.dir="${project.build.directory}/tmp-hadoop-${user.name}"
-                        -Xmx1024m -XX:MaxPermSize=512m
+                    -Dhadoop.tmp.dir="${project.build.directory}/tmp-hadoop-${user.name}"
+                    -Xmx1024m -XX:MaxPermSize=512m
                     </argLine>
                     <skip>${skipITs}</skip>
                     <parallel>none</parallel>

@@ -3,7 +3,7 @@
 // OCO Source Materials
 // (c) Copyright IBM Corp. 2007, 2013
 //
-package org.apache.atlas.repository.graph.util;
+package org.apache.atlas.utils;
 
 import java.util.ArrayList;
 import java.util.Collection;

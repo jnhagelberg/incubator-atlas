@@ -21,6 +21,7 @@ import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.atlas.repository.graph.GraphProvider;
 import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.GremlinVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,6 +41,11 @@ public class GraphTransactionInterceptor implements MethodInterceptor {
         }
 
         try {
+            //force rollback to ensure this thread has a consistent view
+            //of the graph
+            if(graph.getSupportedGremlinVersion() == GremlinVersion.THREE) {
+                graph.rollback();
+            }
             Object response = invocation.proceed();
             graph.commit();
             LOG.debug("graph commit");

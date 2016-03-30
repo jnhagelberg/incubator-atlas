@@ -20,33 +20,34 @@ package org.apache.atlas.query
 
 import java.util
 import java.util.Date
-
-import org.apache.atlas.repository.graphdb.AAVertex
-import org.apache.atlas.repository.graphdb.AADirection
-
-import org.apache.atlas.AtlasException
-import org.apache.atlas.query.Expressions.{ComparisonExpression, ExpressionException}
-import org.apache.atlas.query.TypeUtils.FieldInfo
-import org.apache.atlas.repository.graph.{GraphHelper, GraphBackedMetadataRepository}
-import org.apache.atlas.typesystem.persistence.Id
-import org.apache.atlas.typesystem.types.DataTypes._
-import org.apache.atlas.typesystem.types._
-import org.apache.atlas.typesystem.{ITypedInstance, ITypedReferenceableInstance}
-
 import scala.collection.JavaConversions._
-import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
+import org.apache.atlas.query.Expressions.ComparisonExpression
+import org.apache.atlas.query.Expressions.ExpressionException
+import org.apache.atlas.query.TypeUtils.FieldInfo
+import org.apache.atlas.repository.graph.GraphHelper
+import org.apache.atlas.repository.graphdb.AADirection
+import org.apache.atlas.repository.graphdb.AAVertex
+import org.apache.atlas.repository.graphdb.GremlinVersion
+import org.apache.atlas.typesystem.ITypedInstance
+import org.apache.atlas.typesystem.ITypedReferenceableInstance
+import org.apache.atlas.typesystem.persistence.Id
+import org.apache.atlas.typesystem.types._
+import org.apache.atlas.typesystem.types.DataTypes._
+import org.apache.atlas.repository.graphdb.GremlinVersion
 
 /**
  * Represents the Bridge between the QueryProcessor and the Graph Persistence scheme used.
  * Some of the behaviors captured are:
  * - how is type and id information stored in the Vertex that represents an [[ITypedReferenceableInstance]]
- * - how are edges representing trait and attribute relationships labelled.
+ * - how are edges representing trait and attribute relationships labeled.
  * - how are attribute names mapped to Property Keys in Vertices.
  *
  * This is a work in progress.
  */
-trait GraphPersistenceStrategies {
+trait GraphPersistenceStrategies {   
+    
+    def getSupportedGremlinVersion() : GremlinVersion
+    
     /**
      * Name of attribute used to store typeName in vertex
      */
@@ -109,13 +110,23 @@ trait GraphPersistenceStrategies {
 
     def constructInstance[U,V,E](dataType: IDataType[U], v: java.lang.Object): U
 
-    def gremlinCompOp(op: ComparisonExpression) = op.symbol match {
+    def gremlin2CompOp(op: ComparisonExpression) = op.symbol match {
         case "=" => "T.eq"
         case "!=" => "T.neq"
         case ">" => "T.gt"
         case ">=" => "T.gte"
         case "<" => "T.lt"
         case "<=" => "T.lte"
+        case _ => throw new ExpressionException(op, "Comparison operator not supported in Gremlin")
+    }
+    
+    def gremlin3CompOp(op: ComparisonExpression) = op.symbol match {
+        case "=" => "eq"
+        case "!=" => "neq"
+        case ">" => "gt"
+        case ">=" => "gte"
+        case "<" => "lt"
+        case "<=" => "lte"
         case _ => throw new ExpressionException(op, "Comparison operator not supported in Gremlin")
     }
 
@@ -172,7 +183,17 @@ trait GraphPersistenceStrategies {
             newSetVar(varName),
             fillVarWithTypeInstances(typeName, varName),
             fillVarWithSubTypeInstances(typeName, varName),
-            s"$varName._()"
+            if(getSupportedGremlinVersion() == GremlinVersion.TWO) {
+                s"$varName._()"
+            }
+            else {
+                //this bit of groovy magic converts the set of vertices in varName into
+                //a String containing the ids of all the vertices.  This becomes the argument
+                //to g.V().  This is needed because Gremlin 3 does not support
+                // _()
+                //s"g.V(${varName}.collect{it.id()} as String[])"
+                s"g.V(${varName} as Object[])"
+            }                
         )
     }
 
@@ -187,7 +208,8 @@ trait GraphPersistenceStrategies {
     }
 }
 
-object GraphPersistenceStrategy1  extends GraphPersistenceStrategies {
+abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {        
+    
     val typeAttributeName = "typeName"
     val superTypeAttributeName = "superTypeNames"
     val idAttributeName = "guid"
@@ -372,6 +394,20 @@ object GraphPersistenceStrategy1  extends GraphPersistenceStrategies {
             case _ =>
                 throw new UnsupportedOperationException(s"load for ${attributeInfo.dataType()} not supported")
         }
+    }
+}
+
+object Gremlin2GraphPersistenceStrategy1 extends GraphPersistenceStrategy1 {
+    
+    override def getSupportedGremlinVersion() : GremlinVersion =  {
+        return GremlinVersion.TWO;
+    }
+}
+
+object Gremlin3GraphPersistenceStrategy1 extends GraphPersistenceStrategy1 {
+    
+    override def getSupportedGremlinVersion() : GremlinVersion =  {
+        return GremlinVersion.THREE;
     }
 }
 

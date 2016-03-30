@@ -37,6 +37,7 @@ import org.apache.atlas.AtlasClient;
 import org.apache.atlas.repository.graph.GraphProvider;
 import org.apache.atlas.repository.graphdb.AADirection;
 import org.apache.atlas.repository.graphdb.AAEdge;
+import org.apache.atlas.repository.graphdb.AAElement;
 import org.apache.atlas.repository.graphdb.AAGraph;
 import org.apache.atlas.repository.graphdb.AAVertex;
 import org.apache.atlas.repository.graphdb.AAVertexQuery;
@@ -48,13 +49,6 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Element;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.util.io.graphson.GraphSONMode;
-import com.tinkerpop.blueprints.util.io.graphson.GraphSONUtility;
 
 /**
  * Jersey Resource for lineage metadata operations.
@@ -125,7 +119,7 @@ public class RexsterGraphResource {
             AAVertex<?,?> vertex = findVertex(vertexId);
 
             JSONObject response = new JSONObject();
-            response.put(AtlasClient.RESULTS, vertex.toJson(getVertexIndexedKeys(), GraphSONMode.NORMAL));
+            response.put(AtlasClient.RESULTS, vertex.toJson(getVertexIndexedKeys()));
             return Response.ok(response).build();
         } catch (JSONException e) {
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.INTERNAL_SERVER_ERROR));
@@ -194,7 +188,8 @@ public class RexsterGraphResource {
         LOG.info("Get vertices for property key= {}, value= {}", key, value);
         validateInputs("Invalid argument: key or value passed is null or empty.", key, value);
         try {
-            JSONObject response = buildJSONResponse(getGraph().getVertices(key, value));
+            Iterable<AAVertex> vertices = getGraph().getVertices(key, value);
+            JSONObject response = buildJSONResponse(vertices);
             return Response.ok(response).build();
 
         } catch (JSONException e) {
@@ -246,7 +241,7 @@ public class RexsterGraphResource {
             Iterable<AAVertex<?,?>> vertexQueryResults = query.vertices();
             for (AAVertex<?,?> v : vertexQueryResults) {
                 if (returnType.equals(ReturnType.VERTICES)) {
-                    elementArray.put(v.toJson(getVertexIndexedKeys(), GraphSONMode.NORMAL));
+                    elementArray.put(v.toJson(getVertexIndexedKeys()));
                 } else {
                     elementArray.put(v.getId());
                 }
@@ -255,7 +250,7 @@ public class RexsterGraphResource {
         } else if (returnType == ReturnType.EDGES) {
             Iterable<AAEdge<?,?>> edgeQueryResults = query.edges();
             for (AAEdge<?,?> e : edgeQueryResults) {
-                elementArray.put(e.toJson(getEdgeIndexedKeys(), GraphSONMode.NORMAL));
+                elementArray.put(e.toJson(getEdgeIndexedKeys()));
                 counter++;
             }
         } else if (returnType == ReturnType.COUNT) {
@@ -292,19 +287,19 @@ public class RexsterGraphResource {
             }
 
             JSONObject response = new JSONObject();
-            response.put(AtlasClient.RESULTS, edge.toJson(getEdgeIndexedKeys(), GraphSONMode.NORMAL));
+            response.put(AtlasClient.RESULTS, edge.toJson(getEdgeIndexedKeys()));
             return Response.ok(response).build();
         } catch (JSONException e) {
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.INTERNAL_SERVER_ERROR));
         }
     }
 
-    private <T extends Element> JSONObject buildJSONResponse(Iterable<T> elements) throws JSONException {
+    private <T extends AAElement> JSONObject buildJSONResponse(Iterable<T> elements) throws JSONException {
         JSONArray vertexArray = new JSONArray();
         long counter = 0;
-        for (Element element : elements) {
+        for (AAElement element : elements) {
             counter++;
-            vertexArray.put(GraphSONUtility.jsonFromElement(element, getVertexIndexedKeys(), GraphSONMode.NORMAL));
+            vertexArray.put(element.toJson(getVertexIndexedKeys()));
         }
 
         JSONObject response = new JSONObject();

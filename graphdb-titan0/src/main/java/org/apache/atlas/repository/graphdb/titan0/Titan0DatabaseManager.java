@@ -2,7 +2,6 @@
 package org.apache.atlas.repository.graphdb.titan0;
 
 
-import org.apache.atlas.repository.graphdb.AAVertex;
 import org.apache.atlas.repository.graphdb.ElementType;
 import org.apache.atlas.repository.graphdb.GraphDatabaseManager;
 import org.apache.atlas.typesystem.types.Multiplicity;
@@ -63,6 +62,7 @@ public class Titan0DatabaseManager implements GraphDatabaseManager {
         }
         indexBuilder.buildCompositeIndex();
     }
+          
     
     @Override
     public boolean containsPropertyKey(String vertexTypePropertyKey) {
@@ -92,5 +92,5 @@ public class Titan0DatabaseManager implements GraphDatabaseManager {
     public void commit() { 
         management_.commit();        
     }
-    
+
 }

@@ -1,20 +1,10 @@
 
 package org.apache.atlas.repository.graphdb.titan0;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import javax.script.Bindings;
-import javax.script.ScriptEngine;
 
-import org.apache.atlas.AtlasException;
-import org.apache.atlas.query.Expressions;
-import org.apache.atlas.query.Expressions.AliasExpression;
-import org.apache.atlas.query.GraphPersistenceStrategies;
-import org.apache.atlas.query.GremlinEvaluator;
-import org.apache.atlas.query.GremlinQuery;
-import org.apache.atlas.query.GremlinQueryResult;
-import org.apache.atlas.repository.graph.util.IterableAdapter;
 import org.apache.atlas.repository.graphdb.AAEdge;
 import org.apache.atlas.repository.graphdb.AAGraph;
 import org.apache.atlas.repository.graphdb.AAGraphQuery;
@@ -22,9 +12,8 @@ import org.apache.atlas.repository.graphdb.AAIndexQuery;
 import org.apache.atlas.repository.graphdb.AAVertex;
 import org.apache.atlas.repository.graphdb.ElementType;
 import org.apache.atlas.repository.graphdb.GraphDatabaseManager;
-import org.apache.atlas.typesystem.ITypedStruct;
-import org.apache.atlas.typesystem.types.IDataType;
-import org.apache.atlas.typesystem.types.StructType;
+import org.apache.atlas.repository.graphdb.GremlinVersion;
+import org.apache.atlas.utils.IterableAdapter;
 
 import com.thinkaurelius.titan.core.TitanGraph;
 import com.thinkaurelius.titan.core.TitanIndexQuery;
@@ -33,12 +22,6 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.pipes.util.structures.Row;
-
-import scala.Option;
-import scala.Tuple2;
-import scala.collection.JavaConverters;
-import scala.collection.convert.Decorators.AsScala;
-import scala.collection.mutable.Buffer;
 
 public class Titan0Graph implements AAGraph<Vertex,Edge> {
 
@@ -110,7 +93,7 @@ public class Titan0Graph implements AAGraph<Vertex,Edge> {
     }
 
     @Override
-    public AAIndexQuery indexQuery(String fulltextIndex, String graphQuery) {
+    public AAIndexQuery<Vertex,Edge> indexQuery(String fulltextIndex, String graphQuery) {
         TitanIndexQuery query = titanGraph_.indexQuery(fulltextIndex, graphQuery);
         return new Titan0IndexQuery(query);
     }
@@ -149,65 +132,6 @@ public class Titan0Graph implements AAGraph<Vertex,Edge> {
     public void injectBinding(Bindings bindings, String key) {
         bindings.put(key, titanGraph_);
     }
-
-//    @Override
-//    public GremlinQueryResult executeGremlinQuery(ScriptEngine engine, GremlinQuery qry, Bindings bindings, GremlinEvaluator<?,?> evaluator, GraphPersistenceStrategies persistenceStrategy) throws AtlasException {
-//        
-//        IDataType<?> rType = qry.expr().dataType();
-//        IDataType<?> oType;
-//        if(qry.isPathExpresion()) {
-//            oType = qry.expr().children().head().dataType();
-//        }
-//        else {
-//            oType = rType;
-//        }
-//        
-//        Object rawRes = engine.eval(qry.queryStr(), bindings);
-//
-//        if(qry.hasSelectList()) {
-//            List<Object> rows = new ArrayList<Object>();
-//            List<?> list = (List)rawRes;
-//            for(Object v : list) {
-//                Object iV = evaluator.instanceObject(v);
-//                Object o = persistenceStrategy.constructInstance(oType, iV);
-//                rows.add(evaluator.addPathStruct(v, o));
-//            }
-//                        
-//            scala.collection.immutable.List<Object> scalaRowList = 
-//                    JavaConverters.asScalaBufferConverter(rows).asScala().toList();            
-//            
-//            return new GremlinQueryResult(qry.expr().toString(), rType, scalaRowList);             
-//        }
-//        else {
-//            StructType sType = (StructType)oType;
-//            List<Object> rows = new ArrayList();
-//            List list = (List)rawRes;
-//            
-//            for(Object r : list) {
-// 
-//                Row<List> rV = (Row<List>)evaluator.instanceObject(r);
-//                ITypedStruct sInstance = sType.createInstance();
-//                Object temp = qry.isPathExpresion() ? qry.expr().children().head() : qry.expr();
-//                Expressions.SelectExpression selExpr = (Expressions.SelectExpression)temp;
-//                List<AliasExpression> selList = JavaConverters.asJavaListConverter(selExpr.selectListWithAlias()).asJava();
-//                for(AliasExpression aE : selList) {
-//                    String cName = aE.alias();
-//                    Tuple2<String, Object> mappingTuple = qry.resultMaping().get(cName).get();                   
-//                    String src = mappingTuple._1();
-//                    Integer idx = (Integer)mappingTuple._2();
-//                    Object v = rV.getColumn(src).get(idx);
-//                    sInstance.set(cName, persistenceStrategy.constructInstance(aE.dataType(), v));
-//                    
-//                }
-//                rows.add(evaluator.addPathStruct(r, sInstance));
-//                
-//            }
-//            scala.collection.immutable.List<Object> scalaRowList = 
-//                    JavaConverters.asScalaBufferConverter(rows).asScala().toList();            
-//            
-//            return new GremlinQueryResult(qry.expr().toString(), rType, scalaRowList);        
-//        }
-//    }
     
     @Override
     public Object getGremlinColumnValue(Object rowValue, String colName, int idx) {
@@ -225,5 +149,11 @@ public class Titan0Graph implements AAGraph<Vertex,Edge> {
             return TitanObjectFactory.createEdge((Edge)rawValue);
         }
         return rawValue;
+    }
+
+    @Override
+    public GremlinVersion getSupportedGremlinVersion() {
+
+        return GremlinVersion.TWO;
     }
 }

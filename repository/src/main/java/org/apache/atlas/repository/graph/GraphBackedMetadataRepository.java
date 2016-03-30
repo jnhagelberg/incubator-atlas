@@ -36,6 +36,7 @@ import org.apache.atlas.repository.graphdb.AAEdge;
 import org.apache.atlas.repository.graphdb.AAGraph;
 import org.apache.atlas.repository.graphdb.AAGraphQuery;
 import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.repository.graphdb.GremlinVersion;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.ITypedStruct;
 import org.apache.atlas.typesystem.exception.EntityExistsException;
@@ -344,5 +345,9 @@ public class GraphBackedMetadataRepository<V,E> implements MetadataRepository {
         }
         return new TypeUtils.Pair<>(
                 instanceToGraphMapper.getDeletedEntityGuids(), instanceToGraphMapper.getDeletedEntities());
+    }
+    
+    public GremlinVersion getSupportedGremlinVersion() {
+        return graph.getSupportedGremlinVersion();
     }
 }

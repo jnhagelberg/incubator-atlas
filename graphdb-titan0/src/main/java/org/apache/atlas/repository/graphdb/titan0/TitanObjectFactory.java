@@ -1,10 +1,10 @@
 
 package org.apache.atlas.repository.graphdb.titan0;
 
-import org.apache.atlas.repository.graph.util.LruMap;
 import org.apache.atlas.repository.graphdb.AADirection;
 import org.apache.atlas.repository.graphdb.AAVertex;
 import org.apache.atlas.typesystem.types.Multiplicity;
+import org.apache.atlas.utils.LruMap;
 
 import com.thinkaurelius.titan.core.Cardinality;
 import com.tinkerpop.blueprints.Direction;

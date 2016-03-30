@@ -73,5 +73,11 @@ abstract class AbstractDataType<T> implements IDataType<T> {
     public String getDescription() {
         return description;
     }
+    
+    @Override
+    public String toString() {
+        return getName();
+    }
+    }
 }
 

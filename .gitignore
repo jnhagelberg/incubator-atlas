@@ -16,6 +16,9 @@
 
 # Maven
 target
+dependency-reduced-pom.xml
+core*.dmp
+
 
 # IntelliJ
 *.iml

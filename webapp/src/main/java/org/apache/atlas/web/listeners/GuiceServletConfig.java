@@ -52,7 +52,6 @@ import com.google.inject.servlet.GuiceServletContextListener;
 import com.sun.jersey.api.core.PackagesResourceConfig;
 import com.sun.jersey.guice.JerseyServletModule;
 import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
-import com.tinkerpop.blueprints.Graph;
 
 public class GuiceServletConfig extends GuiceServletContextListener {
 

@@ -33,6 +33,7 @@ import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.graph.GraphBackedMetadataRepository;
 import org.apache.atlas.repository.graph.GraphHelper;
 import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.repository.graphdb.GremlinVersion;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.ITypedStruct;
 import org.apache.atlas.typesystem.persistence.Id;
@@ -210,8 +211,13 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
     }
 
     @Override
-    public String gremlinCompOp(Expressions.ComparisonExpression op) {
-        return GraphPersistenceStrategies$class.gremlinCompOp(this, op);
+    public String gremlin2CompOp(Expressions.ComparisonExpression op) {
+        return GraphPersistenceStrategies$class.gremlin2CompOp(this, op);
+    }
+    
+    @Override
+    public String gremlin3CompOp(Expressions.ComparisonExpression op) {
+        return GraphPersistenceStrategies$class.gremlin3CompOp(this, op);
     }
 
     @Override
@@ -247,6 +253,11 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
     @Override
     public boolean addGraphVertexPrefix(scala.collection.Traversable<String> preStatements) {
         return GraphPersistenceStrategies$class.addGraphVertexPrefix(this, preStatements);
+    }
+    
+    @Override
+    public GremlinVersion getSupportedGremlinVersion() {
+        return metadataRepository.getSupportedGremlinVersion();
     }
 
 }

@@ -84,7 +84,7 @@ public class Titan0GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
             modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
 
             Map<String, String> customMap = new HashMap(StandardIndexProvider.getAllProviderClasses());
-            customMap.put("solr5", Solr5Index.class.getName());
+            customMap.put("solr", Solr5Index.class.getName());
             ImmutableMap<String, String> immap = ImmutableMap.copyOf(customMap);
             field.set(null, immap);
 

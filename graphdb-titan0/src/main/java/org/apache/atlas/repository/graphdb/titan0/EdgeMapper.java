@@ -1,8 +1,8 @@
 
 package org.apache.atlas.repository.graphdb.titan0;
 
-import org.apache.atlas.repository.graph.util.Mapper;
 import org.apache.atlas.repository.graphdb.AAEdge;
+import org.apache.atlas.utils.Mapper;
 
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;

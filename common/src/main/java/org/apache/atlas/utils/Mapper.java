@@ -2,7 +2,7 @@
 // OCO Source Materials
 // (C) Copyright IBM Corp. 2014
 
-package org.apache.atlas.repository.graph.util;
+package org.apache.atlas.utils;
 
 /**
  * @author jeff

@@ -1,11 +1,11 @@
 
 package org.apache.atlas.repository.graphdb.titan0;
 
-import org.apache.atlas.repository.graph.util.IterableAdapter;
 import org.apache.atlas.repository.graphdb.AADirection;
 import org.apache.atlas.repository.graphdb.AAEdge;
 import org.apache.atlas.repository.graphdb.AAVertex;
 import org.apache.atlas.repository.graphdb.AAVertexQuery;
+import org.apache.atlas.utils.IterableAdapter;
 
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
@@ -15,8 +15,8 @@ public class Titan0VertexQuery implements AAVertexQuery<Vertex, Edge> {
 
     private VertexQuery query_;
 
-    public Titan0VertexQuery(VertexQuery query) {
-        query_ = query;
+    public Titan0VertexQuery(VertexQuery vertexQuery) {
+        query_ = vertexQuery;
     }
 
     @Override

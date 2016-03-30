@@ -2,24 +2,15 @@
 package org.apache.atlas.repository.graphdb;
 
 import java.util.Collection;
-import java.util.Set;
+import java.util.List;
 
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
-
-import com.tinkerpop.blueprints.util.io.graphson.GraphSONMode;
-
-public interface AAVertex<V,E> {
-
-	Object getId();
-
-	<T> T getProperty(String propertyName);
+public interface AAVertex<V,E> extends AAElement {
 
 	void removeProperty(String propertyName);
 
-	Set<String> getPropertyKeys();
-
-	void setProperty(String propertyName, Object value);
+	<T> void setProperty(String propertyName, T value);		
+	
+    <T> void addProperty(String propertyName, T value);
 
 	Iterable<AAEdge<V,E>> getEdges(AADirection out, String edgeLabel);
 	
@@ -27,11 +18,7 @@ public interface AAVertex<V,E> {
 
     Iterable<AAEdge<V,E>> getEdges(AADirection in);
 
-    void addProperty(String propertyName, Object value);
-
-    Collection<String> getPropertyValues(String traitNamesPropertyKey);
-    
-    JSONObject toJson(final Set<String> propertyKeys, final GraphSONMode mode) throws JSONException;
+    Collection<String> getPropertyValues(String propertyName);    
 
     AAVertexQuery<V,E> query();
 }

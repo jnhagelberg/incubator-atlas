@@ -18,6 +18,7 @@
 
 package org.apache.atlas.query
 
+import org.apache.atlas.repository.graphdb.GremlinVersion
 import org.apache.atlas.repository.graphdb.AAGraph
 import org.apache.atlas.query.Expressions._
 import org.slf4j.{Logger, LoggerFactory}
@@ -25,14 +26,18 @@ import org.slf4j.{Logger, LoggerFactory}
 object QueryProcessor {
     val LOG : Logger = LoggerFactory.getLogger("org.apache.atlas.query.QueryProcessor")
 
-    def evaluate[V,E](e: Expression, g: AAGraph[V,E], gP : GraphPersistenceStrategies = GraphPersistenceStrategy1):
+    def evaluate[V,E](e: Expression, g: AAGraph[V,E], gP : GraphPersistenceStrategies = null):
     GremlinQueryResult = {
+        var strategy = gP;
+        if(strategy == null) {
+            strategy = if (g.getSupportedGremlinVersion() == GremlinVersion.TWO) Gremlin2GraphPersistenceStrategy1 else Gremlin3GraphPersistenceStrategy1;
+        }
         val e1 = validate(e)
-        val q = new GremlinTranslator(e1, gP).translate()
+        val q = new GremlinTranslator(e1, strategy).translate()
         LOG.debug("Query: " + e1)
         LOG.debug("Expression Tree:\n" + e1.treeString)
         LOG.debug("Gremlin Query: " + q.queryStr)
-        new GremlinEvaluator(q, gP, g).evaluate()
+        new GremlinEvaluator(q, strategy, g).evaluate()
     }
 
     def validate(e: Expression): Expression = {

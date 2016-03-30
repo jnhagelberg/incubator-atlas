@@ -19,16 +19,14 @@
 package org.apache.atlas.query
 
 import javax.script.{ Bindings, ScriptEngine, ScriptEngineManager }
-
 import org.apache.atlas.repository.graphdb.AAGraph
-
 import org.apache.atlas.query.TypeUtils.ResultWithPathStruct
 import org.apache.atlas.typesystem.json._
 import org.apache.atlas.typesystem.types._
 import org.json4s._
 import org.json4s.native.Serialization._
-
 import scala.language.existentials
+import org.apache.atlas.repository.graphdb.AAVertex
 
 case class GremlinQueryResult(query: String,
         resultDataType: IDataType[_],
@@ -83,7 +81,20 @@ class GremlinEvaluator[V, E](qry: GremlinQuery, persistenceStrategy: GraphPersis
         val rType = qry.expr.dataType
         val oType = if (qry.isPathExpresion) qry.expr.children(0).dataType else rType
         val rawRes = engine.eval(qry.queryStr, bindings)
-
+//        val var0 = bindings.get("_var_0")
+//        if(var0 != null) {
+//            var0.asInstanceOf[java.util.Set[AnyRef]].map { v =>
+//                println(v)
+//                var atlasVertex : AAVertex[Any,Any] = g.convertGremlinValue(v).asInstanceOf[AAVertex[Any,Any]]
+//                for(key <- atlasVertex.getPropertyKeys()) {     
+//                    var propertyValues = atlasVertex.getPropertyValues(key)
+//                    println(s"${key} --getPropertyValues--> ${propertyValues}");
+//                    var propertyValue = atlasVertex.getProperty(key)
+//                    println(s"${key} --getProperty--------> ${propertyValue}");
+//                }                       
+//            }                
+//       }
+        
         if (!qry.hasSelectList) {
             val rows = rawRes.asInstanceOf[java.util.List[AnyRef]].map { v =>
                 val iV = instanceObject(v)

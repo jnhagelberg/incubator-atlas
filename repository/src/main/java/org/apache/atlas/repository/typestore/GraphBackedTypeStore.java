@@ -108,6 +108,11 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
         LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, vertex);
         vertex.setProperty(propertyName, value);
     }
+    
+    private void addListProperty(AAVertex<V,E> vertex, String propertyName, List<String> value) {
+        LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, vertex);
+        vertex.setProperty(propertyName, value);
+    }
 
     private void storeInGraph(EnumType dataType) {
         AAVertex<V,E> vertex = createVertex(dataType.getTypeCategory(), dataType.getName(), dataType.getDescription());
@@ -117,7 +122,7 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
             addProperty(vertex, key, enumValue.ordinal);
             values.add(enumValue.value);
         }
-        addProperty(vertex, getPropertyKey(dataType.getName()), values);
+        addListProperty(vertex, getPropertyKey(dataType.getName()), values);
     }
 
     private String getPropertyKey(String name) {
@@ -148,7 +153,7 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
                 addReferencesForAttribute(typeSystem, vertex, attribute);
             }
         }
-        addProperty(vertex, getPropertyKey(typeName), attrNames);
+        addListProperty(vertex, getPropertyKey(typeName), attrNames);
 
         //Add edges for hierarchy
         if (superTypes != null) {
