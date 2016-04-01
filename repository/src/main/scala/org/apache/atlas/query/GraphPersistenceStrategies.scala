@@ -196,7 +196,7 @@ trait GraphPersistenceStrategies {
         else {
             //gremlin 3 does not natively support the "." notation to access vertex
             //properties, and the sugar plugin does not handle multi-valued properties
-            //with that syntax. 
+            //with that syntax.  TODO: also remove use of |, this is translated by the sugar plugin to an or step
             s"""has('${typeAttributeName}',eq('${typeName}')).or().has('${superTypeAttributeName}',eq('${typeName}'))"""
         }
   }    
