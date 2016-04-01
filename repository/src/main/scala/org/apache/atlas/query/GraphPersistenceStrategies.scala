@@ -98,7 +98,14 @@ trait GraphPersistenceStrategies {
         case FieldInfo(dataType, null, null, traitName) => traitLabel(dataType, traitName)
     }
 
-    def fieldPrefixInSelect: String
+    def fieldPrefixInSelect(): String = {
+        if(getSupportedGremlinVersion() == GremlinVersion.TWO) {
+           "it"
+        }
+        else {
+            "__"
+        }
+    }
 
     /**
      * extract the Id from a Vertex.
@@ -110,7 +117,16 @@ trait GraphPersistenceStrategies {
 
     def constructInstance[U,V,E](dataType: IDataType[U], v: java.lang.Object): U
 
-    def gremlin2CompOp(op: ComparisonExpression) = op.symbol match {
+    def gremlinCompOp(op: ComparisonExpression) = {
+         if( getSupportedGremlinVersion() == GremlinVersion.TWO) {
+             gremlin2CompOp(op);             
+         }
+         else {
+            gremlin3CompOp(op);
+         }
+     }
+    
+    private def gremlin2CompOp(op: ComparisonExpression) = op.symbol match {
         case "=" => "T.eq"
         case "!=" => "T.neq"
         case ">" => "T.gt"
@@ -120,7 +136,7 @@ trait GraphPersistenceStrategies {
         case _ => throw new ExpressionException(op, "Comparison operator not supported in Gremlin")
     }
     
-    def gremlin3CompOp(op: ComparisonExpression) = op.symbol match {
+    private def gremlin3CompOp(op: ComparisonExpression) = op.symbol match {
         case "=" => "eq"
         case "!=" => "neq"
         case ">" => "gt"
@@ -169,13 +185,26 @@ trait GraphPersistenceStrategies {
       Seq(s"""filter${_typeTestExpression(typeName, "it")}""")
     }
 
-  private def _typeTestExpression(typeName: String, itRef: String): String = {
-    s"""{(${itRef}.'${typeAttributeName}' == '${typeName}') |
-       |(${itRef}.'${superTypeAttributeName}' ?
-       |${itRef}.'${superTypeAttributeName}'.contains('${typeName}') : false)}""".
-      stripMargin.replace(System.getProperty("line.separator"), "")
-  }
+    private def _typeTestExpression(typeName: String, itRef: String): String = {
+        
+        if( getSupportedGremlinVersion() == GremlinVersion.TWO) {
+             s"""{(${itRef}.'${typeAttributeName}' == '${typeName}') |
+       | (${itRef}.'${superTypeAttributeName}' ?
+       | ${itRef}.'${superTypeAttributeName}'.contains('${typeName}') : false)}""".
+          stripMargin.replace(System.getProperty("line.separator"), "")
+        }
+        else {
+            //gremlin 3 does not natively support the "." notation to access vertex
+            //properties, and the sugar plugin does not handle multi-valued properties
+            //with that syntax. 
+            s"""has('${typeAttributeName}',eq('${typeName}')).or().has('${superTypeAttributeName}',eq('${typeName}'))"""
+        }
+  }    
 
+    private def propertyValueSet(vertexRef : String, attrName: String) : String = {
+        s"""org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils.set(${vertexRef}.values('${attrName})"""        
+    }
+    
     private def typeTestExpressionMultiStep(typeName : String, intSeq : IntSequence) : Seq[String] = {
 
         val varName = s"_var_${intSeq.next}"
@@ -216,9 +245,7 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
 
     def edgeLabel(dataType: IDataType[_], aInfo: AttributeInfo) = s"__${dataType.getName}.${aInfo.name}"
 
-    def edgeLabel(propertyName: String) = s"__${propertyName}"
-
-    val fieldPrefixInSelect = "it"
+    def edgeLabel(propertyName: String) = s"__${propertyName}"   
 
     def traitLabel(cls: IDataType[_], traitName: String) = s"${cls.getName}.$traitName"
 

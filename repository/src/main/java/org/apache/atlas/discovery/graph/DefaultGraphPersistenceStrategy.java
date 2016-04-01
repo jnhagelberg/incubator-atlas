@@ -108,7 +108,7 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
 
     @Override
     public String fieldPrefixInSelect() {
-        return "it";
+        return GraphPersistenceStrategies$class.fieldPrefixInSelect(this);
     }
 
     @Override
@@ -211,15 +211,10 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
     }
 
     @Override
-    public String gremlin2CompOp(Expressions.ComparisonExpression op) {
-        return GraphPersistenceStrategies$class.gremlin2CompOp(this, op);
+    public String gremlinCompOp(Expressions.ComparisonExpression op) {
+        return GraphPersistenceStrategies$class.gremlinCompOp(this, op);
     }
-    
-    @Override
-    public String gremlin3CompOp(Expressions.ComparisonExpression op) {
-        return GraphPersistenceStrategies$class.gremlin3CompOp(this, op);
-    }
-
+       
     @Override
     public String loopObjectExpression(IDataType<?> dataType) {
         return GraphPersistenceStrategies$class.loopObjectExpression(this, dataType);

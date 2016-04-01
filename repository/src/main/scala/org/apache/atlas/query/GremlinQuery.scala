@@ -268,9 +268,11 @@ class GremlinTranslator(expr: Expression,
             if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.THREE) {
                     if(children.length == 1) {
                         //gremlin 3 treats one element expressions as 'false'.  Avoid
-                        //creating a boolean expression in this case.  Inline the expression.
+                        //creating a boolean expression in this case.  Inline the expression
+                        //note: we can't simply omit it, since it will cause us to traverse the edge!
+                        //use 'where' instead
                         var child : Expression = children.head;
-                        return genQuery(child, inSelect);
+                        return s"""where(${genQuery(child, inSelect)})""";
                     }
                     else {
                         // Gremlin 3 does not support _() syntax
@@ -282,34 +284,58 @@ class GremlinTranslator(expr: Expression,
            }           
         }
         case sel@SelectExpression(child, selList) => {
-            val m = groupSelectExpressionsBySrc(sel)
-            var srcNamesList: List[String] = List()
-            var srcExprsList: List[List[String]] = List()
-            val it = m.iterator
-            while (it.hasNext) {
-                val (src, selExprs) = it.next
-                srcNamesList = srcNamesList :+ s""""$src""""
-                srcExprsList = srcExprsList :+ selExprs.map { selExpr =>
-                    genQuery(selExpr, true)
+              val m = groupSelectExpressionsBySrc(sel)
+                var srcNamesList: List[String] = List()
+                var srcExprsList: List[List[String]] = List()
+                val it = m.iterator
+                while (it.hasNext) {
+                    val (src, selExprs) = it.next
+                    srcNamesList = srcNamesList :+ s""""$src""""
+                    srcExprsList = srcExprsList :+ selExprs.map { selExpr =>
+                        genQuery(selExpr, true)
+                    }
                 }
+                if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {               
+                    val srcNamesString = srcNamesList.mkString("[", ",", "]")
+                    val srcExprsStringList = srcExprsList.map {
+                        _.mkString("[", ",", "]")
+                    }
+                    val srcExprsString = srcExprsStringList.foldLeft("")(_ + "{" + _ + "}")
+                    s"${genQuery(child, inSelect)}.select($srcNamesString)$srcExprsString"
+                }
+                else {
+                    //gremlin 3
+              
+                    val srcNamesString = srcNamesList.mkString("", ",", "")
+                    val srcExprsStringList = srcExprsList.map {
+                        _.mkString("", ",", "") //not sure how there could be multiple source expressions for a variable...
+                    }
+                    val srcExprsString = srcExprsStringList.foldLeft("")(_ + ".by(" + _ + ")")
+                    s"${genQuery(child, inSelect)}.select($srcNamesString)$srcExprsString"
             }
-            val srcNamesString = srcNamesList.mkString("[", ",", "]")
-            val srcExprsStringList = srcExprsList.map {
-                _.mkString("[", ",", "]")
-            }
-            val srcExprsString = srcExprsStringList.foldLeft("")(_ + "{" + _ + "}")
-            s"${genQuery(child, inSelect)}.select($srcNamesString)$srcExprsString"
         }
         case loop@LoopExpression(input, loopExpr, t) => {
-            val inputQry = genQuery(input, inSelect)
-            val loopingPathGExpr = genQuery(loopExpr, inSelect)
-            val loopGExpr = s"""loop("${input.asInstanceOf[AliasExpression].alias}")"""
-            val untilCriteria = if (t.isDefined) s"{it.loops < ${t.get.value}}" else "{true}"
-            val loopObjectGExpr = gPersistenceBehavior.loopObjectExpression(input.dataType)
-            s"""${inputQry}.${loopingPathGExpr}.${loopGExpr}${untilCriteria}${loopObjectGExpr}"""
+            
+            if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
+               val inputQry = genQuery(input, inSelect)
+               val loopingPathGExpr = genQuery(loopExpr, inSelect)
+               val loopGExpr = s"""loop("${input.asInstanceOf[AliasExpression].alias}")"""
+               val untilCriteria = if (t.isDefined) s"{it.loops < ${t.get.value}}" else "{true}"
+               val loopObjectGExpr = gPersistenceBehavior.loopObjectExpression(input.dataType)
+               s"""${inputQry}.${loopingPathGExpr}.${loopGExpr}${untilCriteria}${loopObjectGExpr}"""
+            }
+            else {
+                //gremlin 3
+               val inputQry = genQuery(input, inSelect)
+               val repeatExpr = s"""repeat(__.${genQuery(loopExpr, inSelect)})"""
+               val optTimesExpr = if (t.isDefined) s".times(${t.get.value})" else ""
+               val emitExpr = s""".emit(${gPersistenceBehavior.loopObjectExpression(input.dataType)})"""
+               s"""${inputQry}.${repeatExpr}${optTimesExpr}${emitExpr}"""
+                
+            }
         }
         case BackReference(alias, _, _) =>
-            if (inSelect) gPersistenceBehavior.fieldPrefixInSelect else s"""back("$alias")"""
+            if (inSelect) gPersistenceBehavior.fieldPrefixInSelect() else s"""back("$alias")"""
         case AliasExpression(child, alias) => s"""${genQuery(child, inSelect)}.as("$alias")"""
         case isTraitLeafExpression(traitName, Some(clsExp)) =>
             s"""out("${gPersistenceBehavior.traitLabel(clsExp.dataType, traitName)}")"""
@@ -336,21 +362,26 @@ class GremlinTranslator(expr: Expression,
         case in@InstanceExpression(child) => {
           s"${genQuery(child, inSelect)}"
         }
-        case pe@PathExpression(child) => {
-          s"${genQuery(child, inSelect)}.path"
+        case pe@PathExpression(child) => {  
+            if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
+                 s"${genQuery(child, inSelect)}.path"
+            }
+            else {
+                s"${genQuery(child, inSelect)}.path()"
+            }
         }
         case x => throw new GremlinTranslationException(x, "expression not yet supported")
     }
     
     def genHasPredicate(fieldGremlinExpr: String, c: ComparisonExpression, expr2: Any) : String = {
-        
-        if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
-            return s"""has("${fieldGremlinExpr}", ${gPersistenceBehavior.gremlin2CompOp(c)}, $expr2)""";
+            
+            if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
+                return s"""has("${fieldGremlinExpr}", ${gPersistenceBehavior.gremlinCompOp(c)}, $expr2)""";
+            }
+            else {
+                return s"""has("${fieldGremlinExpr}", ${gPersistenceBehavior.gremlinCompOp(c)}($expr2))""";
+            }
         }
-        else {
-            return s"""has("${fieldGremlinExpr}", ${gPersistenceBehavior.gremlin3CompOp(c)}($expr2))""";
-        }
-    }
     
     def genFullQuery(expr: Expression): String = {
         var q = genQuery(expr, false)
@@ -358,9 +389,9 @@ class GremlinTranslator(expr: Expression,
         if(gPersistenceBehavior.addGraphVertexPrefix(preStatements)) {
             q = s"g.V.$q"
         }
-
+        
         q = s"$q.toList()"
-
+      
         q = (preStatements ++ Seq(q) ++ postStatements).mkString("", ";", "")
         /*
          * the L:{} represents a groovy code block; the label is needed
@@ -386,6 +417,7 @@ class GremlinTranslator(expr: Expression,
                 GremlinQuery(e1, genFullQuery(e1), rMap)
             }
             case pe@PathExpression(se@SelectExpression(child, selectList)) => {
+                
               val rMap = buildResultMapping(se)
               GremlinQuery(e1, genFullQuery(e1), rMap)
             }

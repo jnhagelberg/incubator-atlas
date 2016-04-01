@@ -1,6 +1,7 @@
 
 package org.apache.atlas.repository.graphdb;
 
+import java.util.List;
 import java.util.Set;
 
 import javax.script.Bindings;
@@ -47,6 +48,8 @@ public interface AAGraph<V,E> {
     Object getGremlinColumnValue(Object rowValue, String colName, int idx);
 
     Object convertGremlinValue(Object rawVTalue);
+    
+    List<Object> convertPathQueryResultToList(Object rawValue);
     
     GremlinVersion getSupportedGremlinVersion();
 }

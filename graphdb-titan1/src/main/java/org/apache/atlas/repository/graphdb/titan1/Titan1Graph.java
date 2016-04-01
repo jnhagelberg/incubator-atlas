@@ -2,7 +2,8 @@
 package org.apache.atlas.repository.graphdb.titan1;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Optional;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.script.Bindings;
@@ -16,16 +17,9 @@ import org.apache.atlas.repository.graphdb.ElementType;
 import org.apache.atlas.repository.graphdb.GraphDatabaseManager;
 import org.apache.atlas.repository.graphdb.GremlinVersion;
 import org.apache.atlas.utils.IteratorAdapter;
-import org.apache.tinkerpop.gremlin.process.computer.GraphComputer;
-import org.apache.tinkerpop.gremlin.process.traversal.TraversalEngine;
-import org.apache.tinkerpop.gremlin.process.traversal.TraversalSource;
-import org.apache.tinkerpop.gremlin.process.traversal.TraversalSource.Builder;
-import org.apache.tinkerpop.gremlin.process.traversal.TraversalStrategy;
-import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.GraphTraversalSource;
-import org.apache.tinkerpop.gremlin.process.traversal.engine.StandardTraversalEngine;
+import org.apache.tinkerpop.gremlin.process.traversal.step.util.ImmutablePath;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
-import org.apache.tinkerpop.gremlin.structure.Graph;
 import org.apache.tinkerpop.gremlin.structure.T;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
@@ -203,13 +197,9 @@ public class Titan1Graph implements AAGraph<Vertex,Edge> {
 
     
     @Override
-    public Object getGremlinColumnValue(Object rowValue, String colName, int idx) {
+    public Object getGremlinColumnValue(Object rowValue, String colName, int idx) {        
         
-        //TBD
-        //Row<List> rV = (Row<List>)rowValue;
-        //Object value = rV.getColumn(colName).get(idx);
-        
-        Object value = rowValue;
+        Object value = ((Map<?,?>)rowValue).get(colName);
         return convertGremlinValue(value);
     }
 
@@ -229,61 +219,11 @@ public class Titan1Graph implements AAGraph<Vertex,Edge> {
 
         return GremlinVersion.THREE;
     }
-    
-    static class Foo implements TraversalSource.Builder<GraphTraversalSource> {
-        TraversalSource.Builder<GraphTraversalSource> delegate = GraphTraversalSource.build().engine(StandardTraversalEngine.build())
-
-        @Override
-        public Builder engine(org.apache.tinkerpop.gremlin.process.traversal.TraversalEngine.Builder engine) {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        @Override
-        public Builder with(TraversalStrategy strategy) {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        @Override
-        public Builder without(Class<? extends TraversalStrategy> strategyClass) {
-            // TODO Auto-generated method stub
-            return null;
-        }
-
-        @Override
-        public GraphTraversalSource create(Graph graph) {
-            // TODO Auto-generated method stub
-            return null;
-        }
-    }
-    
-    static class CustomTraversalBuilder implements TraversalEngine.Builder {
-
-        TraversalEngine.Builder delegate = GraphTraversalSource.build().engine(StandardTraversalEngine.build())
-        
-        @Override
-        public TraversalEngine create(Graph graph) {
-            // TODO Auto-generated method stub
-            return null;
-        }
-        
-    }
-    
-    static class DelegatingTraversalEngine implements TraversalEngine {
-
-        @Override
-        public Type getType() {
-            // TODO Auto-generated method stub
-            return Type.COMPUTER;
-        }
-
-        @Override
-        public Optional<GraphComputer> getGraphComputer() {
-            // TODO Auto-generated method stub
-            return null;
-        }
-        
+ 
+    @Override
+    public List<Object> convertPathQueryResultToList(Object rawValue) {
+        ImmutablePath path =  (ImmutablePath)rawValue;
+        return path.objects();
         
     }
 }

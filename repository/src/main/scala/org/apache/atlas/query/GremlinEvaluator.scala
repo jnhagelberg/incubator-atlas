@@ -27,6 +27,7 @@ import org.json4s._
 import org.json4s.native.Serialization._
 import scala.language.existentials
 import org.apache.atlas.repository.graphdb.AAVertex
+import java.util.Collections
 
 case class GremlinQueryResult(query: String,
         resultDataType: IDataType[_],
@@ -53,7 +54,8 @@ class GremlinEvaluator[V, E](qry: GremlinQuery, persistenceStrategy: GraphPersis
         } else {
             import scala.collection.JavaConversions._
             import scala.collection.JavaConverters._
-            val iPaths = gResultObj.asInstanceOf[java.util.List[AnyRef]].init
+            val pathList = g.convertPathQueryResultToList(gResultObj)
+            val iPaths = pathList.asInstanceOf[java.util.List[AnyRef]].init
 
             val oPaths = iPaths.map { p =>
                 var atlasValue = g.convertGremlinValue(p);
@@ -70,7 +72,8 @@ class GremlinEvaluator[V, E](qry: GremlinQuery, persistenceStrategy: GraphPersis
     def instanceObject(v: AnyRef): AnyRef = {
         if (qry.isPathExpresion) {
             import scala.collection.JavaConversions._
-            v.asInstanceOf[java.util.List[AnyRef]].last
+            var pathAsList = g.convertPathQueryResultToList(v)
+            pathAsList.asInstanceOf[java.util.List[AnyRef]].last
         } else {
             v
         }
@@ -80,21 +83,8 @@ class GremlinEvaluator[V, E](qry: GremlinQuery, persistenceStrategy: GraphPersis
         import scala.collection.JavaConversions._
         val rType = qry.expr.dataType
         val oType = if (qry.isPathExpresion) qry.expr.children(0).dataType else rType
-        val rawRes = engine.eval(qry.queryStr, bindings)
-//        val var0 = bindings.get("_var_0")
-//        if(var0 != null) {
-//            var0.asInstanceOf[java.util.Set[AnyRef]].map { v =>
-//                println(v)
-//                var atlasVertex : AAVertex[Any,Any] = g.convertGremlinValue(v).asInstanceOf[AAVertex[Any,Any]]
-//                for(key <- atlasVertex.getPropertyKeys()) {     
-//                    var propertyValues = atlasVertex.getPropertyValues(key)
-//                    println(s"${key} --getPropertyValues--> ${propertyValues}");
-//                    var propertyValue = atlasVertex.getProperty(key)
-//                    println(s"${key} --getProperty--------> ${propertyValue}");
-//                }                       
-//            }                
-//       }
-        
+        val rawRes = engine.eval(qry.queryStr, bindings)        
+     
         if (!qry.hasSelectList) {
             val rows = rawRes.asInstanceOf[java.util.List[AnyRef]].map { v =>
                 val iV = instanceObject(v)
@@ -104,7 +94,7 @@ class GremlinEvaluator[V, E](qry: GremlinQuery, persistenceStrategy: GraphPersis
             }
             GremlinQueryResult(qry.expr.toString, rType, rows.toList)
         } else {
-            val sType = oType.asInstanceOf[StructType]
+            val sType = oType.asInstanceOf[StructType]            
             val rows = rawRes.asInstanceOf[java.util.List[AnyRef]].map { r =>
                 val rV = instanceObject(r)
                 val sInstance = sType.createInstance()

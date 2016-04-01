@@ -156,4 +156,9 @@ public class Titan0Graph implements AAGraph<Vertex,Edge> {
 
         return GremlinVersion.TWO;
     }
+
+    @Override
+    public List<Object> convertPathQueryResultToList(Object rawValue) {
+        return (List<Object>)rawValue;
+    }
 }
