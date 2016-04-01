@@ -23,8 +23,13 @@ import org.apache.atlas.discovery.DiscoveryService;
 import org.apache.atlas.discovery.HiveLineageService;
 import org.apache.atlas.discovery.LineageService;
 import org.apache.atlas.discovery.graph.GraphBackedDiscoveryService;
+import org.apache.atlas.listener.EntityChangeListener;
 import org.apache.atlas.listener.TypesChangeListener;
 import org.apache.atlas.repository.MetadataRepository;
+import org.apache.atlas.repository.audit.EntityAuditListener;
+import org.apache.atlas.repository.audit.EntityAuditRepository;
+import org.apache.atlas.repository.audit.HBaseBasedAuditRepository;
+import org.apache.atlas.repository.audit.InMemoryEntityAuditRepository;
 import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.repository.graph.GraphBackedMetadataRepository;
 import org.apache.atlas.repository.graph.GraphBackedSearchIndexer;
@@ -32,12 +37,15 @@ import org.apache.atlas.repository.graph.GraphProvider;
 import org.apache.atlas.repository.graphdb.AAGraph;
 import org.apache.atlas.repository.typestore.GraphBackedTypeStore;
 import org.apache.atlas.repository.typestore.ITypeStore;
+import org.apache.atlas.service.Service;
 import org.apache.atlas.services.DefaultMetadataService;
 import org.apache.atlas.services.IBootstrapTypesRegistrar;
 import org.apache.atlas.services.MetadataService;
 import org.apache.atlas.services.ReservedTypesRegistrar;
 import org.apache.atlas.typesystem.types.TypeSystem;
+import org.apache.atlas.typesystem.types.TypeSystemProvider;
 
+import com.google.inject.Binder;
 import com.google.inject.Singleton;
 import com.google.inject.matcher.Matchers;
 import com.google.inject.multibindings.Multibinder;
@@ -61,7 +69,7 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
         // bind the MetadataRepositoryService interface to an implementation
         bind(MetadataRepository.class).to(GraphBackedMetadataRepository.class).asEagerSingleton();
 
-        bind(TypeSystem.class).in(Singleton.class);
+        bind(TypeSystem.class).toProvider(TypeSystemProvider.class).in(Singleton.class);
 
         // bind the ITypeStore interface to an implementation
         bind(ITypeStore.class).to(GraphBackedTypeStore.class).asEagerSingleton();
@@ -80,9 +88,26 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
 
         bind(LineageService.class).to(HiveLineageService.class).asEagerSingleton();
 
+        bind(EntityAuditRepository.class).to(InMemoryEntityAuditRepository.class).asEagerSingleton();
+        //TODO: add mechanism to disable this, it does not seem to support berkeley db
+        //bindAuditRepository(binder());
+
+        //Add EntityAuditListener as EntityChangeListener
+        Multibinder<EntityChangeListener> entityChangeListenerBinder =
+                Multibinder.newSetBinder(binder(), EntityChangeListener.class);
+        entityChangeListenerBinder.addBinding().to(EntityAuditListener.class);
+
         MethodInterceptor interceptor = new GraphTransactionInterceptor();
         requestInjection(interceptor);
         bindInterceptor(Matchers.any(), Matchers.annotatedWith(GraphTransaction.class), interceptor);
     }
 
+    protected void bindAuditRepository(Binder binder) {
+        //Map EntityAuditRepository interface to hbase based implementation
+        binder.bind(EntityAuditRepository.class).to(HBaseBasedAuditRepository.class).asEagerSingleton();
+
+        //Add HBaseBasedAuditRepository to service so that connection is closed at shutdown
+        Multibinder<Service> serviceBinder = Multibinder.newSetBinder(binder(), Service.class);
+        serviceBinder.addBinding().to(HBaseBasedAuditRepository.class);
+    }
 }

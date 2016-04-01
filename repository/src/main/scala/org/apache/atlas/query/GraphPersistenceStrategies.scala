@@ -180,11 +180,15 @@ trait GraphPersistenceStrategies {
         else
             typeTestExpressionUsingFilter(typeName)
     }
-
+S
     private def typeTestExpressionUsingFilter(typeName : String) : Seq[String] = {
       Seq(s"""filter${_typeTestExpression(typeName, "it")}""")
     }
 
+    /**
+     * type test expression that ends up in the emit clause in
+     * loop/repeat steps and a few other places
+     */
     private def _typeTestExpression(typeName: String, itRef: String): String = {
         
         if( getSupportedGremlinVersion() == GremlinVersion.TWO) {
@@ -194,9 +198,7 @@ trait GraphPersistenceStrategies {
           stripMargin.replace(System.getProperty("line.separator"), "")
         }
         else {
-            //gremlin 3 does not natively support the "." notation to access vertex
-            //properties, and the sugar plugin does not handle multi-valued properties
-            //with that syntax.  TODO: also remove use of |, this is translated by the sugar plugin to an or step
+            //gremlin 3
             s"""has('${typeAttributeName}',eq('${typeName}')).or().has('${superTypeAttributeName}',eq('${typeName}'))"""
         }
   }    

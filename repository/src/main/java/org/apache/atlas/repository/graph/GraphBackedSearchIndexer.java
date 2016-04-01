@@ -27,12 +27,15 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
+import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.discovery.SearchIndexer;
+import org.apache.atlas.ha.HAConfiguration;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.IndexCreationException;
 import org.apache.atlas.repository.IndexException;
 import org.apache.atlas.repository.RepositoryException;
+import org.apache.atlas.listener.ActiveStateChangeHandler;
 import org.apache.atlas.repository.graphdb.AAGraph;
 import org.apache.atlas.repository.graphdb.ElementType;
 import org.apache.atlas.repository.graphdb.GraphDatabaseManager;
@@ -43,19 +46,18 @@ import org.apache.atlas.typesystem.types.IDataType;
 import org.apache.atlas.typesystem.types.Multiplicity;
 import org.apache.atlas.typesystem.types.StructType;
 import org.apache.atlas.typesystem.types.TraitType;
+import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Adds index for properties of a given type when its added before any instances are added.
  */
-public class GraphBackedSearchIndexer<V,E> implements SearchIndexer {
+public class GraphBackedSearchIndexer<V,E> implements SearchIndexer, ActiveStateChangeHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphBackedSearchIndexer.class);
 
     private final AAGraph<V,E> graph;
-
-    private GraphDatabaseManager management;
     
     List<Class> MIXED_INDEX_EXCLUSIONS = new ArrayList<Class>() {{
             add(Boolean.class);
@@ -64,67 +66,78 @@ public class GraphBackedSearchIndexer<V,E> implements SearchIndexer {
         }};
 
     @Inject
-    public GraphBackedSearchIndexer(AtlasGraphProvider graphProvider) throws RepositoryException {
-
+    public GraphBackedSearchIndexer(AtlasGraphProvider graphProvider) throws RepositoryException, AtlasException {
+        this(graphProvider, ApplicationProperties.get());
+    }
+    
+    GraphBackedSearchIndexer(AtlasGraphProvider graphProvider, Configuration configuration)
+            throws IndexException, RepositoryException {
         this.graph = (AAGraph<V,E>)graphProvider.get();
-
-        /* Create the transaction for indexing.
-         */
-        management = graph.getManagementSystem();
-        initialize();
+	    if (!HAConfiguration.isHAEnabled(configuration)) {
+            initialize();
+        }
     }
 
     /**
      * Initializes the indices for the graph - create indices for Global AAVertex Keys
      */
-    private void initialize() {
-        if (management.containsPropertyKey(Constants.VERTEX_TYPE_PROPERTY_KEY)) {
-            LOG.info("Global indexes already exist for graph");
-            return;
+    private void initialize() throws RepositoryException, IndexException {
+        
+        GraphDatabaseManager management = graph.getManagementSystem();
+        
+        try {
+            
+            if (management.containsPropertyKey(Constants.VERTEX_TYPE_PROPERTY_KEY)) {
+                LOG.info("Global indexes already exist for graph");
+                return;
+            }
+
+            /* This is called only once, which is the first time Atlas types are made indexable .*/
+            LOG.info("Indexes do not exist, Creating indexes for graph.");
+            management.buildMixedIndex(Constants.VERTEX_INDEX, ElementType.VERTEX, Constants.BACKING_INDEX);
+            management.buildMixedIndex(Constants.EDGE_INDEX, ElementType.EDGE, Constants.BACKING_INDEX);
+    
+            // create a composite index for guid as its unique
+            createCompositeAndMixedIndex(management, Constants.GUID_PROPERTY_KEY, String.class, true, Multiplicity.OPTIONAL, true);
+    
+            // create a composite and mixed index for type since it can be combined with other keys
+            createCompositeAndMixedIndex(management, Constants.ENTITY_TYPE_PROPERTY_KEY, String.class, false,  Multiplicity.OPTIONAL, true);
+    
+            // create a composite and mixed index for type since it can be combined with other keys
+            createCompositeAndMixedIndex(management, Constants.SUPER_TYPES_PROPERTY_KEY, String.class, false, Multiplicity.SET, true);
+    
+            // create a composite and mixed index for traitNames since it can be combined with other
+            // keys. Traits must be a set and not a list.
+            createCompositeAndMixedIndex(management, Constants.TRAIT_NAMES_PROPERTY_KEY, String.class, false, Multiplicity.SET, true);
+
+            // Index for full text search
+            createFullTextIndex(management);
+
+            //Indexes for graph backed type system store
+            createTypeStoreIndexes(management);
+
+            commit(management);
+
+            LOG.info("Index creation for global keys complete.");
+            
+        } catch (Throwable t) {
+            rollback(management);
+            throw new RepositoryException(t);
         }
-
-        /* This is called only once, which is the first time Atlas types are made indexable .*/
-        LOG.info("Indexes do not exist, Creating indexes for graph.");
-        management.buildMixedIndex(Constants.VERTEX_INDEX, ElementType.VERTEX, Constants.BACKING_INDEX);
-        management.buildMixedIndex(Constants.EDGE_INDEX, ElementType.EDGE, Constants.BACKING_INDEX);
-
-        // create a composite index for guid as its unique
-        createCompositeAndMixedIndex(Constants.GUID_PROPERTY_KEY, String.class, true, Multiplicity.OPTIONAL, true);
-
-        // create a composite and mixed index for type since it can be combined with other keys
-        createCompositeAndMixedIndex(Constants.ENTITY_TYPE_PROPERTY_KEY, String.class, false,  Multiplicity.OPTIONAL, true);
-
-        // create a composite and mixed index for type since it can be combined with other keys
-        createCompositeAndMixedIndex(Constants.SUPER_TYPES_PROPERTY_KEY, String.class, false, Multiplicity.SET, true);
-
-        // create a composite and mixed index for traitNames since it can be combined with other
-        // keys. Traits must be a set and not a list.
-        createCompositeAndMixedIndex(Constants.TRAIT_NAMES_PROPERTY_KEY, String.class, false, Multiplicity.SET, true);
-
-        // Index for full text search
-        createFullTextIndex();
-
-        //Indexes for graph backed type system store
-        createTypeStoreIndexes();
-
-        management.commit();
-        //Make sure we acquire another transaction after commit for subsequent indexing
-        management = graph.getManagementSystem();
-
-        LOG.info("Index creation for global keys complete.");
     }
 
-    private void createFullTextIndex() {
+    private void createFullTextIndex(GraphDatabaseManager management) {
         management.createFullTextIndex(Constants.FULLTEXT_INDEX, Constants.ENTITY_TEXT_PROPERTY_KEY, Constants.BACKING_INDEX);
+        
         LOG.info("Created mixed index for {}", Constants.ENTITY_TEXT_PROPERTY_KEY);
     }
 
-    private void createTypeStoreIndexes() {
+    private void createTypeStoreIndexes(GraphDatabaseManager management) {
         //Create unique index on typeName
-        createCompositeAndMixedIndex(Constants.TYPENAME_PROPERTY_KEY, String.class, true, Multiplicity.OPTIONAL, true);
+        createCompositeAndMixedIndex(management, Constants.TYPENAME_PROPERTY_KEY, String.class, true, Multiplicity.OPTIONAL, true);
 
         //create index on vertex type
-        createCompositeAndMixedIndex(Constants.VERTEX_TYPE_PROPERTY_KEY, String.class, false, Multiplicity.OPTIONAL, true);
+        createCompositeAndMixedIndex(management, Constants.VERTEX_TYPE_PROPERTY_KEY, String.class, false, Multiplicity.OPTIONAL, true);
     }
 
     /**
@@ -135,21 +148,22 @@ public class GraphBackedSearchIndexer<V,E> implements SearchIndexer {
      */
     @Override
     public void onAdd(Collection<? extends IDataType> dataTypes) throws AtlasException {
-
+        GraphDatabaseManager management = graph.getManagementSystem();
         for (IDataType dataType : dataTypes) {
             LOG.info("Creating indexes for type name={}, definition={}", dataType.getName(), dataType.getClass());
             try {
-                addIndexForType(dataType);
+                addIndexForType(management, dataType);
                 LOG.info("Index creation for type {} complete", dataType.getName());
             } catch (Throwable throwable) {
                 LOG.error("Error creating index for type {}", dataType, throwable);
                 //Rollback indexes if any failure
-                rollback();
+                rollback(management);
                 throw new IndexCreationException("Error while creating index for type " + dataType, throwable);
             }
         }
+
         //Commit indexes
-        commit();
+        commit(management);
     }
 
     @Override
@@ -157,7 +171,7 @@ public class GraphBackedSearchIndexer<V,E> implements SearchIndexer {
         onAdd(dataTypes);
     }
 
-    private void addIndexForType(IDataType dataType) {
+    private void addIndexForType(GraphDatabaseManager management, IDataType dataType) {
         switch (dataType.getTypeCategory()) {
         case PRIMITIVE:
         case ENUM:
@@ -169,17 +183,17 @@ public class GraphBackedSearchIndexer<V,E> implements SearchIndexer {
 
         case STRUCT:
             StructType structType = (StructType) dataType;
-            createIndexForFields(structType, structType.fieldMapping().fields);
+            createIndexForFields(management, structType, structType.fieldMapping().fields);
             break;
 
         case TRAIT:
             TraitType traitType = (TraitType) dataType;
-            createIndexForFields(traitType, traitType.fieldMapping().fields);
+            createIndexForFields(management, traitType, traitType.fieldMapping().fields);
             break;
 
         case CLASS:
             ClassType classType = (ClassType) dataType;
-            createIndexForFields(classType, classType.fieldMapping().fields);
+            createIndexForFields(management, classType, classType.fieldMapping().fields);
             break;
 
         default:
@@ -187,24 +201,24 @@ public class GraphBackedSearchIndexer<V,E> implements SearchIndexer {
         }
     }
 
-    private void createIndexForFields(IDataType dataType, Map<String, AttributeInfo> fields) {
+    private void createIndexForFields(GraphDatabaseManager management, IDataType dataType, Map<String, AttributeInfo> fields) {
         for (AttributeInfo field : fields.values()) {
             if (field.isIndexable) {
-                createIndexForAttribute(dataType.getName(), field);
+                createIndexForAttribute(management, dataType.getName(), field);
             }
         }
     }
 
-    private void createIndexForAttribute(String typeName, AttributeInfo field) {
+    private void createIndexForAttribute(GraphDatabaseManager management, String typeName, AttributeInfo field) {
         final String propertyName = typeName + "." + field.name;
         switch (field.dataType().getTypeCategory()) {
         case PRIMITIVE:
-            createCompositeAndMixedIndex(propertyName, getPrimitiveClass(field.dataType()), field.isUnique,
+            createCompositeAndMixedIndex(management, propertyName, getPrimitiveClass(field.dataType()), field.isUnique,
                     field.multiplicity, false);
             break;
 
         case ENUM:
-            createCompositeAndMixedIndex(propertyName, String.class, field.isUnique, field.multiplicity, false);
+            createCompositeAndMixedIndex(management, propertyName, String.class, field.isUnique, field.multiplicity, false);
             break;
 
         case ARRAY:
@@ -215,7 +229,7 @@ public class GraphBackedSearchIndexer<V,E> implements SearchIndexer {
 
         case STRUCT:
             StructType structType = (StructType) field.dataType();
-            createIndexForFields(structType, structType.fieldMapping().fields);
+            createIndexForFields(management, structType, structType.fieldMapping().fields);
             break;
 
         case TRAIT:
@@ -264,7 +278,7 @@ public class GraphBackedSearchIndexer<V,E> implements SearchIndexer {
     }
 
 
-    private void createCompositeAndMixedIndex(String propertyName, Class propertyClass,
+    private void createCompositeAndMixedIndex(GraphDatabaseManager management, String propertyName, Class propertyClass,
             boolean isUnique, Multiplicity cardinality, boolean force) {
 
         if(management.containsPropertyKey(propertyName)) {
@@ -296,7 +310,7 @@ public class GraphBackedSearchIndexer<V,E> implements SearchIndexer {
         return !(MIXED_INDEX_EXCLUSIONS.contains(propertyClass) || cardinality.isMany());
     }
 
-    public void commit() throws IndexException {
+    public void commit(GraphDatabaseManager management) throws IndexException {
         try {
             management.commit();
         } catch (Exception e) {
@@ -305,13 +319,35 @@ public class GraphBackedSearchIndexer<V,E> implements SearchIndexer {
         }
     }
 
-    public void rollback() throws IndexException {
+    public void rollback(GraphDatabaseManager management) throws IndexException {
         try {
             management.rollback();
         } catch (Exception e) {
             LOG.error("Index rollback failed ", e);
             throw new IndexException("Index rollback failed ", e);
         }
+    }
+
+    /**
+     * Initialize global indices for Titan graph on server activation.
+     *
+     * Since the indices are shared state, we need to do this only from an active instance.
+     */
+    @Override
+    public void instanceIsActive() throws AtlasException {
+        LOG.info("Reacting to active: initializing index");
+        try {
+            initialize();
+        } catch (RepositoryException e) {
+            throw new AtlasException("Error in reacting to active on initialization", e);
+        } catch (IndexException e) {
+            throw new AtlasException("Error in reacting to active on initialization", e);
+        }
+    }
+
+    @Override
+    public void instanceIsPassive() {
+        LOG.info("Reacting to passive state: No action right now.");
     }
 
     /* Commenting this out since we do not need an index for edge label here

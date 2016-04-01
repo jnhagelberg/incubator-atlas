@@ -13,6 +13,14 @@ ATLAS-409 Atlas will not import avro tables with schema read from a file (dosset
 ATLAS-379 Create sqoop and falcon metadata addons (venkatnrangan,bvellanki,sowmyaramesh via shwethags)
 
 ALL CHANGES:
+ATLAS-599 HDFS Path Model (sumasai via yhemanth)
+ATLAS-553 Entity mutation - Fix issue with reordering of elements in array<class> with composite references (sumasai via shwethags)
+ATLAS-513 Admin support for HA (yhemanth via sumasai)
+ATLAS-511 Ability to run multiple instances of Atlas Server with automatic failover to one active server (yhemanth via shwethags)
+ATLAS-577 Integrate entity audit with DefaultMetadataService (shwethags)
+ATLAS-588 import-hive.sh fails while importing partitions for a non-partitioned table (sumasai via shwethags)
+ATLAS-575 jetty-maven-plugin fails with ShutdownMonitorThread already started (shwethags)
+ATLAS-408 UI : Add a close link (x) on the top right when Tag is added (darshankumar89 via shwethags)
 ATLAS-524 Support alter database (sumasai via shwethags)
 ATLAS-539 Store for entity audit events (shwethags)
 ATLAS-523 Support alter view (sumasai via shwethags)

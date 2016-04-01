@@ -376,6 +376,8 @@
         <skipDocs>true</skipDocs>
         <skipSite>true</skipSite>
         <projectBaseDir>${project.basedir}</projectBaseDir>
+        <jetty-maven-plugin.stopWait>10</jetty-maven-plugin.stopWait>
+
         <titan.storage.backend>berkeleyje</titan.storage.backend>
         <titan.index.backend>elasticsearch</titan.index.backend>
     </properties>
@@ -447,6 +449,7 @@
         <module>dashboard</module>
         <module>webapp</module>
         <module>docs</module>
+        <module>addons/hdfs-model</module>
         <module>addons/hive-bridge</module>
         <module>addons/falcon-bridge</module>
         <module>addons/sqoop-bridge</module>
@@ -984,6 +987,12 @@
 
             <dependency>
                 <groupId>org.apache.atlas</groupId>
+                <artifactId>hdfs-model</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.atlas</groupId>
                 <artifactId>falcon-bridge</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1429,6 +1438,8 @@
                         <user.dir>${project.basedir}</user.dir>
                         <atlas.data>${project.build.directory}/data</atlas.data>
                         <log4j.configuration>atlas-log4j.xml</log4j.configuration>
+                        <zookeeper.client.secure>false</zookeeper.client.secure>
+                        <zookeeper.sasl.client>false</zookeeper.sasl.client>
                     </systemProperties>
                     <skipTests>${skipTests}</skipTests>
                     <forkMode>always</forkMode>
@@ -1438,9 +1449,6 @@
                     -Xmx1024m -XX:MaxPermSize=512m -Djava.net.preferIPv4Stack=true
                     </argLine>
                     <skip>${skipUTs}</skip>
-                    <excludes>
-                        <exclude>**/*Base*</exclude>
-                    </excludes>
                 </configuration>
                 <dependencies>
                     <dependency>

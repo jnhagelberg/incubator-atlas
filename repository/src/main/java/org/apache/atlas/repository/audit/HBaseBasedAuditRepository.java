@@ -18,8 +18,12 @@
 
 package org.apache.atlas.repository.audit;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Singleton;
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
+import org.apache.atlas.ha.HAConfiguration;
+import org.apache.atlas.listener.ActiveStateChangeHandler;
 import org.apache.atlas.service.Service;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.lang.StringUtils;
@@ -43,6 +47,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -58,7 +63,8 @@ import java.util.List;
  * and only 1 version is kept, there can be just 1 audit event per entity id + timestamp. This is ok for one atlas server.
  * But if there are more than one atlas servers, we should use server id in the key
  */
-public class HBaseBasedAuditRepository implements Service, EntityAuditRepository {
+@Singleton
+public class HBaseBasedAuditRepository implements Service, EntityAuditRepository, ActiveStateChangeHandler {
     private static final Logger LOG = LoggerFactory.getLogger(HBaseBasedAuditRepository.class);
 
     public static final String CONFIG_PREFIX = "atlas.audit";
@@ -80,16 +86,29 @@ public class HBaseBasedAuditRepository implements Service, EntityAuditRepository
      * @param events events to be added
      * @throws AtlasException
      */
+    @Override
     public void putEvents(EntityAuditRepository.EntityAuditEvent... events) throws AtlasException {
-        LOG.info("Putting {} events", events.length);
+        putEvents(Arrays.asList(events));
+    }
+
+    @Override
+    /**
+     * Add events to the event repository
+     * @param events events to be added
+     * @throws AtlasException
+     */
+    public void putEvents(List<EntityAuditEvent> events) throws AtlasException {
+        LOG.info("Putting {} events", events.size());
         Table table = null;
         try {
             table = connection.getTable(tableName);
-            List<Put> puts = new ArrayList<>(events.length);
+            List<Put> puts = new ArrayList<>(events.size());
             for (EntityAuditRepository.EntityAuditEvent event : events) {
                 LOG.debug("Adding entity audit event {}", event);
                 Put put = new Put(getKey(event.entityId, event.timestamp));
-                addColumn(put, COLUMN_ACTION, event.action);
+                if (event.action != null) {
+                    put.addColumn(COLUMN_FAMILY, COLUMN_ACTION, Bytes.toBytes((short)event.action.ordinal()));
+                }
                 addColumn(put, COLUMN_USER, event.user);
                 addColumn(put, COLUMN_DETAIL, event.details);
                 puts.add(put);
@@ -145,7 +164,8 @@ public class HBaseBasedAuditRepository implements Service, EntityAuditRepository
                 String key = Bytes.toString(result.getRow());
                 EntityAuditRepository.EntityAuditEvent event = fromKey(key);
                 event.user = getResultString(result, COLUMN_USER);
-                event.action = getResultString(result, COLUMN_ACTION);
+                event.action =
+                        EntityAuditAction.values()[(Bytes.toShort(result.getValue(COLUMN_FAMILY, COLUMN_ACTION)))];
                 event.details = getResultString(result, COLUMN_DETAIL);
                 events.add(event);
             }
@@ -189,7 +209,7 @@ public class HBaseBasedAuditRepository implements Service, EntityAuditRepository
      * @throws AtlasException
      * @param atlasConf
      */
-    public org.apache.hadoop.conf.Configuration getHBaseConfiguration(Configuration atlasConf) throws AtlasException {
+    public static org.apache.hadoop.conf.Configuration getHBaseConfiguration(Configuration atlasConf) throws AtlasException {
         Configuration subsetAtlasConf =
                 ApplicationProperties.getSubsetConfiguration(atlasConf, CONFIG_PREFIX);
         org.apache.hadoop.conf.Configuration hbaseConf = HBaseConfiguration.create();
@@ -222,23 +242,47 @@ public class HBaseBasedAuditRepository implements Service, EntityAuditRepository
 
     @Override
     public void start() throws AtlasException {
-        Configuration atlasConf = ApplicationProperties.get();
+        Configuration configuration = ApplicationProperties.get();
+        startInternal(configuration, getHBaseConfiguration(configuration));
+    }
+
+    @VisibleForTesting
+    void startInternal(Configuration atlasConf,
+                                 org.apache.hadoop.conf.Configuration hbaseConf) throws AtlasException {
 
         String tableNameStr = atlasConf.getString(CONFIG_TABLE_NAME, DEFAULT_TABLE_NAME);
         tableName = TableName.valueOf(tableNameStr);
 
         try {
-            org.apache.hadoop.conf.Configuration hbaseConf = getHBaseConfiguration(atlasConf);
-            connection = ConnectionFactory.createConnection(hbaseConf);
+            connection = createConnection(hbaseConf);
         } catch (IOException e) {
             throw new AtlasException(e);
         }
 
-        createTableIfNotExists();
+        if (!HAConfiguration.isHAEnabled(atlasConf)) {
+            LOG.info("HA is disabled. Hence creating table on startup.");
+            createTableIfNotExists();
+        }
+    }
+
+    @VisibleForTesting
+    protected Connection createConnection(org.apache.hadoop.conf.Configuration hbaseConf) throws IOException {
+        return ConnectionFactory.createConnection(hbaseConf);
     }
 
     @Override
     public void stop() throws AtlasException {
         close(connection);
+    }
+
+    @Override
+    public void instanceIsActive() throws AtlasException {
+        LOG.info("Reacting to active: Creating HBase table for Audit if required.");
+        createTableIfNotExists();
+    }
+
+    @Override
+    public void instanceIsPassive() {
+        LOG.info("Reacting to passive: No action for now.");
     }
 }

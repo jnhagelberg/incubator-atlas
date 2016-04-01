@@ -23,46 +23,78 @@ import kafka.consumer.ConsumerTimeoutException;
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasClient;
 import org.apache.atlas.AtlasException;
+import org.apache.atlas.ha.HAConfiguration;
+import org.apache.atlas.listener.ActiveStateChangeHandler;
 import org.apache.atlas.notification.hook.HookNotification;
 import org.apache.atlas.service.Service;
 import org.apache.commons.configuration.Configuration;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Consumer of notifications from hooks e.g., hive hook etc.
  */
 @Singleton
-public class NotificationHookConsumer implements Service {
+public class NotificationHookConsumer implements Service, ActiveStateChangeHandler {
     private static final Logger LOG = LoggerFactory.getLogger(NotificationHookConsumer.class);
 
     public static final String CONSUMER_THREADS_PROPERTY = "atlas.notification.hook.numthreads";
     public static final String ATLAS_ENDPOINT_PROPERTY = "atlas.rest.address";
     public static final int SERVER_READY_WAIT_TIME_MS = 1000;
 
-    @Inject
     private NotificationInterface notificationInterface;
     private ExecutorService executors;
-    private AtlasClient atlasClient;
+    private String atlasEndpoint;
+    private Configuration applicationProperties;
+    private List<HookConsumer> consumers;
+
+    @Inject
+    public NotificationHookConsumer(NotificationInterface notificationInterface) {
+        this.notificationInterface = notificationInterface;
+    }
 
     @Override
     public void start() throws AtlasException {
-        Configuration applicationProperties = ApplicationProperties.get();
+        Configuration configuration = ApplicationProperties.get();
+        startInternal(configuration, null);
+    }
 
-        String atlasEndpoint = applicationProperties.getString(ATLAS_ENDPOINT_PROPERTY, "http://localhost:21000");
-        atlasClient = new AtlasClient(atlasEndpoint);
+    void startInternal(Configuration configuration,
+                       ExecutorService executorService) {
+        this.applicationProperties = configuration;
+        this.atlasEndpoint = applicationProperties.getString(ATLAS_ENDPOINT_PROPERTY, "http://localhost:21000");
+        if (consumers == null) {
+            consumers = new ArrayList<>();
+        }
+        if (executorService != null) {
+            executors = executorService;
+        }
+        if (!HAConfiguration.isHAEnabled(configuration)) {
+            LOG.info("HA is disabled, starting consumers inline.");
+            startConsumers(executorService);
+        }
+    }
+
+    private void startConsumers(ExecutorService executorService) {
         int numThreads = applicationProperties.getInt(CONSUMER_THREADS_PROPERTY, 1);
-        List<NotificationConsumer<HookNotification.HookNotificationMessage>> consumers =
+        List<NotificationConsumer<HookNotification.HookNotificationMessage>> notificationConsumers =
                 notificationInterface.createConsumers(NotificationInterface.NotificationType.HOOK, numThreads);
-        executors = Executors.newFixedThreadPool(consumers.size());
-
-        for (final NotificationConsumer<HookNotification.HookNotificationMessage> consumer : consumers) {
-            executors.submit(new HookConsumer(consumer));
+        if (executorService == null) {
+            executorService = Executors.newFixedThreadPool(notificationConsumers.size());
+        }
+        executors = executorService;
+        for (final NotificationConsumer<HookNotification.HookNotificationMessage> consumer : notificationConsumers) {
+            HookConsumer hookConsumer = new HookConsumer(consumer);
+            consumers.add(hookConsumer);
+            executors.submit(hookConsumer);
         }
     }
 
@@ -71,12 +103,50 @@ public class NotificationHookConsumer implements Service {
         //Allow for completion of outstanding work
         notificationInterface.close();
         try {
-            if (executors != null && !executors.awaitTermination(5000, TimeUnit.MILLISECONDS)) {
-                LOG.error("Timed out waiting for consumer threads to shut down, exiting uncleanly");
+            if (executors != null) {
+                stopConsumerThreads();
+                executors.shutdownNow();
+                if (!executors.awaitTermination(5000, TimeUnit.MILLISECONDS)) {
+                    LOG.error("Timed out waiting for consumer threads to shut down, exiting uncleanly");
+                }
+                executors = null;
             }
         } catch (InterruptedException e) {
             LOG.error("Failure in shutting down consumers");
         }
+    }
+
+    private void stopConsumerThreads() {
+        if (consumers != null) {
+            for (HookConsumer consumer : consumers) {
+                consumer.stop();
+            }
+            consumers.clear();
+        }
+    }
+
+    /**
+     * Start Kafka consumer threads that read from Kafka topic when server is activated.
+     *
+     * Since the consumers create / update entities to the shared backend store, only the active instance
+     * should perform this activity. Hence, these threads are started only on server activation.
+     */
+    @Override
+    public void instanceIsActive() {
+        LOG.info("Reacting to active state: initializing Kafka consumers");
+        startConsumers(executors);
+    }
+
+    /**
+     * Stop Kafka consumer threads that read from Kafka topic when server is de-activated.
+     *
+     * Since the consumers create / update entities to the shared backend store, only the active instance
+     * should perform this activity. Hence, these threads are stopped only on server deactivation.
+     */
+    @Override
+    public void instanceIsPassive() {
+        LOG.info("Reacting to passive state: shutting down Kafka consumers.");
+        stop();
     }
 
     static class Timer {
@@ -87,15 +157,9 @@ public class NotificationHookConsumer implements Service {
 
     class HookConsumer implements Runnable {
         private final NotificationConsumer<HookNotification.HookNotificationMessage> consumer;
-        private final AtlasClient client;
+        private final AtomicBoolean shouldRun = new AtomicBoolean(false);
 
         public HookConsumer(NotificationConsumer<HookNotification.HookNotificationMessage> consumer) {
-            this(atlasClient, consumer);
-        }
-
-        public HookConsumer(AtlasClient client,
-                            NotificationConsumer<HookNotification.HookNotificationMessage> consumer) {
-            this.client = client;
             this.consumer = consumer;
         }
 
@@ -109,15 +173,19 @@ public class NotificationHookConsumer implements Service {
 
         @Override
         public void run() {
+            shouldRun.set(true);
 
             if (!serverAvailable(new NotificationHookConsumer.Timer())) {
                 return;
             }
 
-            while (true) {
+            while (shouldRun.get()) {
                 try {
                     if (hasNext()) {
                         HookNotification.HookNotificationMessage message = consumer.next();
+                        UserGroupInformation ugi = UserGroupInformation.createRemoteUser(message.getUser());
+                        AtlasClient atlasClient = getAtlasClient(ugi);
+
                         try {
                             switch (message.getType()) {
                             case ENTITY_CREATE:
@@ -154,9 +222,14 @@ public class NotificationHookConsumer implements Service {
             }
         }
 
+        protected AtlasClient getAtlasClient(UserGroupInformation ugi) {
+            return new AtlasClient(atlasEndpoint, ugi, ugi.getShortUserName());
+        }
+
         boolean serverAvailable(Timer timer) {
             try {
-                while (!client.isServerReady()) {
+                AtlasClient atlasClient = getAtlasClient(UserGroupInformation.getCurrentUser());
+                while (!atlasClient.isServerReady()) {
                     try {
                         LOG.info("Atlas Server is not ready. Waiting for {} milliseconds to retry...",
                                 SERVER_READY_WAIT_TIME_MS);
@@ -175,6 +248,10 @@ public class NotificationHookConsumer implements Service {
             }
             LOG.info("Atlas Server is ready, can start reading Kafka events.");
             return true;
+        }
+
+        public void stop() {
+            shouldRun.set(false);
         }
     }
 }

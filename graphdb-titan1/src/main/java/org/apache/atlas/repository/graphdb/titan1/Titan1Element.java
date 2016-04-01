@@ -6,11 +6,10 @@ import java.util.Set;
 import org.apache.atlas.repository.graphdb.AAElement;
 import org.apache.atlas.repository.graphdb.titan1.graphson.AtlasGraphSONMode;
 import org.apache.atlas.repository.graphdb.titan1.graphson.AtlasGraphSONUtility;
-import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
+import org.apache.tinkerpop.gremlin.structure.Property;
+import org.apache.tinkerpop.gremlin.structure.T;
+import org.json.simple.JSONObject;
 
 public class Titan1Element<T extends Element> implements AAElement {
 
@@ -27,11 +26,12 @@ public class Titan1Element<T extends Element> implements AAElement {
         
         //add explicit logic to return null if the property does not exist
         //This is the behavior Atlas expects.  Titan 1 throws an exception
-        //in this scenario.
-        if(! getPropertyKeys().contains(propertyName)) {
-            return  null;
+        //in this scenario.       
+        Property p = element_.property(propertyName);
+        if(p.isPresent()) {
+            return p.value();
         }
-        return element_.value(propertyName);
+        return null;
     }
     
     @Override
