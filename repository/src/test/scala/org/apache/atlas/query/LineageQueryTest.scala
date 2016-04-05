@@ -18,25 +18,25 @@
 
 package org.apache.atlas.query
 
-import com.thinkaurelius.titan.core.TitanGraph
-import com.thinkaurelius.titan.core.util.TitanCleanup
+import org.apache.atlas.repository.graphdb.AAGraph
+
 import org.apache.atlas.discovery.graph.DefaultGraphPersistenceStrategy
 import org.apache.atlas.query.Expressions._
-import org.apache.atlas.repository.graph.{GraphBackedMetadataRepository, TitanGraphProvider}
+import org.apache.atlas.repository.graph.{GraphBackedMetadataRepository, AtlasGraphProvider}
 import org.apache.atlas.typesystem.types.TypeSystem
 import org.testng.annotations.{Test,BeforeClass,AfterClass}
 
 class LineageQueryTest extends BaseGremlinTest {
 
-    var g: TitanGraph = null
-    var gProvider:TitanGraphProvider = null;
+    var g: AAGraph[_,_] = null
+    var gProvider:AtlasGraphProvider = null;
     var gp:GraphPersistenceStrategies = null;
 
     @BeforeClass
     def beforeAll() {
       TypeSystem.getInstance().reset()
       QueryTestsUtils.setupTypes
-      gProvider = new TitanGraphProvider();
+      gProvider = new AtlasGraphProvider();
       gp = new DefaultGraphPersistenceStrategy(new GraphBackedMetadataRepository(gProvider))
       g = QueryTestsUtils.setupTestGraph(gProvider)
     }
@@ -45,7 +45,7 @@ class LineageQueryTest extends BaseGremlinTest {
     def afterAll() {
       g.shutdown()
       try {
-        TitanCleanup.clear(g);
+        g.clear()
       } catch {
         case ex: Exception =>
           print("Could not clear the graph ", ex);

@@ -20,20 +20,66 @@ package org.apache.atlas.query
 
 import java.io.File
 import javax.script.{Bindings, ScriptEngine, ScriptEngineManager}
-
 import com.google.common.collect.ImmutableList
-import com.thinkaurelius.titan.core.{TitanFactory, TitanGraph}
-import com.tinkerpop.blueprints.Vertex
-import com.typesafe.config.{Config, ConfigFactory}
-import org.apache.atlas.repository.graph.TitanGraphProvider
+import org.apache.atlas.repository.graphdb.AAVertex
+import org.apache.atlas.repository.graphdb.AAGraph
+import org.apache.atlas.ApplicationProperties;
+import org.apache.atlas.repository.graph.AtlasGraphProvider
 import org.apache.atlas.typesystem.types._
+import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.commons.configuration.{Configuration, ConfigurationException, MapConfiguration}
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang.RandomStringUtils
 import org.json.JSONObject
 import org.skyscreamer.jsonassert.JSONAssert
-
 import scala.util.Random
+import org.apache.atlas.typesystem.types.EnumTypeDefinition
+import org.apache.atlas.typesystem.types.StructTypeDefinition
+import org.apache.atlas.typesystem.types.IDataType
+import org.apache.atlas.typesystem.types.TypeSystem
+import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition
+import org.apache.atlas.typesystem.types.TraitType
+import org.apache.atlas.typesystem.types.AttributeDefinition
+import org.apache.atlas.typesystem.types.DataTypes
+import org.apache.atlas.typesystem.types.ClassType
+import org.apache.atlas.typesystem.types.Multiplicity
+import org.apache.atlas.typesystem.types.EnumTypeDefinition
+import org.apache.atlas.typesystem.types.StructTypeDefinition
+import org.apache.atlas.typesystem.types.IDataType
+import org.apache.atlas.typesystem.types.TypeSystem
+import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition
+import org.apache.atlas.typesystem.types.TraitType
+import org.apache.atlas.typesystem.types.AttributeDefinition
+import org.apache.atlas.typesystem.types.DataTypes
+import org.apache.atlas.typesystem.types.ClassType
+import org.apache.atlas.typesystem.types.Multiplicity
+import org.apache.atlas.typesystem.types.EnumTypeDefinition
+import org.apache.atlas.typesystem.types.StructTypeDefinition
+import org.apache.atlas.typesystem.types.IDataType
+import org.apache.atlas.typesystem.types.TypeSystem
+import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition
+import org.apache.atlas.typesystem.types.TraitType
+import org.apache.atlas.typesystem.types.AttributeDefinition
+import org.apache.atlas.typesystem.types.DataTypes
+import org.apache.atlas.typesystem.types.ClassType
+import org.apache.atlas.typesystem.types.Multiplicity
+import org.apache.atlas.typesystem.types.EnumTypeDefinition
+import org.apache.atlas.typesystem.types.StructTypeDefinition
+import org.apache.atlas.typesystem.types.IDataType
+import org.apache.atlas.typesystem.types.TypeSystem
+import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition
+import org.apache.atlas.typesystem.types.TraitType
+import org.apache.atlas.typesystem.types.AttributeDefinition
+import org.apache.atlas.typesystem.types.DataTypes
+import org.apache.atlas.typesystem.types.EnumTypeDefinition
+import org.apache.atlas.typesystem.types.StructTypeDefinition
+import org.apache.atlas.typesystem.types.IDataType
+import org.apache.atlas.typesystem.types.TypeSystem
+import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition
+import org.apache.atlas.repository.graph.GraphProvider
+import org.apache.atlas.typesystem.types.TraitType
+import org.apache.atlas.typesystem.types.AttributeDefinition
+import org.apache.atlas.typesystem.types.DataTypes
 
 
 trait GraphUtils {
@@ -54,10 +100,9 @@ trait GraphUtils {
 
     def graph(conf: Configuration) = {
         try {
-            val g = TitanFactory.open(conf)
+            val g = AtlasGraphProvider.getGraphInstance
             val mgmt = g.getManagementSystem
-            val typname = mgmt.makePropertyKey("typeName").dataType(classOf[String]).make()
-            mgmt.buildIndex("byTypeName", classOf[Vertex]).addKey(typname).buildCompositeIndex()
+            mgmt.createCompositeIndex("byTypeName",classOf[String], null, false)           
             mgmt.commit()
             g
         } catch {
@@ -154,15 +199,19 @@ object QueryTestsUtils extends GraphUtils {
         ()
     }
 
-    def setupTestGraph(gp: TitanGraphProvider): TitanGraph = {
-        var conf = TitanGraphProvider.getConfiguration
+    def setupTestGraph(gp: AtlasGraphProvider): AAGraph[_,_] = {
+        var conf = getTitanConfiguration()
         conf.setProperty("storage.directory",
-            conf.getString("storage.directory") + "/../graph-data/" + RandomStringUtils.randomAlphanumeric(10))
-        val g = TitanFactory.open(conf)
+        conf.getString("storage.directory") + "/../graph-data/" + RandomStringUtils.randomAlphanumeric(10))
+       
+        //start with a clean graph
+        AtlasGraphProvider.unloadGraph();    
+        val g = AtlasGraphProvider.getGraphInstance();
+        
         val manager: ScriptEngineManager = new ScriptEngineManager
         val engine: ScriptEngine = manager.getEngineByName("gremlin-groovy")
         val bindings: Bindings = engine.createBindings
-        bindings.put("g", g)
+        g.injectBinding(bindings , "g")
 
         val hiveGraphFile = FileUtils.getTempDirectory().getPath.toString + File.separator + System.nanoTime() + ".gson"
         HiveTitanSample.writeGson(hiveGraphFile)
@@ -171,6 +220,11 @@ object QueryTestsUtils extends GraphUtils {
         engine.eval("g.loadGraphSON(hiveGraphFile)", bindings)
         g
     }
+    
+   def getTitanConfiguration() : Configuration = {
+      val configProperties : Configuration = ApplicationProperties.get();
+      return ApplicationProperties.getSubsetConfiguration(configProperties, "atlas.graph");
+   }
 
 }
 
@@ -188,5 +242,7 @@ trait BaseGremlinTest {
       println(rJ)
     }
   }
+  
+
 
 }

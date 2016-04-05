@@ -18,17 +18,21 @@
 
 package org.apache.atlas.repository.graph;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.thinkaurelius.titan.core.TitanGraph;
-import com.thinkaurelius.titan.core.util.TitanCleanup;
-import com.tinkerpop.blueprints.Vertex;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
 
 import org.apache.atlas.RepositoryMetadataModule;
 import org.apache.atlas.TestUtils;
 import org.apache.atlas.discovery.graph.GraphBackedDiscoveryService;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.RepositoryException;
+import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AAVertex;
 import org.apache.atlas.typesystem.IStruct;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.ITypedStruct;
@@ -54,13 +58,8 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Guice;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Test for GraphBackedMetadataRepository.deleteEntities
@@ -72,7 +71,7 @@ import java.util.Map;
 public class GraphBackedMetadataRepositoryDeleteEntitiesTest {
 
     @Inject
-    private GraphProvider<TitanGraph> graphProvider;
+    private AtlasGraphProvider graphProvider;
 
     @Inject
     private GraphBackedMetadataRepository repositoryService;
@@ -103,7 +102,7 @@ public class GraphBackedMetadataRepositoryDeleteEntitiesTest {
             e.printStackTrace();
         }
         try {
-            TitanCleanup.clear(graphProvider.get());
+            graphProvider.get().clear();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -199,7 +198,7 @@ public class GraphBackedMetadataRepositoryDeleteEntitiesTest {
         String edgeLabel = GraphHelper.getEdgeLabel(mapOwnerType, mapOwnerType.fieldMapping.fields.get("map"));
         String mapEntryLabel = edgeLabel + "." + "value1";
         AtlasEdgeLabel atlasEdgeLabel = new AtlasEdgeLabel(mapEntryLabel);
-        Vertex mapOwnerVertex = GraphHelper.getInstance().getVertexForGUID(mapOwnerGuid);
+        AAVertex mapOwnerVertex = GraphHelper.getInstance().getVertexForGUID(mapOwnerGuid);
         object = mapOwnerVertex.getProperty(atlasEdgeLabel.getQualifiedMapKey());
         Assert.assertNotNull(object);
         
@@ -514,7 +513,7 @@ public class GraphBackedMetadataRepositoryDeleteEntitiesTest {
         
         // Verify MapOwner.map attribute has expected value.
         String mapValueGuid = null;
-        Vertex mapOwnerVertex = null;
+        AAVertex<?,?> mapOwnerVertex = null;
         mapOwnerInstance = repositoryService.getEntityDefinition(mapOwnerGuid);
         for (String mapAttrName : Arrays.asList("map", "biMap")) {
             Object object = mapOwnerInstance.get(mapAttrName);
@@ -592,10 +591,11 @@ public class GraphBackedMetadataRepositoryDeleteEntitiesTest {
         repositoryService.createEntities(db, table);
     }
     
-    private int countVertices(String propertyName, Object value) {
-        Iterable<Vertex> vertices = graphProvider.get().getVertices(propertyName, value);
+    private <V,E> int countVertices(String propertyName, Object value) {
+        AAGraph<V,E> graph = (AAGraph<V,E>)graphProvider.get();
+        Iterable<AAVertex<V,E>> vertices = graph.getVertices(propertyName, value);
         int vertexCount = 0;
-        for (Vertex vertex : vertices) {
+        for (AAVertex<?,?> vertex : vertices) {
             vertexCount++;
         }
         return vertexCount;

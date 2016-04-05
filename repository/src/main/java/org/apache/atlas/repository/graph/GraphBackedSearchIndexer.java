@@ -53,11 +53,11 @@ import org.slf4j.LoggerFactory;
 /**
  * Adds index for properties of a given type when its added before any instances are added.
  */
-public class GraphBackedSearchIndexer<V,E> implements SearchIndexer, ActiveStateChangeHandler {
+public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChangeHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphBackedSearchIndexer.class);
 
-    private final AAGraph<V,E> graph;
+    private final AAGraph<?,?> graph;
     
     List<Class> MIXED_INDEX_EXCLUSIONS = new ArrayList<Class>() {{
             add(Boolean.class);
@@ -70,9 +70,9 @@ public class GraphBackedSearchIndexer<V,E> implements SearchIndexer, ActiveState
         this(graphProvider, ApplicationProperties.get());
     }
     
-    GraphBackedSearchIndexer(AtlasGraphProvider graphProvider, Configuration configuration)
+    GraphBackedSearchIndexer( GraphProvider<AAGraph> graphProvider, Configuration configuration)
             throws IndexException, RepositoryException {
-        this.graph = (AAGraph<V,E>)graphProvider.get();
+        this.graph = (AAGraph<?,?>)graphProvider.get();
 	    if (!HAConfiguration.isHAEnabled(configuration)) {
             initialize();
         }

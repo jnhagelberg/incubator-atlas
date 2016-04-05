@@ -18,14 +18,19 @@
 
 package org.apache.atlas;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.thinkaurelius.titan.core.TitanGraph;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.util.io.graphson.GraphSONWriter;
+import static org.apache.atlas.typesystem.types.utils.TypesUtil.createClassTypeDef;
+import static org.apache.atlas.typesystem.types.utils.TypesUtil.createOptionalAttrDef;
+import static org.apache.atlas.typesystem.types.utils.TypesUtil.createRequiredAttrDef;
+import static org.apache.atlas.typesystem.types.utils.TypesUtil.createStructTypeDef;
+import static org.apache.atlas.typesystem.types.utils.TypesUtil.createTraitTypeDef;
+
+import java.io.File;
+import java.util.Collection;
 
 import org.apache.atlas.repository.graph.GraphHelper;
+import org.apache.atlas.repository.graphdb.AAEdge;
+import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AAVertex;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.Referenceable;
 import org.apache.atlas.typesystem.TypesDef;
@@ -44,14 +49,8 @@ import org.apache.atlas.typesystem.types.utils.TypesUtil;
 import org.apache.commons.lang.RandomStringUtils;
 import org.testng.Assert;
 
-import java.io.File;
-import java.util.Collection;
-
-import static org.apache.atlas.typesystem.types.utils.TypesUtil.createClassTypeDef;
-import static org.apache.atlas.typesystem.types.utils.TypesUtil.createOptionalAttrDef;
-import static org.apache.atlas.typesystem.types.utils.TypesUtil.createRequiredAttrDef;
-import static org.apache.atlas.typesystem.types.utils.TypesUtil.createStructTypeDef;
-import static org.apache.atlas.typesystem.types.utils.TypesUtil.createTraitTypeDef;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 
 /**
  * Test utility class.
@@ -70,18 +69,18 @@ public final class TestUtils {
      * @return path to the dump file
      * @throws Exception
      */
-    public static String dumpGraph(TitanGraph graph) throws Exception {
+    public static String dumpGraph(AAGraph<?,?> graph) throws Exception {
         File tempFile = File.createTempFile("graph", ".gson");
         System.out.println("tempFile.getPath() = " + tempFile.getPath());
-        GraphSONWriter.outputGraph(graph, tempFile.getPath());
+        //GraphSONWriter.outputGraph(graph, tempFile.getPath());
 
         System.out.println("Vertices:");
-        for (Vertex vertex : graph.getVertices()) {
+        for (AAVertex<?,?> vertex : graph.getVertices()) {
             System.out.println(GraphHelper.vertexString(vertex));
         }
 
-        System.out.println("Edges:");
-        for (Edge edge : graph.getEdges()) {
+        System.out.println("AAEdge<V,E>s:");
+        for (AAEdge<?,?> edge: graph.getEdges()) {
             System.out.println(GraphHelper.edgeString(edge));
         }
 

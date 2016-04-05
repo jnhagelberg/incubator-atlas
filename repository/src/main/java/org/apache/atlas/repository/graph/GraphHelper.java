@@ -50,29 +50,29 @@ import org.slf4j.LoggerFactory;
 /**
  * Utility class for graph operations.
  */
-public final class GraphHelper<V,E> {
+public final class GraphHelper {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphHelper.class);
     public static final String EDGE_LABEL_PREFIX = "__";
 
     private static final TypeSystem typeSystem = TypeSystem.getInstance();
 
-    private static final GraphHelper<?,?> INSTANCE = new GraphHelper<Object,Object>(AtlasGraphProvider.getGraphInstance());
+    private static final GraphHelper INSTANCE = new GraphHelper(AtlasGraphProvider.getGraphInstance());
 
-    private AAGraph<V,E> graph;
+    private AAGraph<?,?> graph;
 
-    private GraphHelper(AAGraph<V,E> graph) {
+    private GraphHelper(AAGraph<?,?> graph) {
         this.graph = graph;
     }
 
-    public static GraphHelper<?,?> getInstance() {
+    public static GraphHelper getInstance() {
         return INSTANCE;
     }
 
-    public AAVertex<V,E> createVertexWithIdentity(ITypedReferenceableInstance typedInstance, Set<String> superTypeNames) {
+    public AAVertex<?,?> createVertexWithIdentity(ITypedReferenceableInstance typedInstance, Set<String> superTypeNames) {
         final String guid = UUID.randomUUID().toString();
 
-        final AAVertex<V,E> vertexWithIdentity = createVertexWithoutIdentity(typedInstance.getTypeName(),
+        final AAVertex<?,?> vertexWithIdentity = createVertexWithoutIdentity(typedInstance.getTypeName(),
                 new Id(guid, 0 , typedInstance.getTypeName()), superTypeNames);
 
         // add identity
@@ -84,9 +84,10 @@ public final class GraphHelper<V,E> {
         return vertexWithIdentity;
     }
 
-    public AAVertex<V,E> createVertexWithoutIdentity(String typeName, Id typedInstanceId, Set<String> superTypeNames) {
+    public <V,E> AAVertex<V,E> createVertexWithoutIdentity(String typeName, Id typedInstanceId, Set<String> superTypeNames) {
         LOG.debug("Creating vertex for type {} id {}", typeName,
                 typedInstanceId != null ? typedInstanceId._getId() : null);
+        AAGraph<V,E> graph = getGraph();
         final AAVertex<V,E> vertexWithoutIdentity = graph.addVertex(null);
 
         // add type information
@@ -103,16 +104,17 @@ public final class GraphHelper<V,E> {
         return vertexWithoutIdentity;
     }
 
-    public AAEdge<V,E> addEdge(AAVertex<V,E> fromVertex, AAVertex<V,E> toVertex, String edgeLabel) {
+    public <V,E> AAEdge<V,E> addEdge(AAVertex<V,E> fromVertex, AAVertex<V,E> toVertex, String edgeLabel) {
         LOG.debug("Adding edge for {} -> label {} -> {}", fromVertex, edgeLabel, toVertex);
+        AAGraph<V,E> graph = getGraph();
         AAEdge<V,E> edge = graph.addEdge(null, fromVertex, toVertex, edgeLabel);
         LOG.debug("Added edge for {} -> label {}, id {} -> {}", fromVertex, edgeLabel, edge.getId(), toVertex);
         return edge;
     }
 
-    public AAVertex<V,E> findVertex(String propertyKey, Object value) {
+    public <V,E> AAVertex<V,E> findVertex(String propertyKey, Object value) {
         LOG.debug("Finding vertex for {}={}", propertyKey, value);
-
+        AAGraph<V,E> graph = getGraph();
         AAGraphQuery<V,E> query = graph.query().has(propertyKey, value);
       
         Iterator<AAVertex<V,E>> results = query.vertices().iterator();
@@ -127,8 +129,9 @@ public final class GraphHelper<V,E> {
         return null;
     }
 
-    public AAEdge<V,E> getOutGoingEdgeById(String edgeId) {
+    public <V,E> AAEdge<V,E> getOutGoingEdgeById(String edgeId) {
         if(edgeId != null) {
+            AAGraph<V,E> graph = getGraph();
             return graph.getEdge(edgeId);
         }
         return null;
@@ -169,13 +172,14 @@ public final class GraphHelper<V,E> {
         vertex.addProperty(propertyName, value);
     }
 
-    public AAEdge<V,E> removeRelation(String edgeId, boolean cascade) {
+    public <V,E> AAEdge<V,E> removeRelation(String edgeId, boolean cascade) {
         LOG.debug("Removing edge with id {}", edgeId);
+        AAGraph<V,E> graph = getGraph();
         final AAEdge<V,E> edge = graph.getEdge(edgeId);
         graph.removeEdge(edge);
         LOG.info("Removed edge {}", edge);
         if (cascade) {
-           AAVertex<V,E> referredVertex = edge.getVertex(AADirection.IN);
+           AAVertex<?,?> referredVertex = edge.getVertex(AADirection.IN);
            removeVertex(referredVertex);
         }
         return edge;
@@ -186,8 +190,9 @@ public final class GraphHelper<V,E> {
      * 
      * @param edge
      */
-    public void removeEdge(AAEdge<V,E> edge) {
+    public <V,E> void removeEdge(AAEdge<V,E> edge) {
         LOG.debug("Removing edge {}", edge);
+        AAGraph<V,E> graph = getGraph();
         graph.removeEdge(edge);
         LOG.info("Removed edge {}", edge);
     }
@@ -198,7 +203,8 @@ public final class GraphHelper<V,E> {
      * @param edgeId
      * @return edge and target vertex
      */
-    public Pair<AAEdge<V,E>, AAVertex<V,E>> getEdgeAndTargetVertex(String edgeId) {
+    public <V,E> Pair<AAEdge<V,E>, AAVertex<V,E>> getEdgeAndTargetVertex(String edgeId) {
+        AAGraph<V,E> graph = getGraph();        
         final AAEdge<V,E> edge = graph.getEdge(edgeId);
         AAVertex<V,E> referredVertex = edge.getVertex(AADirection.IN);
         return Pair.of(edge, referredVertex);
@@ -209,18 +215,19 @@ public final class GraphHelper<V,E> {
      * 
      * @param vertex
      */
-    public void removeVertex(AAVertex<V,E> vertex) {
+    public <V,E> void removeVertex(AAVertex<V,E> vertex) {
         LOG.debug("Removing vertex {}", vertex);
+        AAGraph<V,E> graph = getGraph();
         graph.removeVertex(vertex);
         LOG.info("Removed vertex {}", vertex);
     }
 
-    public AAVertex<V,E> getVertexForGUID(String guid) throws EntityNotFoundException {
+    public <V,E> AAVertex<V,E> getVertexForGUID(String guid) throws EntityNotFoundException {
         return getVertexForProperty(Constants.GUID_PROPERTY_KEY, guid);
     }
 
 
-    public AAVertex<V,E> getVertexForProperty(String propertyKey, Object value) throws EntityNotFoundException {
+    public <V,E> AAVertex<V,E> getVertexForProperty(String propertyKey, Object value) throws EntityNotFoundException {
         AAVertex<V,E> instanceVertex = findVertex(propertyKey, value);
         if (instanceVertex == null) {
             LOG.debug("Could not find a vertex with {}={}", propertyKey, value);
@@ -302,15 +309,19 @@ public final class GraphHelper<V,E> {
         return result;
     }
 
-    public static <V,E> void dumpToLog(final AAGraph<V,E> graph) {
+    private <V,E> AAGraph<V,E> getGraph() {
+        return (AAGraph<V,E>)graph;
+    }
+    
+    public static void dumpToLog(final AAGraph<?,?> graph) {
         LOG.debug("*******************Graph Dump****************************");
         LOG.debug("Vertices of {}", graph);
-        for (AAVertex<V,E> vertex : graph.getVertices()) {
+        for (AAVertex<?,?> vertex : graph.getVertices()) {
             LOG.debug(vertexString(vertex));
         }
 
         LOG.debug("Edges of {}", graph);
-        for (AAEdge<V,E> edge : graph.getEdges()) {
+        for (AAEdge<?,?> edge : graph.getEdges()) {
             LOG.debug(edgeString(edge));
         }
         LOG.debug("*******************Graph Dump****************************");

@@ -329,8 +329,7 @@
     </developers>
 
     <properties>
-        <!-- for now in POC -->
-        <maven.test.skip>true</maven.test.skip>
+
         <!-- platform encoding override -->
         <skipTests>false</skipTests>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -932,6 +931,12 @@
             <dependency>
                 <groupId>org.apache.atlas</groupId>
                 <artifactId>atlas-typesystem</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.atlas</groupId>
+                <artifactId>atlas-graphdb-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
 

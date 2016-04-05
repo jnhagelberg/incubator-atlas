@@ -18,22 +18,22 @@
 
 package org.apache.atlas.repository.graph;
 
-import com.thinkaurelius.titan.core.TitanGraph;
-import com.thinkaurelius.titan.core.schema.TitanManagement;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.when;
+
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.ha.HAConfiguration;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.IndexException;
 import org.apache.atlas.repository.RepositoryException;
+import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.GraphDatabaseManager;
 import org.apache.commons.configuration.Configuration;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
-import static org.mockito.Mockito.when;
 
 public class GraphBackedSearchIndexerTest {
 
@@ -41,13 +41,13 @@ public class GraphBackedSearchIndexerTest {
     private Configuration configuration;
 
     @Mock
-    private GraphProvider<TitanGraph> graphProvider;
+    private GraphProvider<AAGraph> graphProvider;
 
     @Mock
-    private TitanGraph titanGraph;
+    private AAGraph<Object,Object> titanGraph;
 
     @Mock
-    private TitanManagement titanManagement;
+    private GraphDatabaseManager titanManagement;
 
     @BeforeMethod
     public void setup() {

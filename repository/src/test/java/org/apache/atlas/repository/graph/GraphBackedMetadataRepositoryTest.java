@@ -18,13 +18,14 @@
 
 package org.apache.atlas.repository.graph;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.thinkaurelius.titan.core.TitanGraph;
-import com.thinkaurelius.titan.core.util.TitanCleanup;
-import com.tinkerpop.blueprints.Compare;
-import com.tinkerpop.blueprints.GraphQuery;
-import com.tinkerpop.blueprints.Vertex;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.UUID;
+
+import javax.inject.Inject;
 
 import org.apache.atlas.GraphTransaction;
 import org.apache.atlas.RepositoryMetadataModule;
@@ -32,6 +33,10 @@ import org.apache.atlas.TestUtils;
 import org.apache.atlas.discovery.graph.GraphBackedDiscoveryService;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.RepositoryException;
+import org.apache.atlas.repository.graphdb.AAGraphQuery;
+import org.apache.atlas.repository.graphdb.AAGraphQuery.ComparisionOperator;
+import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AAVertex;
 import org.apache.atlas.typesystem.IStruct;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.ITypedStruct;
@@ -56,16 +61,13 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Guice;
 import org.testng.annotations.Test;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+
+
+
+
 import scala.actors.threadpool.Arrays;
-
-import javax.inject.Inject;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.UUID;
 
 /**
  * GraphBackedMetadataRepository test
@@ -77,7 +79,7 @@ import java.util.UUID;
 public class GraphBackedMetadataRepositoryTest {
 
     @Inject
-    private GraphProvider<TitanGraph> graphProvider;
+    private AtlasGraphProvider graphProvider;
 
     @Inject
     private GraphBackedMetadataRepository repositoryService;
@@ -110,7 +112,7 @@ public class GraphBackedMetadataRepositoryTest {
             e.printStackTrace();
         }
         try {
-            TitanCleanup.clear(graphProvider.get());
+            graphProvider.get().clear();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -197,7 +199,7 @@ public class GraphBackedMetadataRepositoryTest {
 
     @GraphTransaction
     String getGUID() {
-        Vertex tableVertex = getTableEntityVertex();
+        AAVertex tableVertex = getTableEntityVertex();
 
         String guid = tableVertex.getProperty(Constants.GUID_PROPERTY_KEY);
         if (guid == null) {
@@ -207,12 +209,12 @@ public class GraphBackedMetadataRepositoryTest {
     }
 
     @GraphTransaction
-    Vertex getTableEntityVertex() {
-        TitanGraph graph = graphProvider.get();
-        GraphQuery query = graph.query().has(Constants.ENTITY_TYPE_PROPERTY_KEY, Compare.EQUAL, TestUtils.TABLE_TYPE);
-        Iterator<Vertex> results = query.vertices().iterator();
+    <V,E> AAVertex<V,E> getTableEntityVertex() {
+        AAGraph<V,E> graph = (AAGraph<V,E>)graphProvider.get();
+        AAGraphQuery query = graph.query().has(Constants.ENTITY_TYPE_PROPERTY_KEY, ComparisionOperator.EQUAL, TestUtils.TABLE_TYPE);
+        Iterator<AAVertex> results = query.vertices().iterator();
         // returning one since guid should be unique
-        Vertex tableVertex = results.hasNext() ? results.next() : null;
+        AAVertex tableVertex = results.hasNext() ? results.next() : null;
         if (tableVertex == null) {
             Assert.fail();
         }
@@ -242,7 +244,7 @@ public class GraphBackedMetadataRepositoryTest {
     @Test(dependsOnMethods = "testGetTraitNames")
     public void testAddTrait() throws Exception {
         final String aGUID = getGUID();
-        Vertex vertex = GraphHelper.getInstance().getVertexForGUID(aGUID);
+        AAVertex<?,?> vertex = GraphHelper.getInstance().getVertexForGUID(aGUID);
         Long modificationTimestampPreUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY);
         Assert.assertNull(modificationTimestampPreUpdate);
 
@@ -314,7 +316,7 @@ public class GraphBackedMetadataRepositoryTest {
     @Test(dependsOnMethods = "testAddTrait")
     public void testDeleteTrait() throws Exception {
         final String aGUID = getGUID();
-        Vertex vertex = GraphHelper.getInstance().getVertexForGUID(aGUID);
+        AAVertex<?,?> vertex = GraphHelper.getInstance().getVertexForGUID(aGUID);
         Long modificationTimestampPreUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY);
         Assert.assertNotNull(modificationTimestampPreUpdate);
 
@@ -354,7 +356,7 @@ public class GraphBackedMetadataRepositoryTest {
 
     @Test(dependsOnMethods = "testCreateEntity")
     public void testGetIdFromVertex() throws Exception {
-        Vertex tableVertex = getTableEntityVertex();
+        AAVertex<?,?> tableVertex = getTableEntityVertex();
 
         String guid = tableVertex.getProperty(Constants.GUID_PROPERTY_KEY);
         if (guid == null) {
@@ -367,7 +369,7 @@ public class GraphBackedMetadataRepositoryTest {
 
     @Test(dependsOnMethods = "testCreateEntity")
     public void testGetTypeName() throws Exception {
-        Vertex tableVertex = getTableEntityVertex();
+        AAVertex tableVertex = getTableEntityVertex();
         Assert.assertEquals(GraphHelper.getTypeName(tableVertex), TestUtils.TABLE_TYPE);
     }
 
@@ -504,7 +506,7 @@ public class GraphBackedMetadataRepositoryTest {
 
         ITypedReferenceableInstance max = repositoryService.getEntityDefinition("Person", "name", "Max");
         String maxGuid = max.getId()._getId();
-        Vertex vertex = GraphHelper.getInstance().getVertexForGUID(maxGuid);
+        AAVertex vertex = GraphHelper.getInstance().getVertexForGUID(maxGuid);
         Long creationTimestamp = vertex.getProperty(Constants.TIMESTAMP_PROPERTY_KEY);
         Assert.assertNotNull(creationTimestamp);
 

@@ -31,19 +31,19 @@ import org.apache.commons.lang.StringUtils;
 import java.util.List;
 import java.util.Map;
 
-public class FullTextMapper<V,E> {
+public class FullTextMapper {
 
-    private final GraphToTypedInstanceMapper<V,E> graphToTypedInstanceMapper;
+    private final GraphToTypedInstanceMapper graphToTypedInstanceMapper;
 
-    private static final GraphHelper<?,?> graphHelper = GraphHelper.getInstance();
+    private static final GraphHelper graphHelper = GraphHelper.getInstance();
 
     private static final String FULL_TEXT_DELIMITER = " ";
 
-    FullTextMapper(GraphToTypedInstanceMapper<V,E> graphToTypedInstanceMapper) {
+    FullTextMapper(GraphToTypedInstanceMapper graphToTypedInstanceMapper) {
         this.graphToTypedInstanceMapper = graphToTypedInstanceMapper;
     }
 
-    public String mapRecursive(AAVertex<V,E> instanceVertex, boolean followReferences) throws AtlasException {
+    public <V,E> String mapRecursive(AAVertex<V,E> instanceVertex, boolean followReferences) throws AtlasException {
         String guid = instanceVertex.getProperty(Constants.GUID_PROPERTY_KEY);
         ITypedReferenceableInstance typedReference =
             graphToTypedInstanceMapper.mapGraphToTypedInstance(guid, instanceVertex);

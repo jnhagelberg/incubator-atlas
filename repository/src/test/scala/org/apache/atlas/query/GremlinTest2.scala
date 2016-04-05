@@ -18,25 +18,27 @@
 
 package org.apache.atlas.query
 
-import com.thinkaurelius.titan.core.TitanGraph
-import com.thinkaurelius.titan.core.util.TitanCleanup
+import org.apache.atlas.repository.graphdb.AAGraph
 import org.apache.atlas.discovery.graph.DefaultGraphPersistenceStrategy
 import org.apache.atlas.query.Expressions._
-import org.apache.atlas.repository.graph.{TitanGraphProvider, GraphBackedMetadataRepository}
+import org.apache.atlas.repository.graph.{AtlasGraphProvider,GraphBackedMetadataRepository}
 import org.apache.atlas.typesystem.types.TypeSystem
 import org.testng.annotations.{Test,BeforeClass,AfterClass}
+import org.apache.atlas.typesystem.types.TypeSystem
+import org.apache.atlas.repository.graph.GraphBackedMetadataRepository
+import org.apache.atlas.repository.graphdb.GremlinVersion
 
 class GremlinTest2 extends BaseGremlinTest {
 
-  var g: TitanGraph = null
-  var gProvider:TitanGraphProvider = null;
+  var g: AAGraph[_,_] = null
+  var gProvider: AtlasGraphProvider = null;
   var gp:GraphPersistenceStrategies = null;
 
   @BeforeClass
   def beforeAll() {
     TypeSystem.getInstance().reset()
     QueryTestsUtils.setupTypes
-    gProvider = new TitanGraphProvider();
+    gProvider = new AtlasGraphProvider();
     gp = new DefaultGraphPersistenceStrategy(new GraphBackedMetadataRepository(gProvider))
     g = QueryTestsUtils.setupTestGraph(gProvider)
   }
@@ -45,7 +47,7 @@ class GremlinTest2 extends BaseGremlinTest {
   def afterAll() {
     g.shutdown()
     try {
-      TitanCleanup.clear(g);
+      g.clear();
     } catch {
       case ex: Exception =>
         print("Could not clear the graph ", ex);
@@ -111,7 +113,7 @@ class GremlinTest2 extends BaseGremlinTest {
           "LoadProcess",
           "inputTables",
           "outputTable",
-        None, Some(List("name")), true, GraphPersistenceStrategy1, g).evaluate()
+        None, Some(List("name")), true, getPersistenceStrategy(g), g).evaluate()
     validateJson(r)
   }
 
@@ -120,7 +122,7 @@ class GremlinTest2 extends BaseGremlinTest {
       "LoadProcess",
       "inputTables",
       "outputTable",
-      None, Some(List("name")), true, GraphPersistenceStrategy1, g).graph
+      None, Some(List("name")), true, getPersistenceStrategy(g), g).graph
 
     println(r.toInstanceJson)
     //validateJson(r)
@@ -131,7 +133,7 @@ class GremlinTest2 extends BaseGremlinTest {
       "LoadProcess",
       "inputTables",
       "outputTable",
-      None, Some(List("name")), true, GraphPersistenceStrategy1, g).evaluate()
+      None, Some(List("name")), true, getPersistenceStrategy(g), g).evaluate()
     validateJson(r)
   }
 
@@ -140,8 +142,17 @@ class GremlinTest2 extends BaseGremlinTest {
       "LoadProcess",
       "inputTables",
       "outputTable",
-      None, Some(List("name")), true, GraphPersistenceStrategy1, g).graph
+      None, Some(List("name")), true, getPersistenceStrategy(g), g).graph
     println(r.toInstanceJson)
   }
 
+  private def getPersistenceStrategy(g: AAGraph[_,_]) : GraphPersistenceStrategies = {
+       if(g.getSupportedGremlinVersion == GremlinVersion.TWO) {
+           Gremlin2GraphPersistenceStrategy1
+       }
+       else {
+           Gremlin3GraphPersistenceStrategy1
+       }
+   }
+  
 }

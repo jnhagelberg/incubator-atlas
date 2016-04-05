@@ -35,6 +35,11 @@ public class AuditRepositoryTestBase {
 
     @Test
     public void testAddEvents() throws Exception {
+        
+        if(! isRepositoryTestable()) {
+            return;
+        }
+        
         EntityAuditRepository.EntityAuditEvent event =
                 new EntityAuditRepository.EntityAuditEvent(rand(), System.currentTimeMillis(), "u1",
                         EntityAuditRepository.EntityAuditAction.ENTITY_CREATE, "d1");
@@ -49,6 +54,10 @@ public class AuditRepositoryTestBase {
 
     @Test
     public void testListPagination() throws Exception {
+        
+        if(! isRepositoryTestable()) {
+            return;
+        }
         String id1 = "id1" + rand();
         String id2 = "id2" + rand();
         String id3 = "id3" + rand();
@@ -78,4 +87,9 @@ public class AuditRepositoryTestBase {
         assertEquals(events.size(), 1);
         assertEquals(events.get(0), expectedEvents.get(2));
     }
+    
+    protected boolean isRepositoryTestable() {
+        return true;
+    }
+
 }

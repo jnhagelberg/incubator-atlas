@@ -19,22 +19,40 @@
 package org.apache.atlas.repository.audit;
 
 import org.apache.atlas.ApplicationProperties;
+import org.apache.atlas.RepositoryMetadataModule;
 import org.apache.commons.configuration.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Guice;
 import org.testng.annotations.Test;
+
+import com.google.inject.Inject;
 
 import static org.testng.Assert.assertTrue;
 
+@Guice(modules = RepositoryMetadataModule.class)
 public class HBaseBasedAuditRepositoryTest extends AuditRepositoryTestBase {
+    
     private TableName tableName;
+    
 
+    @Inject
+    private EntityAuditRepository repository;
+
+    @Override
+    protected boolean isRepositoryTestable() {
+        return (repository instanceof HBaseBasedAuditRepository);
+    }
+    
     @BeforeClass
     public void setup() throws Exception {
-        eventRepository = new HBaseBasedAuditRepository();
+        if(! isRepositoryTestable()) {
+            return;
+        }
+        eventRepository = repository;
         HBaseTestUtils.startCluster();
         ((HBaseBasedAuditRepository)eventRepository).start();
 
@@ -46,14 +64,22 @@ public class HBaseBasedAuditRepositoryTest extends AuditRepositoryTestBase {
 
     @AfterClass
     public void teardown() throws Exception {
+        if(! isRepositoryTestable()) {
+            return;
+        }
         ((HBaseBasedAuditRepository)eventRepository).stop();
         HBaseTestUtils.stopCluster();
     }
 
     @Test
     public void testTableCreated() throws Exception {
+        if(! isRepositoryTestable()) {
+            return;
+        }
         Connection connection = HBaseTestUtils.getConnection();
         Admin admin = connection.getAdmin();
         assertTrue(admin.tableExists(tableName));
     }
+    
+   
 }

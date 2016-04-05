@@ -102,7 +102,7 @@ public interface MetadataRepository {
      * @return a list of entity names for the given type
      * @throws RepositoryException
      */
-    List<String> getEntityList(String entityType) throws RepositoryException;
+    <V,E> List<String> getEntityList(String entityType) throws RepositoryException;
 
     /**
      * Deletes entities for the specified guids.

@@ -18,28 +18,29 @@
 
 package org.apache.atlas.service;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
-import com.google.inject.Inject;
-import com.thinkaurelius.titan.core.TitanGraph;
-import com.thinkaurelius.titan.core.util.TitanCleanup;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.atlas.AtlasClient;
+import org.apache.atlas.AtlasException;
+import org.apache.atlas.RepositoryMetadataModule;
+import org.apache.atlas.RequestContext;
+import org.apache.atlas.TestUtils;
+import org.apache.atlas.listener.EntityChangeListener;
 import org.apache.atlas.repository.audit.EntityAuditRepository;
 import org.apache.atlas.repository.audit.HBaseBasedAuditRepository;
 import org.apache.atlas.repository.audit.HBaseTestUtils;
-import org.apache.atlas.typesystem.exception.TypeNotFoundException;
-import org.apache.atlas.typesystem.exception.EntityNotFoundException;
-import org.apache.atlas.typesystem.types.ClassType;
-import org.apache.atlas.typesystem.types.DataTypes;
-import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition;
-import org.apache.atlas.typesystem.types.utils.TypesUtil;
-import org.apache.atlas.utils.ParamChecker;
-import org.apache.atlas.AtlasException;
-import org.apache.atlas.RepositoryMetadataModule;
-import org.apache.atlas.TestUtils;
-import org.apache.atlas.listener.EntityChangeListener;
-import org.apache.atlas.repository.graph.GraphProvider;
+import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.services.MetadataService;
 import org.apache.atlas.typesystem.IReferenceableInstance;
 import org.apache.atlas.typesystem.IStruct;
@@ -47,12 +48,19 @@ import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.Referenceable;
 import org.apache.atlas.typesystem.Struct;
 import org.apache.atlas.typesystem.TypesDef;
+import org.apache.atlas.typesystem.exception.EntityNotFoundException;
+import org.apache.atlas.typesystem.exception.TypeNotFoundException;
 import org.apache.atlas.typesystem.json.InstanceSerialization;
 import org.apache.atlas.typesystem.json.TypesSerialization;
 import org.apache.atlas.typesystem.persistence.Id;
+import org.apache.atlas.typesystem.types.ClassType;
+import org.apache.atlas.typesystem.types.DataTypes;
 import org.apache.atlas.typesystem.types.EnumValue;
+import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition;
 import org.apache.atlas.typesystem.types.TypeSystem;
 import org.apache.atlas.typesystem.types.ValueConversionException;
+import org.apache.atlas.typesystem.types.utils.TypesUtil;
+import org.apache.atlas.utils.ParamChecker;
 import org.apache.commons.lang.RandomStringUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -63,18 +71,9 @@ import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Guice;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNull;
-import static org.testng.Assert.assertTrue;
-import static org.testng.Assert.fail;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.inject.Inject;
 
 @Guice(modules = RepositoryMetadataModule.class)
 public class DefaultMetadataServiceTest {
@@ -82,7 +81,7 @@ public class DefaultMetadataServiceTest {
     private MetadataService metadataService;
 
     @Inject
-    private GraphProvider<TitanGraph> graphProvider;
+    private AtlasGraphProvider graphProvider;
 
     @Inject
     private EntityAuditRepository repository;
@@ -105,7 +104,7 @@ public class DefaultMetadataServiceTest {
             HBaseTestUtils.startCluster();
             ((HBaseBasedAuditRepository) repository).start();
         }
-
+        RequestContext.createContext().setUser("testuser");
         TypesDef typesDef = TestUtils.defineHiveTypes();
         try {
             metadataService.getTypeDefinition(TestUtils.TABLE_TYPE);
@@ -134,7 +133,7 @@ public class DefaultMetadataServiceTest {
             e.printStackTrace();
         }
         try {
-            TitanCleanup.clear(graphProvider.get());
+            graphProvider.get().clear();
         } catch(Exception e) {
             e.printStackTrace();
         }

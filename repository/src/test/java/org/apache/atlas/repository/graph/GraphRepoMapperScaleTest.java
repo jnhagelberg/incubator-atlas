@@ -18,17 +18,24 @@
 
 package org.apache.atlas.repository.graph;
 
-import com.thinkaurelius.titan.core.TitanGraph;
-import com.thinkaurelius.titan.core.TitanIndexQuery;
-import com.thinkaurelius.titan.core.util.TitanCleanup;
-import com.tinkerpop.blueprints.Compare;
-import com.tinkerpop.blueprints.GraphQuery;
-import com.tinkerpop.blueprints.Predicate;
-import com.tinkerpop.blueprints.Vertex;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
+
+import javax.inject.Inject;
+
 import org.apache.atlas.GraphTransaction;
 import org.apache.atlas.RepositoryMetadataModule;
 import org.apache.atlas.TestUtils;
 import org.apache.atlas.repository.Constants;
+import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AAGraphQuery;
+import org.apache.atlas.repository.graphdb.AAGraphQuery.ComparisionOperator;
+import org.apache.atlas.repository.graphdb.AAIndexQuery;
+import org.apache.atlas.repository.graphdb.AAVertex;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.Referenceable;
 import org.apache.atlas.typesystem.Struct;
@@ -42,10 +49,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Guice;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
+import com.tinkerpop.blueprints.Compare;
 
 @Test
 @Guice(modules = RepositoryMetadataModule.class)
@@ -55,7 +59,7 @@ public class GraphRepoMapperScaleTest {
     private static final String TABLE_NAME = "bar";
 
     @Inject
-    GraphProvider<TitanGraph> graphProvider;
+    AtlasGraphProvider graphProvider;
 
     @Inject
     private GraphBackedMetadataRepository repositoryService;
@@ -85,7 +89,7 @@ public class GraphRepoMapperScaleTest {
             e.printStackTrace();
         }
         try {
-            TitanCleanup.clear(graphProvider.get());
+            graphProvider.get().clear();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -101,7 +105,8 @@ public class GraphRepoMapperScaleTest {
         ClassType dbType = typeSystem.getDataType(ClassType.class, TestUtils.DATABASE_TYPE);
         ITypedReferenceableInstance db = dbType.convert(databaseInstance, Multiplicity.REQUIRED);
 
-        dbGUID = repositoryService.createEntities(db).get(0);
+        List<String> entities = repositoryService.createEntities(db);
+        dbGUID = entities.get(0);
 
         Referenceable dbInstance = new Referenceable(dbGUID, TestUtils.DATABASE_TYPE, databaseInstance.getValuesMap());
 
@@ -122,7 +127,7 @@ public class GraphRepoMapperScaleTest {
 
         searchWithOutIndex("hive_table.name", "bar-999");
         searchWithIndex("hive_table.name", "bar-999");
-        searchWithIndex("hive_table.created", Compare.GREATER_THAN_EQUAL, TestUtils.TEST_DATE_IN_LONG, 1000);
+        searchWithIndex("hive_table.created", ComparisionOperator.GREATER_THAN_EQUAL, TestUtils.TEST_DATE_IN_LONG, 1000);
 
         for (int index = 500; index < 600; index++) {
             searchWithIndex("hive_table.name", "bar-" + index);
@@ -130,12 +135,13 @@ public class GraphRepoMapperScaleTest {
     }
 
     private void searchWithOutIndex(String key, String value) {
-        TitanGraph graph = graphProvider.get();
+        AAGraph graph = graphProvider.get();
         long start = System.currentTimeMillis();
         int count = 0;
         try {
-            GraphQuery query = graph.query().has(key, Compare.EQUAL, value);
-            for (Vertex ignored : query.vertices()) {
+            AAGraphQuery query = graph.query().has(key, ComparisionOperator.EQUAL, value);
+            Iterable<AAVertex> result = query.vertices();
+            for (AAVertex ignored : result) {
                 count++;
             }
         } finally {
@@ -145,13 +151,15 @@ public class GraphRepoMapperScaleTest {
     }
 
     private void searchWithIndex(String key, String value) {
-        TitanGraph graph = graphProvider.get();
+        AAGraph graph = graphProvider.get();
         long start = System.currentTimeMillis();
         int count = 0;
         try {
             String queryString = "v.\"" + key + "\":(" + value + ")";
-            TitanIndexQuery query = graph.indexQuery(Constants.VERTEX_INDEX, queryString);
-            for (TitanIndexQuery.Result<Vertex> ignored : query.vertices()) {
+            AAIndexQuery query = graph.indexQuery(Constants.VERTEX_INDEX, queryString);
+            Iterator<AAIndexQuery.Result> result = query.vertices();
+            while(result.hasNext()) {
+                result.next();
                 count++;
             }
         } finally {
@@ -160,13 +168,14 @@ public class GraphRepoMapperScaleTest {
         }
     }
 
-    private void  searchWithIndex(String key, Predicate searchPredicate, Object value, int expectedResults) {
-        TitanGraph graph = graphProvider.get();
+    private void  searchWithIndex(String key, ComparisionOperator op, Object value, int expectedResults) {
+        AAGraph graph = graphProvider.get();
         long start = System.currentTimeMillis();
         int count = 0;
         try {
-            GraphQuery query = graph.query().has(key, searchPredicate, value);
-            for (Vertex ignored : query.vertices()) {
+            AAGraphQuery query = graph.query().has(key, op, value);
+            Iterable<AAVertex> itrble = query.vertices();
+            for (AAVertex ignored : itrble) {
                 count++;
             }
         } finally {

@@ -57,25 +57,25 @@ import com.google.common.base.Preconditions;
  * as a Graph Service.
  */
 @Singleton
-public class GraphBackedMetadataRepository<V,E> implements MetadataRepository {
+public class GraphBackedMetadataRepository implements MetadataRepository {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphBackedMetadataRepository.class);
 
-    private final GraphToTypedInstanceMapper<V,E> graphToInstanceMapper;
+    private final GraphToTypedInstanceMapper graphToInstanceMapper;
 
     private static TypeSystem typeSystem = TypeSystem.getInstance();
 
     private static final GraphHelper graphHelper = GraphHelper.getInstance();
 
-    private final AAGraph<V,E> graph;
+    private final AAGraph<?,?> graph;
 
     @Inject
     public GraphBackedMetadataRepository(AtlasGraphProvider graphProvider) {
-        this.graph = (AAGraph<V,E>)graphProvider.get();
-        this.graphToInstanceMapper = new GraphToTypedInstanceMapper<V,E>(graph);
+        this.graph = graphProvider.get();
+        this.graphToInstanceMapper = new GraphToTypedInstanceMapper(graph);
     }
 
-    public GraphToTypedInstanceMapper<V,E> getGraphToInstanceMapper() {
+    public GraphToTypedInstanceMapper getGraphToInstanceMapper() {
         return graphToInstanceMapper;
     }
 
@@ -139,7 +139,7 @@ public class GraphBackedMetadataRepository<V,E> implements MetadataRepository {
     public ITypedReferenceableInstance getEntityDefinition(String guid) throws RepositoryException, EntityNotFoundException {
         LOG.info("Retrieving entity with guid={}", guid);
 
-        AAVertex<V,E> instanceVertex = graphHelper.getVertexForGUID(guid);
+        AAVertex<?,?> instanceVertex = graphHelper.getVertexForGUID(guid);
 
         try {
             return graphToInstanceMapper.mapGraphToTypedInstance(guid, instanceVertex);
@@ -153,9 +153,9 @@ public class GraphBackedMetadataRepository<V,E> implements MetadataRepository {
     public ITypedReferenceableInstance getEntityDefinition(String entityType, String attribute, Object value)
             throws AtlasException {
         LOG.info("Retrieving entity with type={} and {}={}", entityType, attribute, value);
-        IDataType type = typeSystem.getDataType(IDataType.class, entityType);
+        IDataType<?> type = typeSystem.getDataType(IDataType.class, entityType);
         String propertyKey = getFieldNameInVertex(type, attribute);
-        AAVertex<V,E> instanceVertex = graphHelper.getVertexForProperty(propertyKey, value);
+        AAVertex<?,?> instanceVertex = graphHelper.getVertexForProperty(propertyKey, value);
 
         String guid = instanceVertex.getProperty(Constants.GUID_PROPERTY_KEY);
         return graphToInstanceMapper.mapGraphToTypedInstance(guid, instanceVertex);
@@ -163,8 +163,9 @@ public class GraphBackedMetadataRepository<V,E> implements MetadataRepository {
 
     @Override
     @GraphTransaction
-    public List<String> getEntityList(String entityType) throws RepositoryException {
+    public <V,E> List<String> getEntityList(String entityType) throws RepositoryException {
         LOG.info("Retrieving entity list for type={}", entityType);
+        AAGraph<V,E> graph = getGraph();
         AAGraphQuery<V,E> query = graph.query().has(Constants.ENTITY_TYPE_PROPERTY_KEY, entityType);
         Iterator<AAVertex<V,E>> results = query.vertices().iterator();
         if (!results.hasNext()) {
@@ -179,7 +180,7 @@ public class GraphBackedMetadataRepository<V,E> implements MetadataRepository {
 
         return entityList;
     }
-
+    
     /**
      * Gets the list of trait names for a given entity represented by a guid.
      *
@@ -324,14 +325,14 @@ public class GraphBackedMetadataRepository<V,E> implements MetadataRepository {
             throw new IllegalArgumentException("guids must be non-null and non-empty");
         }
         
-        TypedInstanceToGraphMapper<V,E> instanceToGraphMapper = new TypedInstanceToGraphMapper<V,E>(graphToInstanceMapper);
+        TypedInstanceToGraphMapper instanceToGraphMapper = new TypedInstanceToGraphMapper(graphToInstanceMapper);
         for (String guid : guids) {
             if (guid == null) {
                 LOG.warn("deleteEntities: Ignoring null guid");
                 continue;
             }
             try {
-                AAVertex<V,E> instanceVertex = graphHelper.getVertexForGUID(guid);
+                AAVertex<?,?> instanceVertex = graphHelper.getVertexForGUID(guid);
                 String typeName = GraphHelper.getTypeName(instanceVertex);
                 instanceToGraphMapper.deleteEntity(typeName, instanceVertex);
             } catch (EntityNotFoundException e) {
@@ -349,5 +350,9 @@ public class GraphBackedMetadataRepository<V,E> implements MetadataRepository {
     
     public GremlinVersion getSupportedGremlinVersion() {
         return graph.getSupportedGremlinVersion();
+    }
+    
+    private <V,E> AAGraph<V,E> getGraph() {
+        return (AAGraph<V,E>)graph;
     }
 }

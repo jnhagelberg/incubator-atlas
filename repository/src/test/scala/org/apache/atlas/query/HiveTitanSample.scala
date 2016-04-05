@@ -23,9 +23,12 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.{Date, UUID}
 import javax.script.{Bindings, ScriptEngine, ScriptEngineManager}
 
-import com.thinkaurelius.titan.core.TitanGraph
+
 import org.apache.atlas.repository.Constants
-import org.apache.atlas.repository.graph.TitanGraphProvider
+import org.apache.atlas.repository.graph.AtlasGraphProvider
+import org.apache.atlas.repository.graphdb.AAGraph
+import org.apache.atlas.repository.graphdb.AAVertex
+import org.apache.atlas.repository.graphdb.AAEdge
 import org.apache.atlas.TestUtils
 import org.apache.commons.io.FileUtils
 
@@ -368,12 +371,13 @@ object HiveTitanSample {
 }
 
 object TestApp extends App with GraphUtils {
-
-    val g: TitanGraph = TitanGraphProvider.getGraphInstance
+    AtlasGraphProvider.unloadGraph()
+    val g = AtlasGraphProvider.getGraphInstance
     val manager: ScriptEngineManager = new ScriptEngineManager
     val engine: ScriptEngine = manager.getEngineByName("gremlin-groovy")
     val bindings: Bindings = engine.createBindings
-    bindings.put("g", g)
+    g.injectBinding(bindings , "g")
+    
 
     val hiveGraphFile = FileUtils.getTempDirectory().getPath + File.separator + System.nanoTime() + ".gson"
     HiveTitanSample.writeGson(hiveGraphFile)

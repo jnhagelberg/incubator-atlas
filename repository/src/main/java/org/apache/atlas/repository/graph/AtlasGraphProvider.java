@@ -17,18 +17,18 @@ public class AtlasGraphProvider implements GraphProvider<AAGraph> {
     private static volatile GraphProviderPlugin<?,?> plugin_;
     private static volatile AAGraph<?,?> graph_;
         
-	public static <V,E> AAGraph<V,E> getGraphInstance() {
-	    
-	    if(graph_ == null) {
-	        try {
-    	        String implClassName = getPluginImplClass();
-    	        Class implClass = Thread.currentThread().getContextClassLoader().loadClass(implClassName);
-    	        plugin_ = (GraphProviderPlugin)implClass.newInstance();
-    	        plugin_.initialize();
-    	        graph_ = plugin_.createGraph();
-	        }
-	        catch (ClassNotFoundException e) {
-	            throw new RuntimeException("Error initializing graph database provider", e);
+    public static <V,E> AAGraph<V,E> getGraphInstance() {
+        
+        if(graph_ == null) {
+            try {
+                String implClassName = getPluginImplClass();
+                Class implClass = Thread.currentThread().getContextClassLoader().loadClass(implClassName);
+                plugin_ = (GraphProviderPlugin)implClass.newInstance();
+                plugin_.initialize();
+                graph_ = plugin_.createGraph();
+            }
+            catch (ClassNotFoundException e) {
+                throw new RuntimeException("Error initializing graph database provider", e);
             } catch (IllegalAccessException e) {
                 throw new RuntimeException("Error initializing graph database provider", e);
             } catch (InstantiationException e) {
@@ -36,11 +36,11 @@ public class AtlasGraphProvider implements GraphProvider<AAGraph> {
             } catch (AtlasException e) {
                 throw new RuntimeException("Error initializing graph database provider", e);
             }
-	        
-	    }
-	    return (AAGraph<V,E>)graph_;
-	    
-	}	
+            
+        }
+        return (AAGraph<V,E>)graph_;
+        
+    }   
 
     private static String getPluginImplClass() throws AtlasException {
         
@@ -58,13 +58,19 @@ public class AtlasGraphProvider implements GraphProvider<AAGraph> {
         
         return implClassName;
     }
-	
+    
     @Override
     @Singleton
     @Provides
-    public AAGraph<Object,Object> get() {
+    public AAGraph<?,?> get() {
        return getGraphInstance();
     }
     
+    public static void unloadGraph() {
+        if(plugin_ != null) {
+            plugin_.unloadGraph();
+        }
+        graph_ = null;
+    }
     
 }

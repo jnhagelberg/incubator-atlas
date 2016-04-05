@@ -46,15 +46,13 @@ import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.repository.graphdb.AAGraph;
-import org.apache.atlas.repository.graphdb.AAVertex;
 import org.apache.atlas.repository.graphdb.AAIndexQuery;
+import org.apache.atlas.repository.graphdb.AAVertex;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-
 
 import scala.util.Either;
 import scala.util.parsing.combinator.Parsers;
@@ -186,17 +184,17 @@ public class GraphBackedDiscoveryService implements DiscoveryService {
         List l = (List) o;
         List<Map<String, String>> result = new ArrayList<>();
         for (Object r : l) {
-
+            Object atlasResultEntry = graph.convertGremlinValue(r);
             Map<String, String> oRow = new HashMap<>();
-            if (r instanceof Map) {
-                @SuppressWarnings("unchecked") Map<Object, Object> iRow = (Map) r;
+            if (atlasResultEntry instanceof Map) {
+                @SuppressWarnings("unchecked") Map<Object, Object> iRow = (Map) atlasResultEntry;
                 for (Map.Entry e : iRow.entrySet()) {
                     Object k = e.getKey();
                     Object v = e.getValue();
                     oRow.put(k.toString(), v.toString());
                 }
-            } else if (r instanceof AAVertex) {
-                AAVertex<?,?> vertex = (AAVertex<?,?>)r;               
+            } else if (atlasResultEntry instanceof AAVertex) {
+                AAVertex<?,?> vertex = (AAVertex<?,?>)atlasResultEntry;               
                 for (String key : vertex.getPropertyKeys()) {
                     Object value = vertex.getProperty(key);
                     if (value != null) {
@@ -204,10 +202,10 @@ public class GraphBackedDiscoveryService implements DiscoveryService {
                     }
                 }
 
-            } else if (r instanceof String) {
-                oRow.put("", r.toString());
+            } else if (atlasResultEntry instanceof String) {
+                oRow.put("", atlasResultEntry.toString());
             } else {
-                throw new DiscoveryException(String.format("Cannot process result %s", o.toString()));
+                throw new DiscoveryException(String.format("Cannot process result %s", String.valueOf(atlasResultEntry)));
             }
 
             result.add(oRow);

@@ -180,7 +180,7 @@ trait GraphPersistenceStrategies {
         else
             typeTestExpressionUsingFilter(typeName)
     }
-S
+
     private def typeTestExpressionUsingFilter(typeName : String) : Seq[String] = {
       Seq(s"""filter${_typeTestExpression(typeName, "it")}""")
     }
