@@ -13,6 +13,13 @@ ATLAS-409 Atlas will not import avro tables with schema read from a file (dosset
 ATLAS-379 Create sqoop and falcon metadata addons (venkatnrangan,bvellanki,sowmyaramesh via shwethags)
 
 ALL CHANGES:
+ATLAS-572 Handle secure instance of Zookeeper for leader election.(yhemanth via sumasai)
+ATLAS-605 Hook Notifications for DELETE entity needs to be supported (sumasai)
+ATLAS-607 Add Support for delete entity through a qualifiedName (sumasai via yhemanth)
+ATLAS-571 Modify Atlas client for necessary changes in context of HA (yhemanth via sumasai)
+ATLAS-620 Disable hbase based entity audit (shwethags)
+ATLAS-618 Fix assembly for hdfs-module (sumasai via yhemanth)
+ATLAS-573 Inherited attributes disappear from entities after server restart (dkantor via sumasai)
 ATLAS-525 Drop support for partitions, select query lineage, roles, principals, resource, hive_type...(sumasai via shwethags)
 ATLAS-599 HDFS Path Model (sumasai via yhemanth)
 ATLAS-553 Entity mutation - Fix issue with reordering of elements in array<class> with composite references (sumasai via shwethags)

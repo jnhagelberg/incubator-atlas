@@ -28,7 +28,6 @@ import org.apache.atlas.listener.TypesChangeListener;
 import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.audit.EntityAuditListener;
 import org.apache.atlas.repository.audit.EntityAuditRepository;
-import org.apache.atlas.repository.audit.HBaseBasedAuditRepository;
 import org.apache.atlas.repository.audit.InMemoryEntityAuditRepository;
 import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.repository.graph.GraphBackedMetadataRepository;
@@ -37,7 +36,6 @@ import org.apache.atlas.repository.graph.GraphProvider;
 import org.apache.atlas.repository.graphdb.AAGraph;
 import org.apache.atlas.repository.typestore.GraphBackedTypeStore;
 import org.apache.atlas.repository.typestore.ITypeStore;
-import org.apache.atlas.service.Service;
 import org.apache.atlas.services.DefaultMetadataService;
 import org.apache.atlas.services.IBootstrapTypesRegistrar;
 import org.apache.atlas.services.MetadataService;
@@ -88,9 +86,7 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
 
         bind(LineageService.class).to(HiveLineageService.class).asEagerSingleton();
 
-        bind(EntityAuditRepository.class).to(InMemoryEntityAuditRepository.class).asEagerSingleton();
-        //TODO: add mechanism to disable this, it does not seem to support berkeley db
-        //bindAuditRepository(binder());
+        bindAuditRepository(binder());
 
         //Add EntityAuditListener as EntityChangeListener
         Multibinder<EntityChangeListener> entityChangeListenerBinder =
@@ -103,11 +99,15 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
     }
 
     protected void bindAuditRepository(Binder binder) {
+        /** Enable this after ATLAS-498 is committed
         //Map EntityAuditRepository interface to hbase based implementation
         binder.bind(EntityAuditRepository.class).to(HBaseBasedAuditRepository.class).asEagerSingleton();
 
         //Add HBaseBasedAuditRepository to service so that connection is closed at shutdown
         Multibinder<Service> serviceBinder = Multibinder.newSetBinder(binder(), Service.class);
         serviceBinder.addBinding().to(HBaseBasedAuditRepository.class);
+         **/
+        //Map EntityAuditRepository interface to hbase based implementation
+        binder.bind(EntityAuditRepository.class).to(InMemoryEntityAuditRepository.class).asEagerSingleton();
     }
 }

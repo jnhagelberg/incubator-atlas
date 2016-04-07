@@ -254,8 +254,6 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         }
 
         try {
-            
-
             final String entityTypeName = GraphHelper.getTypeName(instanceVertex);
             String relationshipLabel = GraphHelper.getTraitLabel(entityTypeName, traitNameToBeDeleted);
             Iterator<AAEdge> results = instanceVertex.getEdges(AADirection.OUT, relationshipLabel).iterator();

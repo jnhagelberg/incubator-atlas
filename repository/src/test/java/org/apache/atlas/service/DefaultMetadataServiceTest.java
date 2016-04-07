@@ -104,7 +104,9 @@ public class DefaultMetadataServiceTest {
             HBaseTestUtils.startCluster();
             ((HBaseBasedAuditRepository) repository).start();
         }
-        RequestContext.createContext().setUser("testuser");
+        RequestContext.createContext();
+        RequestContext.get().setUser("testuser");
+
         TypesDef typesDef = TestUtils.defineHiveTypes();
         try {
             metadataService.getTypeDefinition(TestUtils.TABLE_TYPE);

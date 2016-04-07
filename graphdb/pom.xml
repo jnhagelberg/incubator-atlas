@@ -30,10 +30,21 @@
     <description>Apache Atlas Graph Database Projects</description>
     <name>Apache Atlas Graph Database Projects</name>
     <packaging>pom</packaging>
-
+    <profiles>
+        <profile>
+            <id>titan0</id>                      
+            <modules>
+                <module>titan0</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>titan1</id>
+            <modules>
+                <module>titan1</module>
+            </modules>
+        </profile>
+    </profiles>
     <modules>
         <module>api</module>
-        <module>titan0</module>
-        <module>titan1</module>
     </modules>
 </project>

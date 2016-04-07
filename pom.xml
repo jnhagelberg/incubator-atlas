@@ -421,21 +421,6 @@
                 <skipDocs>false</skipDocs>
             </properties>
         </profile>
-
-        <profile>
-            <id>titan0</id>                      
-            <modules>
-                <module>graphdb-titan0</module>
-            </modules>
-        </profile>
-
-        <profile>
-            <id>titan1</id>
-            <modules>
-                <module>graphdb-titan1</module>
-            </modules>
-        </profile>
-
     </profiles>
 
     <modules>
@@ -444,6 +429,7 @@
         <module>server-api</module>
         <module>notification</module>
         <module>client</module>
+	<module>graphdb</module>
         <module>repository</module>
         <module>dashboard</module>
         <module>webapp</module>
