@@ -221,6 +221,8 @@ object QueryTestsUtils extends GraphUtils {
             var importer = new JSONImporter(TypeSystem.getInstance(), json);
             importer.doImport(repo);
             g.commit();
+            //for debugging only!
+            g.shutdown();
         }
         else {
             var conf = getTitanConfiguration()

@@ -11,8 +11,13 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.atlas.AtlasException;
+import org.apache.atlas.discovery.graph.DefaultGraphPersistenceStrategy;
+import org.apache.atlas.query.QueryTestsUtils;
 import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.RepositoryException;
+import org.apache.atlas.repository.graph.AtlasGraphProvider;
+import org.apache.atlas.repository.graph.GraphBackedMetadataRepository;
+import org.apache.atlas.repository.graphdb.AAGraph;
 import org.apache.atlas.typesystem.IReferenceableInstance;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.Referenceable;
@@ -60,41 +65,9 @@ public class JSONImporter {
         //as children.  Any nodes with no referenced objects become part
         //of the initial set of leaf nodes.
         for(DependencyTreeNode node : instanceNodes_.values()) {
-            IReferenceableInstance inst = node.getInstance();
-            ClassType entityType = typeSystem.getDataType(ClassType.class, inst.getTypeName());
-            
-            for(Map.Entry<String,Object> valueMapEntry: inst.getValuesMap().entrySet()) {
-                String key = valueMapEntry.getKey();
-                Object value = valueMapEntry.getValue();
-                boolean isReference = isReference(entityType, key);
-                if(! isReference) {
-                    continue;
-                }
-                Collection<Object> referencedValues;
-                if(value instanceof Collection) {
-                    referencedValues = (Collection<Object>)value;
-                    
-                }
-                else {
-                    referencedValues = Collections.singleton(value);
-                }
-                
-                boolean hasReferences = false;
-                for(Object referencedValue : referencedValues) {
-                    if(referencedValue instanceof IReferenceableInstance) {
-                        hasReferences=true;
-                        IReferenceableInstance refdInst = (IReferenceableInstance)referencedValue;
-                        DependencyTreeNode refdNode = instanceNodes_.get(refdInst.getId().id);
-                        if(refdNode == null) {      
-                            throw new AtlasException(inst.getId() + " refers to the non existent entity " + refdInst.getId());
-                        }
-                        node.addChild(key, refdNode);
-                    }
-                    
-                }
-                if(! hasReferences) {
-                    leafNodes_.add(node);
-                }
+            findAndAddChildren(typeSystem, node);
+            if(node.isLeaf()) {
+                leafNodes_.add(node);
             }
         }
 
@@ -103,6 +76,41 @@ public class JSONImporter {
         for(DependencyTreeNode node : instanceNodes_.values()) {
             IReferenceableInstance inst = node.getInstance();
             ((ReferenceableInstance)inst).replaceWithNewId(new Id(inst.getTypeName()));
+        }
+    }
+
+
+    private void findAndAddChildren(TypeSystem typeSystem, DependencyTreeNode node) throws AtlasException {
+        IReferenceableInstance inst = node.getInstance();
+        ClassType entityType = typeSystem.getDataType(ClassType.class, inst.getTypeName());
+        
+        for(Map.Entry<String,Object> valueMapEntry: inst.getValuesMap().entrySet()) {
+            String key = valueMapEntry.getKey();
+            Object value = valueMapEntry.getValue();
+            boolean isReference = isReference(entityType, key);
+            if(! isReference) {
+                continue;
+            }
+            Collection<Object> referencedValues;
+            if(value instanceof Collection) {
+                referencedValues = (Collection<Object>)value;
+                
+            }
+            else {
+                referencedValues = Collections.singleton(value);
+            }                
+
+            for(Object referencedValue : referencedValues) {
+                if(referencedValue instanceof IReferenceableInstance) {
+                    IReferenceableInstance refdInst = (IReferenceableInstance)referencedValue;
+                    DependencyTreeNode refdNode = instanceNodes_.get(refdInst.getId().id);
+                    if(refdNode == null) {      
+                        throw new AtlasException(inst.getId() + " refers to the non existent entity " + refdInst.getId());
+                    }
+                    node.addChild(key, refdNode);
+                }
+                
+            }
         }
     }
 
@@ -214,5 +222,13 @@ public class JSONImporter {
     }
     
 
+    public static void main(String[] args) {
+        
+        QueryTestsUtils.setupTypes();
+        AtlasGraphProvider gProvider = new AtlasGraphProvider();
+        MetadataRepository repo = new GraphBackedMetadataRepository(gProvider);
+        DefaultGraphPersistenceStrategy gp = new DefaultGraphPersistenceStrategy(repo);
+        AAGraph<?,?> g = QueryTestsUtils.setupTestGraph(repo, gProvider);
+    }
 
 }

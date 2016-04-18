@@ -21,7 +21,7 @@ public class Titan1DatabaseManager implements GraphDatabaseManager {
     private TitanManagement management_;
     
     public Titan1DatabaseManager(TitanManagement managementSystem) {
-        management_ = managementSystem;
+        management_ = managementSystem;        
     }
 
     @Override

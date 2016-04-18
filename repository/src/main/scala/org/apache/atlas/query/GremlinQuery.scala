@@ -71,7 +71,7 @@ trait SelectExpressionHandling {
     /**
      * To aide in gremlinQuery generation add an alias to the input of SelectExpressions
      */
-    class GremlinAddAliasToSelectInput extends PartialFunction[Expression, Expression] {
+    class AddAliasToSelectInput extends PartialFunction[Expression, Expression] {
 
         private var idx = 0
 
@@ -95,80 +95,13 @@ trait SelectExpressionHandling {
             }
             case SelectExpression(child, selList) => {
                 idx = idx + 1
-                val aliasE = new AliasExpression(child, Seq[String](s"_src$idx"))
+                val aliasE = AliasExpression(child, s"_src$idx")
                 SelectExpression(aliasE, selList.map(_.transformUp(new DecorateFieldWithAlias(aliasE))))
             }
             case _ => e
         }
     }
     
-//    class Gremlin3AddAliasToSelectInput extends PartialFunction[Expression, Expression] {
-//
-//        private var idx = 0
-//
-//        def isDefinedAt(e: Expression) = true
-//
-//        class DecorateFieldWithAlias(aliasE: AliasExpression, aliasNameIndex : Integer)
-//            extends PartialFunction[Expression, Expression] {
-//            def isDefinedAt(e: Expression) = true
-//
-//            def apply(e: Expression) = e match {
-//                case fe@FieldExpression(fieldName, fInfo, None) =>
-//                    //use the first alias.  Any one will do, since they all refer to the expression
-//                    FieldExpression(fieldName, fInfo, Some(BackReference(aliasE.aliases(aliasNameIndex), aliasE.child, None)))
-//                case _ => e
-//            }
-//        }
-//
-//        def apply(e: Expression) = e match {
-//            case SelectExpression(aliasE@AliasExpression(aliasChild, aliases), selList) => {
-//                idx = idx + 1
-//                //make sure there are the right number of alias names in the Alias.  If not,
-//                //generate a new one
-//                var aliasEtoUse : AliasExpression = null
-//                if(aliases.size != selList.size) {
-//                    if(aliases.size > selList.size) {
-//                        //this should never happen, user provided aliases only have one alias name
-//                        throw new GremlinTranslationException(e, "Alias list is too long.  Alias list: " + aliases + ", selList: " + selList); 
-//                    }
-//                    //there are not enough alias names.  We need one for each element in the select list
-//                    //Add the additional ones that are needed.
-//                    var updatedAliasNames : ListBuffer[String] = new ListBuffer[String]();
-//                    updatedAliasNames.appendAll(aliases)
-//                    idx += aliases.size
-//                    for(i <- 1 to (selList.size - aliases.size)) {
-//                        idx = idx + 1
-//                        updatedAliasNames += s"_src$idx";
-//                    }
-//                    aliasEtoUse = new AliasExpression(aliasChild, updatedAliasNames)
-//                }
-//                else {
-//                    aliasEtoUse = aliasE
-//                    idx += aliases.size
-//                }
-//                
-//                import TraversableUtil._;   
-//                //use a different alias in each expression transformation to be consistent with the
-//                //gremlin semantics
-//                SelectExpression(aliasEtoUse, selList.map{doIndexed((i,expr) => expr.transformUp(new DecorateFieldWithAlias(aliasEtoUse,i)))})
-//            }
-//            case SelectExpression(child, selList) => {
-//                
-//                var aliases : ListBuffer[String] = new ListBuffer[String]();
-//                for (i <- 1 to selList.size) {
-//                    idx = idx + 1;
-//                    aliases += s"_src$idx";
-//                }
-//                val aliasE = new AliasExpression(child, aliases.seq)
-//                //use a different alias in each expression transformation to be consistent with the
-//                //gremlin semantics
-//                import TraversableUtil._; 
-//                SelectExpression(aliasE, selList.map{doIndexed((i,expr) => expr.transformUp(new DecorateFieldWithAlias(aliasE,i)))})
-//            }
-//            case _ => e
-//        }
-//    }
-
     def getSelectExpressionSrc(e: Expression): List[String] = {
         val l = ArrayBuffer[String]()
         e.traverseUp {
@@ -282,7 +215,7 @@ class GremlinTranslator(expr: Expression,
     def addAliasToLoopInput(c: IntSequence = counter): PartialFunction[Expression, Expression] = {
         case l@LoopExpression(aliasE@AliasExpression(_, _), _, _) => l
         case l@LoopExpression(inputExpr, loopExpr, t) => {
-            val aliasE = AliasExpression(inputExpr, Seq[String](s"_loop${c.next}"))
+            val aliasE = AliasExpression(inputExpr, s"_loop${c.next}")
             LoopExpression(aliasE, loopExpr, t)
         }
     }
@@ -316,7 +249,7 @@ class GremlinTranslator(expr: Expression,
         stats.last
     }       
 
-    protected def genQuery(expr: Expression, inSelect: Boolean): String = expr match {
+    private def genQuery(expr: Expression, inSelect: Boolean): String = expr match {
         case ClassExpression(clsName) =>
             typeTestExpression(clsName)
         case TraitExpression(clsName) =>
@@ -402,27 +335,26 @@ class GremlinTranslator(expr: Expression,
         }
         case sel@SelectExpression(child, selList) => {
               val m = groupSelectExpressionsBySrc(sel)
-              System.out.println("m = " + m);
-                var srcNamesList: List[String] = List()
-                var srcExprsList: List[List[String]] = List()
-                val it = m.iterator
-                while (it.hasNext) {
-                    val (src, selExprs) = it.next
-                    srcNamesList = srcNamesList :+ s""""$src""""
-                    srcExprsList = srcExprsList :+ selExprs.map { selExpr =>
-                        genQuery(selExpr, true)
-                    }
-                }
-                val srcExprsStringList = srcExprsList.map {
+              var srcNamesList: List[String] = List()
+              var srcExprsList: List[List[String]] = List()
+              val it = m.iterator
+              while (it.hasNext) {
+                  val (src, selExprs) = it.next
+                  srcNamesList = srcNamesList :+ s""""$src""""
+                  srcExprsList = srcExprsList :+ selExprs.map { selExpr =>
+                      genQuery(selExpr, true)
+                   }
+               }
+               val srcExprsStringList = srcExprsList.map {
                     _.mkString("[", ",", "]")
-                }
+               }
 
-                if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {               
+               if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {               
                     val srcNamesString = srcNamesList.mkString("[", ",", "]")
                     val srcExprsString = srcExprsStringList.foldLeft("")(_ + "{" + _ + "}")
                     s"${genQuery(child, inSelect)}.select($srcNamesString)$srcExprsString"
-                }
-                else {
+               }
+               else {
                     //gremlin 3
                     val srcNamesString = srcNamesList.mkString("", ",", "")
                     val srcExprsString = srcExprsStringList.foldLeft("")(_ + ".by{" + _ + "}")
@@ -465,7 +397,7 @@ class GremlinTranslator(expr: Expression,
                 }
             }
         }
-        case AliasExpression(child, alias) => s"""${genQuery(child, inSelect)}.as(${alias.map { x => s""""$x"""" }.mkString(",")})"""
+        case AliasExpression(child, alias) => s"""${genQuery(child, inSelect)}.as("$alias")"""
         case isTraitLeafExpression(traitName, Some(clsExp)) =>
             s"""out("${gPersistenceBehavior.traitLabel(clsExp.dataType, traitName)}")"""
         case isTraitUnaryExpression(traitName, child) =>
@@ -543,7 +475,7 @@ class GremlinTranslator(expr: Expression,
         var e1 = expr.transformUp(wrapAndRule)
 
         e1.traverseUp(validateComparisonForm)
-        e1 = e1.transformUp(new GremlinAddAliasToSelectInput)
+        e1 = e1.transformUp(new AddAliasToSelectInput)
         e1.traverseUp(validateSelectExprHaveOneSrc)
         e1 = e1.transformUp(addAliasToLoopInput())
         e1 = e1.transformUp(instanceClauseToTop(e1))

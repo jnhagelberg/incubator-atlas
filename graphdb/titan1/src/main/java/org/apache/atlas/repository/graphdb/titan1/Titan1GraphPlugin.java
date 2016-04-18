@@ -39,6 +39,9 @@ import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.thinkaurelius.titan.core.Cardinality;
+import com.thinkaurelius.titan.core.PropertyKey;
+import com.thinkaurelius.titan.core.RelationType;
 import com.thinkaurelius.titan.core.TitanFactory;
 import com.thinkaurelius.titan.core.TitanGraph;
 import com.thinkaurelius.titan.core.schema.TitanManagement;
@@ -104,6 +107,13 @@ public class Titan1GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
                     }
 
                     graphInstance = TitanFactory.open(config);
+                                        
+                    TitanManagement mgmt = graphInstance.openManagement();
+                    //todo: refactor to use Constants class.  need that to be in the classpath...
+                    createPropertyKeyIfNeeded("__traitNames", mgmt);
+                    createPropertyKeyIfNeeded("__superTypeNames", mgmt);
+
+                    mgmt.commit();
                     
                     validateIndexBackend(config);
                 }
@@ -111,6 +121,39 @@ public class Titan1GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
         }
         return graphInstance;
     }
+
+
+
+    private static boolean isRecreateKey(RelationType type) {
+        if(! type.isPropertyKey()) {
+            return true;
+        }
+        //check to make sure the property key is valid
+        PropertyKey pk = (PropertyKey)type;
+        if(pk.cardinality() != Cardinality.SET) {
+            return true;
+        }
+        if(pk.dataType() != String.class) {
+            return true;
+        }
+        return false;
+    }
+    
+    private static void createPropertyKeyIfNeeded(String name, TitanManagement mgmt) {
+        
+        boolean create = true;
+        if(mgmt.containsRelationType(name)) {
+            RelationType type = mgmt.getRelationType(name);
+            create = isRecreateKey(type);
+            if(create) {
+                type.remove();
+            }
+        }
+        if(create) {
+            mgmt.makePropertyKey(name).dataType(String.class).cardinality(Cardinality.SET).make();
+        }
+    }
+     
 
     public static void unload() {
         synchronized (Titan1GraphPlugin.class) {
@@ -145,6 +188,8 @@ public class Titan1GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
         
         //update registry
         GraphSONMapper.build().addRegistry(TitanIoRegistry.INSTANCE).create();
+        
+        
     }
 
     @Override

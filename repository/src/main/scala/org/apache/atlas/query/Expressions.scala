@@ -280,7 +280,7 @@ object Expressions {
 
         def `.`(fieldName: String) = field(fieldName)
 
-        def as(alias: String) = new AliasExpression(this, Seq[String](alias))
+        def as(alias: String) = new AliasExpression(this, alias)
 
         def arith(op: String)(rightExpr: Expression) = new ArithmeticExpression(op, this, rightExpr)
 
@@ -441,11 +441,10 @@ object Expressions {
         }
     }
 
-    case class AliasExpression(child: Expression, aliases: Seq[String]) extends Expression with UnaryNode {
-        
-        override def namedExpressions = child.namedExpressions ++ aliases.map { alias => alias ->child }
+    case class AliasExpression(child: Expression, alias: String) extends Expression with UnaryNode {
+        override def namedExpressions = child.namedExpressions + (alias -> child)
 
-        override def toString = s"$child as ${aliases.mkString("[",",","]")}"
+        override def toString = s"$child as $alias"
 
         lazy val dataType = {
             if (!resolved) {
@@ -453,13 +452,6 @@ object Expressions {
                     s"datatype. Can not resolve due to unresolved child")
             }
             child.dataType
-        }
-        
-        def alias = {
-            if(aliases.length > 1) {
-                throw new GremlinTranslationException(this, "This expression has multiple aliases");
-            }
-            aliases.head
         }
     }
        
@@ -689,7 +681,7 @@ object Expressions {
         val children = List(child) ::: selectList
         lazy val selectListWithAlias = selectList.zipWithIndex map {
             case (s: AliasExpression, _) => s
-            case (x, i) => new AliasExpression(x, Seq[String](s"${x}"))
+            case (x, i) => new AliasExpression(x, s"${x}")
         }
         
 

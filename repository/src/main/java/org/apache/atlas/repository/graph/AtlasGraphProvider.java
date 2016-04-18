@@ -21,10 +21,13 @@ public class AtlasGraphProvider implements GraphProvider<AAGraph> {
         
         if(graph_ == null) {
             try {
-                String implClassName = getPluginImplClass();
-                Class implClass = Thread.currentThread().getContextClassLoader().loadClass(implClassName);
-                plugin_ = (GraphProviderPlugin)implClass.newInstance();
-                plugin_.initialize();
+                if(plugin_ == null) {
+                    String implClassName = getPluginImplClass();
+                    
+                    Class implClass = Thread.currentThread().getContextClassLoader().loadClass(implClassName);
+                    plugin_ = (GraphProviderPlugin)implClass.newInstance();
+                    plugin_.initialize();
+            }
                 graph_ = plugin_.createGraph();
             }
             catch (ClassNotFoundException e) {

@@ -27,7 +27,7 @@ import org.testng.annotations.{Test,BeforeClass,AfterClass}
 import java.net.URL
 import org.apache.atlas.typesystem.json.TypesSerialization
 import org.apache.atlas.typesystem.json.InstanceSerialization
-import javax.crypto.e
+//import javax.crypto.e
 import org.apache.atlas.utils.ParamChecker
 import org.apache.atlas.typesystem.persistence.ReferenceableInstance
 import org.apache.atlas.typesystem.types.ValueConversionException
@@ -38,9 +38,9 @@ import org.apache.commons.io.FileUtils
 import org.codehaus.jettison.json.JSONArray
 import org.apache.atlas.typesystem.types.ClassType
 import org.apache.atlas.typesystem.types.Multiplicity
-import javax.crypto.e
+//import javax.crypto.e
 import scala.collection.mutable.ListBuffer
-import javax.crypto.e
+//import javax.crypto.e
 import org.apache.atlas.typesystem.Referenceable
 import org.apache.atlas.services.JSONImporter
 
