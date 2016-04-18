@@ -113,8 +113,13 @@ public class Titan0GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
         return graphInstance;
     }
 
-    public static void clear() {
+    public static void unload() {
+    	
         synchronized (Titan0GraphPlugin.class) {
+        	if(graphInstance == null) {
+        		return;
+        	}
+        	
             graphInstance.shutdown();
             graphInstance = null;
         }
@@ -123,7 +128,7 @@ public class Titan0GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
     static void validateIndexBackend(Configuration config) {
         String configuredIndexBackend = config.getString(INDEX_BACKEND_CONF);
 
-        TitanManagement managementSystem = graphInstance.getManagementSystem();
+        TitanManagement managementSystem = getGraphInstance().getManagementSystem();
         String currentIndexBackend = managementSystem.get(INDEX_BACKEND_CONF);
         managementSystem.commit();
         
@@ -149,12 +154,14 @@ public class Titan0GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
 
     @Override
     public AAGraph<Vertex, Edge> createGraph() {
-       return new Titan0Graph(getGraphInstance());
+       //force graph loading now to try to debug issue
+       getGraphInstance();
+       return new Titan0Graph();
     }
 
     @Override
     public void unloadGraph() { 
-        clear();
+        unload();
     }
     
 

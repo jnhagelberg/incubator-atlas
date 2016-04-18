@@ -35,7 +35,7 @@ public class TitanGraphProviderTest {
    @BeforeTest
    public void setUp() throws AtlasException {
        //First get Instance
-       graph = new Titan0Graph(Titan0GraphPlugin.getGraphInstance());
+       graph = new Titan0Graph();
        configuration = ApplicationProperties.getSubsetConfiguration(ApplicationProperties.get(), Titan0GraphPlugin.GRAPH_PREFIX);
    }
 
