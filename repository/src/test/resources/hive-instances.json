@@ -1,0 +1,1073 @@
+[{
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "0be280c8-3a14-4df4-b4fa-7e2977ff8908",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "e5b77576-f3ee-4d46-8379-fc963d143ba5",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "time_id",
+            "dataType": "int"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "c0d62422-61b8-46b4-8720-117aeefb0990",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "e5b77576-f3ee-4d46-8379-fc963d143ba5",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "product_id",
+            "dataType": "int"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "c023cd4f-8aac-441d-8e5e-c3ae9035072e",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "e5b77576-f3ee-4d46-8379-fc963d143ba5",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "customer_id",
+            "dataType": "int"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "34316d85-33ad-46a7-a328-35d8e0905eaa",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "e5b77576-f3ee-4d46-8379-fc963d143ba5",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "created",
+            "dataType": "date"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "aca7fd43-a779-4489-855a-3df068126d60",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "e5b77576-f3ee-4d46-8379-fc963d143ba5",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "sales",
+            "dataType": "double"
+        },
+        "traitNames": [
+            "Metric"
+        ],
+        "traits": {
+            "Metric": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Struct",
+                "typeName": "Metric",
+                "values": {
+
+                }
+            }
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "92dc9840-f25d-4300-8c83-cc58f8254eea",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "c96eb5b6-07a4-4c93-a93f-016b2c9d4bca",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "product_id",
+            "dataType": "int"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "b50bb77f-3ea8-42b6-916f-7aaeb0b31944",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "c96eb5b6-07a4-4c93-a93f-016b2c9d4bca",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "product_name",
+            "dataType": "string"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "47244cf6-aa2f-4aac-9b82-7729e8c659de",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "c96eb5b6-07a4-4c93-a93f-016b2c9d4bca",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "brand_name",
+            "dataType": "string"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "a507de62-31e3-45d6-ac15-6af6da7e4295",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "c281e95d-b5fb-400f-addd-d2680f0a5050",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "time_id",
+            "dataType": "int"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "c182fb7d-511d-4a10-a439-a26d5a4f0f15",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "c281e95d-b5fb-400f-addd-d2680f0a5050",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "dayOfYear",
+            "dataType": "int"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "71d61c54-6108-4eb8-8e5b-a8336a44f4b3",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "c281e95d-b5fb-400f-addd-d2680f0a5050",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "weekDay",
+            "dataType": "string"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "2cb1ae1b-c354-45c3-b67d-ca17f44e5d77",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "67d355ce-28f0-45ce-bab8-cbb067f9b7c3",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "customer_id",
+            "dataType": "int"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "56f4e028-1552-48ab-9d27-1d296dc148a7",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "67d355ce-28f0-45ce-bab8-cbb067f9b7c3",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "name",
+            "dataType": "int"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "8db885bf-8b6c-443d-871d-83ed09506598",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "67d355ce-28f0-45ce-bab8-cbb067f9b7c3",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "address",
+            "dataType": "string"
+        },
+        "traitNames": [
+            "PII"
+        ],
+        "traits": {
+            "PII": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Struct",
+                "typeName": "PII",
+                "values": {
+
+                }
+            }
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "72d8527c-fd65-40e2-9af2-828c308215c3",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "7152303b-d083-4e5e-9da5-e3334eec508a",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "time_id",
+            "dataType": "int"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "080e45e2-cc3d-477e-b154-78d7e9b5b10c",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "7152303b-d083-4e5e-9da5-e3334eec508a",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "product_id",
+            "dataType": "int"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "51ab1884-9648-4bb9-9bd7-d57d885c5b46",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "7152303b-d083-4e5e-9da5-e3334eec508a",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "customer_id",
+            "dataType": "int"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "f4a4029b-60bb-4edb-927e-6fca721b926c",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "7152303b-d083-4e5e-9da5-e3334eec508a",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "sales",
+            "dataType": "double"
+        },
+        "traitNames": [
+            "Metric"
+        ],
+        "traits": {
+            "Metric": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Struct",
+                "typeName": "Metric",
+                "values": {
+
+                }
+            }
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "d98129f4-6165-499d-90cf-dbb5596ac122",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "8352740c-b3ce-4aba-9045-5aca1bd1b28f",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "time_id",
+            "dataType": "int"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "4e45f302-94f2-4527-8928-67c8c4230f15",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "8352740c-b3ce-4aba-9045-5aca1bd1b28f",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "product_id",
+            "dataType": "int"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "7425ea5a-9776-4d01-b0b4-cfcb082baa31",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "8352740c-b3ce-4aba-9045-5aca1bd1b28f",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "customer_id",
+            "dataType": "int"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "516e0e0b-10e1-457e-8e58-bcf2dfa59d32",
+            "version": 0,
+            "typeName": "Column"
+        },
+        "typeName": "Column",
+        "values": {
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "8352740c-b3ce-4aba-9045-5aca1bd1b28f",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "name": "sales",
+            "dataType": "double"
+        },
+        "traitNames": [
+            "Metric"
+        ],
+        "traits": {
+            "Metric": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Struct",
+                "typeName": "Metric",
+                "values": {
+
+                }
+            }
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "2305771c-6f8b-40be-a217-465598dfa1fa",
+            "version": 0,
+            "typeName": "Partition"
+        },
+        "typeName": "Partition",
+        "values": {
+            "values": [
+                "2015-01-01"
+            ],
+            "table": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "d5c3d6d0-aa10-44c1-b05d-ed9400d2a5ac",
+                "version": 0,
+                "typeName": "Table"
+            }
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "bacfa996-e88e-4d7e-9630-68c9829b10b4",
+            "version": 0,
+            "typeName": "Table"
+        },
+        "typeName": "Table",
+        "values": {
+            "created": "2014-12-11T02:35:58.440Z",
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "e5b77576-f3ee-4d46-8379-fc963d143ba5",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "db": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "250004ed-c443-4db1-94fe-18b01b54d0ab",
+                "version": 0,
+                "typeName": "DB"
+            },
+            "name": "sales_fact"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "150e81bd-60e6-4bc5-b5c3-d4ed5d3d09a8",
+            "version": 0,
+            "typeName": "Table"
+        },
+        "typeName": "Table",
+        "values": {
+            "created": "2014-12-11T02:35:58.440Z",
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "c96eb5b6-07a4-4c93-a93f-016b2c9d4bca",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "db": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "250004ed-c443-4db1-94fe-18b01b54d0ab",
+                "version": 0,
+                "typeName": "DB"
+            },
+            "name": "product_dim"
+        },
+        "traitNames": [
+            "Dimension"
+        ],
+        "traits": {
+            "Dimension": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Struct",
+                "typeName": "Dimension",
+                "values": {
+
+                }
+            }
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "6da06805-3f56-446f-8831-672a65ac2199",
+            "version": 0,
+            "typeName": "Table"
+        },
+        "typeName": "Table",
+        "values": {
+            "created": "2014-12-11T02:35:58.440Z",
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "c281e95d-b5fb-400f-addd-d2680f0a5050",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "db": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "250004ed-c443-4db1-94fe-18b01b54d0ab",
+                "version": 0,
+                "typeName": "DB"
+            },
+            "name": "time_dim"
+        },
+        "traitNames": [
+            "Dimension"
+        ],
+        "traits": {
+            "Dimension": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Struct",
+                "typeName": "Dimension",
+                "values": {
+
+                }
+            }
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "fadaab04-079b-4e2a-87ba-3a02d84f0ca3",
+            "version": 0,
+            "typeName": "Table"
+        },
+        "typeName": "Table",
+        "values": {
+            "created": "2014-12-11T02:35:58.440Z",
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "67d355ce-28f0-45ce-bab8-cbb067f9b7c3",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "db": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "250004ed-c443-4db1-94fe-18b01b54d0ab",
+                "version": 0,
+                "typeName": "DB"
+            },
+            "name": "customer_dim"
+        },
+        "traitNames": [
+            "Dimension"
+        ],
+        "traits": {
+            "Dimension": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Struct",
+                "typeName": "Dimension",
+                "values": {
+
+                }
+            }
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "d5c3d6d0-aa10-44c1-b05d-ed9400d2a5ac",
+            "version": 0,
+            "typeName": "Table"
+        },
+        "typeName": "Table",
+        "values": {
+            "created": "2014-12-11T02:35:58.440Z",
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "7152303b-d083-4e5e-9da5-e3334eec508a",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "db": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "a49577b8-1c5d-4d17-913a-47b9b23d39b8",
+                "version": 0,
+                "typeName": "DB"
+            },
+            "name": "sales_fact_daily_mv"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "20bd6a60-722b-4fbb-830f-24070758be1c",
+            "version": 0,
+            "typeName": "Table"
+        },
+        "typeName": "Table",
+        "values": {
+            "created": "2014-12-11T02:35:58.440Z",
+            "sd": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "8352740c-b3ce-4aba-9045-5aca1bd1b28f",
+                "version": 0,
+                "typeName": "StorageDescriptor"
+            },
+            "db": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "a49577b8-1c5d-4d17-913a-47b9b23d39b8",
+                "version": 0,
+                "typeName": "DB"
+            },
+            "name": "sales_fact_monthly_mv"
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "6765f7c6-cc11-4575-8c13-8bab9b3d86a2",
+            "version": 0,
+            "typeName": "LoadProcess"
+        },
+        "typeName": "LoadProcess",
+        "values": {
+            "inputTables": null,
+            "outputTable": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "d5c3d6d0-aa10-44c1-b05d-ed9400d2a5ac",
+                "version": 0,
+                "typeName": "Table"
+            },
+            "name": "loadSalesDaily"
+        },
+        "traitNames": [
+            "ETL"
+        ],
+        "traits": {
+            "ETL": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Struct",
+                "typeName": "ETL",
+                "values": {
+
+                }
+            }
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "ccc9282b-1339-4088-b1cb-5c05b941cb98",
+            "version": 0,
+            "typeName": "LoadProcess"
+        },
+        "typeName": "LoadProcess",
+        "values": {
+            "inputTables": null,
+            "outputTable": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "20bd6a60-722b-4fbb-830f-24070758be1c",
+                "version": 0,
+                "typeName": "Table"
+            },
+            "name": "loadSalesMonthly"
+        },
+        "traitNames": [
+            "ETL"
+        ],
+        "traits": {
+            "ETL": {
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Struct",
+                "typeName": "ETL",
+                "values": {
+
+                }
+            }
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "250004ed-c443-4db1-94fe-18b01b54d0ab",
+            "version": 0,
+            "typeName": "DB"
+        },
+        "typeName": "DB",
+        "values": {
+            "owner": "John ETL",
+            "name": "Sales",
+            "clusterName": "test",
+            "createTime": 1000
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "a49577b8-1c5d-4d17-913a-47b9b23d39b8",
+            "version": 0,
+            "typeName": "DB"
+        },
+        "typeName": "DB",
+        "values": {
+            "owner": "Jane BI",
+            "name": "Reporting",
+            "clusterName": "test",
+            "createTime": 1500
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "67d355ce-28f0-45ce-bab8-cbb067f9b7c3",
+            "version": 0,
+            "typeName": "StorageDescriptor"
+        },
+        "typeName": "StorageDescriptor",
+        "values": {
+            "inputFormat": "TextInputFormat",
+            "outputFormat": "TextOutputFormat",
+            "sortCols": [{
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Struct",
+                "typeName": "HiveOrder",
+                "values": {
+                    "col": "customer_id",
+                    "order": 0
+                }
+            }]
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "7152303b-d083-4e5e-9da5-e3334eec508a",
+            "version": 0,
+            "typeName": "StorageDescriptor"
+        },
+        "typeName": "StorageDescriptor",
+        "values": {
+            "inputFormat": "TextInputFormat",
+            "outputFormat": "TextOutputFormat",
+            "sortCols": [{
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Struct",
+                "typeName": "HiveOrder",
+                "values": {
+                    "col": "customer_id",
+                    "order": 0
+                }
+            }]
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "8352740c-b3ce-4aba-9045-5aca1bd1b28f",
+            "version": 0,
+            "typeName": "StorageDescriptor"
+        },
+        "typeName": "StorageDescriptor",
+        "values": {
+            "inputFormat": "TextInputFormat",
+            "outputFormat": "TextOutputFormat",
+            "sortCols": [{
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Struct",
+                "typeName": "HiveOrder",
+                "values": {
+                    "col": "customer_id",
+                    "order": 0
+                }
+            }]
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "e5b77576-f3ee-4d46-8379-fc963d143ba5",
+            "version": 0,
+            "typeName": "StorageDescriptor"
+        },
+        "typeName": "StorageDescriptor",
+        "values": {
+            "inputFormat": "TextInputFormat",
+            "outputFormat": "TextOutputFormat",
+            "sortCols": [{
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Struct",
+                "typeName": "HiveOrder",
+                "values": {
+                    "col": "customer_id",
+                    "order": 0
+                }
+            }]
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "c96eb5b6-07a4-4c93-a93f-016b2c9d4bca",
+            "version": 0,
+            "typeName": "StorageDescriptor"
+        },
+        "typeName": "StorageDescriptor",
+        "values": {
+            "inputFormat": "TextInputFormat",
+            "outputFormat": "TextOutputFormat",
+            "sortCols": [{
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Struct",
+                "typeName": "HiveOrder",
+                "values": {
+                    "col": "product_id",
+                    "order": 0
+                }
+            }]
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }, {
+        "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Reference",
+        "id": {
+            "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+            "id": "c281e95d-b5fb-400f-addd-d2680f0a5050",
+            "version": 0,
+            "typeName": "StorageDescriptor"
+        },
+        "typeName": "StorageDescriptor",
+        "values": {
+            "inputFormat": "TextInputFormat",
+            "outputFormat": "TextOutputFormat",
+            "sortCols": [{
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Struct",
+                "typeName": "HiveOrder",
+                "values": {
+                    "col": "time_id",
+                    "order": 0
+                }
+            }]
+        },
+        "traitNames": [
+
+        ],
+        "traits": {
+
+        }
+    }
+
+]

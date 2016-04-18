@@ -18,16 +18,45 @@
 
 package org.apache.atlas.query
 
-import org.apache.atlas.query.Expressions._
-import org.apache.atlas.typesystem.types.{TypeSystem, DataTypes}
-import org.apache.atlas.typesystem.types.DataTypes.TypeCategory
-import org.joda.time.format.ISODateTimeFormat
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.ListBuffer
+
+import org.apache.atlas.query.Expressions.AliasExpression
+import org.apache.atlas.query.Expressions.ArithmeticExpression
+import org.apache.atlas.query.Expressions.BackReference
+import org.apache.atlas.query.Expressions.ClassExpression
+import org.apache.atlas.query.Expressions.ComparisonExpression
+import org.apache.atlas.query.Expressions.Expression
+import org.apache.atlas.query.Expressions.ExpressionException
+import org.apache.atlas.query.Expressions.FieldExpression
+import org.apache.atlas.query.Expressions.FilterExpression
+import org.apache.atlas.query.Expressions.InstanceExpression
+import org.apache.atlas.query.Expressions.ListLiteral
+import org.apache.atlas.query.Expressions.Literal
+import org.apache.atlas.query.Expressions.LogicalExpression
+import org.apache.atlas.query.Expressions.LoopExpression
+import org.apache.atlas.query.Expressions.PathExpression
+import org.apache.atlas.query.Expressions.SelectExpression
+import org.apache.atlas.query.Expressions.TraitExpression
+import org.apache.atlas.query.Expressions.TraitInstanceExpression
+import org.apache.atlas.query.Expressions.hasFieldLeafExpression
+import org.apache.atlas.query.Expressions.hasFieldUnaryExpression
+import org.apache.atlas.query.Expressions.id
+import org.apache.atlas.query.Expressions.isTraitLeafExpression
+import org.apache.atlas.query.Expressions.isTraitUnaryExpression
 import org.apache.atlas.repository.graphdb.GremlinVersion
+import org.apache.atlas.typesystem.types.DataTypes
+import org.apache.atlas.typesystem.types.DataTypes.TypeCategory
+import org.apache.atlas.typesystem.types.TypeSystem
+import org.joda.time.format.ISODateTimeFormat
 
 trait IntSequence {
     def next: Int
+}
+
+case class SelectContext(selectChild: Expression) {
+    
 }
 
 case class GremlinQuery(expr: Expression, queryStr: String, resultMaping: Map[String, (String, Int)]) {
@@ -42,7 +71,7 @@ trait SelectExpressionHandling {
     /**
      * To aide in gremlinQuery generation add an alias to the input of SelectExpressions
      */
-    class AddAliasToSelectInput extends PartialFunction[Expression, Expression] {
+    class GremlinAddAliasToSelectInput extends PartialFunction[Expression, Expression] {
 
         private var idx = 0
 
@@ -66,12 +95,79 @@ trait SelectExpressionHandling {
             }
             case SelectExpression(child, selList) => {
                 idx = idx + 1
-                val aliasE = AliasExpression(child, s"_src$idx")
+                val aliasE = new AliasExpression(child, Seq[String](s"_src$idx"))
                 SelectExpression(aliasE, selList.map(_.transformUp(new DecorateFieldWithAlias(aliasE))))
             }
             case _ => e
         }
     }
+    
+//    class Gremlin3AddAliasToSelectInput extends PartialFunction[Expression, Expression] {
+//
+//        private var idx = 0
+//
+//        def isDefinedAt(e: Expression) = true
+//
+//        class DecorateFieldWithAlias(aliasE: AliasExpression, aliasNameIndex : Integer)
+//            extends PartialFunction[Expression, Expression] {
+//            def isDefinedAt(e: Expression) = true
+//
+//            def apply(e: Expression) = e match {
+//                case fe@FieldExpression(fieldName, fInfo, None) =>
+//                    //use the first alias.  Any one will do, since they all refer to the expression
+//                    FieldExpression(fieldName, fInfo, Some(BackReference(aliasE.aliases(aliasNameIndex), aliasE.child, None)))
+//                case _ => e
+//            }
+//        }
+//
+//        def apply(e: Expression) = e match {
+//            case SelectExpression(aliasE@AliasExpression(aliasChild, aliases), selList) => {
+//                idx = idx + 1
+//                //make sure there are the right number of alias names in the Alias.  If not,
+//                //generate a new one
+//                var aliasEtoUse : AliasExpression = null
+//                if(aliases.size != selList.size) {
+//                    if(aliases.size > selList.size) {
+//                        //this should never happen, user provided aliases only have one alias name
+//                        throw new GremlinTranslationException(e, "Alias list is too long.  Alias list: " + aliases + ", selList: " + selList); 
+//                    }
+//                    //there are not enough alias names.  We need one for each element in the select list
+//                    //Add the additional ones that are needed.
+//                    var updatedAliasNames : ListBuffer[String] = new ListBuffer[String]();
+//                    updatedAliasNames.appendAll(aliases)
+//                    idx += aliases.size
+//                    for(i <- 1 to (selList.size - aliases.size)) {
+//                        idx = idx + 1
+//                        updatedAliasNames += s"_src$idx";
+//                    }
+//                    aliasEtoUse = new AliasExpression(aliasChild, updatedAliasNames)
+//                }
+//                else {
+//                    aliasEtoUse = aliasE
+//                    idx += aliases.size
+//                }
+//                
+//                import TraversableUtil._;   
+//                //use a different alias in each expression transformation to be consistent with the
+//                //gremlin semantics
+//                SelectExpression(aliasEtoUse, selList.map{doIndexed((i,expr) => expr.transformUp(new DecorateFieldWithAlias(aliasEtoUse,i)))})
+//            }
+//            case SelectExpression(child, selList) => {
+//                
+//                var aliases : ListBuffer[String] = new ListBuffer[String]();
+//                for (i <- 1 to selList.size) {
+//                    idx = idx + 1;
+//                    aliases += s"_src$idx";
+//                }
+//                val aliasE = new AliasExpression(child, aliases.seq)
+//                //use a different alias in each expression transformation to be consistent with the
+//                //gremlin semantics
+//                import TraversableUtil._; 
+//                SelectExpression(aliasE, selList.map{doIndexed((i,expr) => expr.transformUp(new DecorateFieldWithAlias(aliasE,i)))})
+//            }
+//            case _ => e
+//        }
+//    }
 
     def getSelectExpressionSrc(e: Expression): List[String] = {
         val l = ArrayBuffer[String]()
@@ -81,6 +177,8 @@ trait SelectExpressionHandling {
         }
         l.toSet.toList
     }
+    
+    
 
     def validateSelectExprHaveOneSrc: PartialFunction[Expression, Unit] = {
         case SelectExpression(_, selList) => {
@@ -125,6 +223,22 @@ trait SelectExpressionHandling {
 
 }
 
+object TraversableUtil {
+    class IndexMemorizingFunction[A, B](f: (Int, A) => B) extends Function1[A, B] {
+        private var index = 0
+        override def apply(a: A): B = {
+            val ret = f(index, a)
+            index += 1
+            ret
+        }
+    }
+
+    def doIndexed[A, B](f: (Int, A) => B): A => B = {
+        new IndexMemorizingFunction(f)
+    }
+}
+
+
 class GremlinTranslationException(expr: Expression, reason: String) extends
 ExpressionException(expr, s"Unsupported Gremlin translation: $reason")
 
@@ -168,7 +282,7 @@ class GremlinTranslator(expr: Expression,
     def addAliasToLoopInput(c: IntSequence = counter): PartialFunction[Expression, Expression] = {
         case l@LoopExpression(aliasE@AliasExpression(_, _), _, _) => l
         case l@LoopExpression(inputExpr, loopExpr, t) => {
-            val aliasE = AliasExpression(inputExpr, s"_loop${c.next}")
+            val aliasE = AliasExpression(inputExpr, Seq[String](s"_loop${c.next}"))
             LoopExpression(aliasE, loopExpr, t)
         }
     }
@@ -200,7 +314,7 @@ class GremlinTranslator(expr: Expression,
         val stats = gPersistenceBehavior.typeTestExpression(typeName, counter)
         preStatements ++= stats.init
         stats.last
-    }
+    }       
 
     protected def genQuery(expr: Expression, inSelect: Boolean): String = expr match {
         case ClassExpression(clsName) =>
@@ -266,18 +380,21 @@ class GremlinTranslator(expr: Expression,
         }
         case l@LogicalExpression(symb, children) => {
             if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.THREE) {
-                    if(children.length == 1) {
-                        //gremlin 3 treats one element expressions as 'false'.  Avoid
-                        //creating a boolean expression in this case.  Inline the expression
-                        //note: we can't simply omit it, since it will cause us to traverse the edge!
-                        //use 'where' instead
-                        var child : Expression = children.head;
-                        return s"""where(${genQuery(child, inSelect)})""";
-                    }
-                    else {
-                        // Gremlin 3 does not support _() syntax
-                       return s"""$symb${children.map( genQuery(_, inSelect)).mkString("(", ",", ")")}"""
-                    }
+                if(children.length == 1) {
+                    //gremlin 3 treats one element expressions as 'false'.  Avoid
+                    //creating a boolean expression in this case.  Inline the expression
+                    //note: we can't simply omit it, since it will cause us to traverse the edge!
+                    //use 'where' instead
+                    var child : Expression = children.head;
+                    //if child is a back expression, that expression becomes an argument to where
+                    
+                    return s"""where(${genQuery(child, inSelect)})""";
+                }
+                else {
+                    // Gremlin 3 does not support _() syntax
+                    //
+                   return s"""$symb${children.map( genQuery(_, inSelect)).mkString("(", ",", ")")}"""
+                }
            }
            else {          
                 s"""$symb${children.map("_()." + genQuery(_, inSelect)).mkString("(", ",", ")")}"""
@@ -285,6 +402,7 @@ class GremlinTranslator(expr: Expression,
         }
         case sel@SelectExpression(child, selList) => {
               val m = groupSelectExpressionsBySrc(sel)
+              System.out.println("m = " + m);
                 var srcNamesList: List[String] = List()
                 var srcExprsList: List[List[String]] = List()
                 val it = m.iterator
@@ -295,24 +413,24 @@ class GremlinTranslator(expr: Expression,
                         genQuery(selExpr, true)
                     }
                 }
+                val srcExprsStringList = srcExprsList.map {
+                    _.mkString("[", ",", "]")
+                }
+
                 if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {               
                     val srcNamesString = srcNamesList.mkString("[", ",", "]")
-                    val srcExprsStringList = srcExprsList.map {
-                        _.mkString("[", ",", "]")
-                    }
                     val srcExprsString = srcExprsStringList.foldLeft("")(_ + "{" + _ + "}")
                     s"${genQuery(child, inSelect)}.select($srcNamesString)$srcExprsString"
                 }
                 else {
                     //gremlin 3
-              
                     val srcNamesString = srcNamesList.mkString("", ",", "")
-                    val srcExprsStringList = srcExprsList.map {
-                        _.mkString("", ",", "") //not sure how there could be multiple source expressions for a variable...
-                    }
-                    val srcExprsString = srcExprsStringList.foldLeft("")(_ + ".by(" + _ + ")")
+                    val srcExprsString = srcExprsStringList.foldLeft("")(_ + ".by{" + _ + "}")
+                    System.out.println("srcNamesList: " + srcNamesList);
+                    System.out.println("srcExprsList: " + srcExprsList);
+
                     s"${genQuery(child, inSelect)}.select($srcNamesString)$srcExprsString"
-            }
+               }
         }
         case loop@LoopExpression(input, loopExpr, t) => {
             
@@ -334,9 +452,20 @@ class GremlinTranslator(expr: Expression,
                 
             }
         }
-        case BackReference(alias, _, _) =>
-            if (inSelect) gPersistenceBehavior.fieldPrefixInSelect() else s"""back("$alias")"""
-        case AliasExpression(child, alias) => s"""${genQuery(child, inSelect)}.as("$alias")"""
+        case BackReference(alias, _, _) => {
+         
+            if (inSelect) { 
+                gPersistenceBehavior.fieldPrefixInSelect()
+            } else {
+                if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
+                    s"""back("$alias")"""
+                }
+                else {
+                    s"""select("$alias")"""
+                }
+            }
+        }
+        case AliasExpression(child, alias) => s"""${genQuery(child, inSelect)}.as(${alias.map { x => s""""$x"""" }.mkString(",")})"""
         case isTraitLeafExpression(traitName, Some(clsExp)) =>
             s"""out("${gPersistenceBehavior.traitLabel(clsExp.dataType, traitName)}")"""
         case isTraitUnaryExpression(traitName, child) =>
@@ -371,7 +500,7 @@ class GremlinTranslator(expr: Expression,
             }
         }
         case x => throw new GremlinTranslationException(x, "expression not yet supported")
-    }
+    }    
     
     def genHasPredicate(fieldGremlinExpr: String, c: ComparisonExpression, expr2: Any) : String = {
             
@@ -381,7 +510,7 @@ class GremlinTranslator(expr: Expression,
             else {
                 return s"""has("${fieldGremlinExpr}", ${gPersistenceBehavior.gremlinCompOp(c)}($expr2))""";
             }
-        }
+    }
     
     def genFullQuery(expr: Expression): String = {
         var q = genQuery(expr, false)
@@ -390,7 +519,17 @@ class GremlinTranslator(expr: Expression,
             q = s"g.V.$q"
         }
         
-        q = s"$q.toList()"
+        if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.THREE) {
+            q = expr match {
+                // pure select expression generates a HashMap if there is one result and there are multiple output columns.  This is not compatible with List.
+                case e1: SelectExpression =>  s"$q.toList()"
+                case pe@PathExpression(se@SelectExpression(_, _)) => s"$q.toList()"
+                case e1 => s"$q.toList()"
+            }        
+        }
+        else {
+            q = s"$q.toList()"
+        }
       
         q = (preStatements ++ Seq(q) ++ postStatements).mkString("", ";", "")
         /*
@@ -404,8 +543,7 @@ class GremlinTranslator(expr: Expression,
         var e1 = expr.transformUp(wrapAndRule)
 
         e1.traverseUp(validateComparisonForm)
-
-        e1 = e1.transformUp(new AddAliasToSelectInput)
+        e1 = e1.transformUp(new GremlinAddAliasToSelectInput)
         e1.traverseUp(validateSelectExprHaveOneSrc)
         e1 = e1.transformUp(addAliasToLoopInput())
         e1 = e1.transformUp(instanceClauseToTop(e1))

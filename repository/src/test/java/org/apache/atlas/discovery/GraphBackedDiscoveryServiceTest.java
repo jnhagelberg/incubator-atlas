@@ -25,6 +25,8 @@ import org.apache.atlas.TestUtils;
 import org.apache.atlas.discovery.graph.GraphBackedDiscoveryService;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.MetadataRepository;
+import org.apache.atlas.repository.graph.AtlasGraphProvider;
+import org.apache.atlas.repository.graphdb.GremlinVersion;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.Referenceable;
 import org.apache.atlas.typesystem.persistence.Id;
@@ -119,6 +121,19 @@ public class GraphBackedDiscoveryServiceTest extends BaseHiveRepositoryTest {
         Assert.fail();
     }
 
+    private String getPropertySyntax(String var, String property) {
+            if(isGremlin3()) {
+                //in gremlin 3, if we just get the value, an exception is thrown if the property
+                //is not present.  We need to include an additional condition to check whether the property
+                //exists.
+                return String.format("%s.get().property('%s').isPresent() && %s.get().value('%s')",var,property,var,property);
+            }
+            else {
+                return String.format("%s.%s",var,property); 
+            }
+           
+    }
+    
     @Test
     public void testRawSearch1() throws Exception {
         // Query for all Vertices in Graph
@@ -127,16 +142,16 @@ public class GraphBackedDiscoveryServiceTest extends BaseHiveRepositoryTest {
         List<Map<String, Object>> resultList = (List<Map<String, Object>>) r;
         Assert.assertTrue(resultList.size() > 0);
         System.out.println("search result = " + r);
-
+        
         // Query for all Vertices of a Type
-        r = discoveryService.searchByGremlin("g.V.filter{it." + Constants.ENTITY_TYPE_PROPERTY_KEY + " == 'Department'}.toList()");
+        r = discoveryService.searchByGremlin("g.V.filter{" + getPropertySyntax("it", Constants.ENTITY_TYPE_PROPERTY_KEY) + " == 'Department'}.toList()");
         Assert.assertTrue(r instanceof List);
         resultList = (List<Map<String, Object>>) r;
         Assert.assertTrue(resultList.size() > 0);
         System.out.println("search result = " + r);
 
         // Property Query: list all Person names
-        r = discoveryService.searchByGremlin("g.V.filter{it." + Constants.ENTITY_TYPE_PROPERTY_KEY + " == 'Person'}.'Person.name'.toList()");
+        r = discoveryService.searchByGremlin("g.V.filter{" + getPropertySyntax("it", Constants.ENTITY_TYPE_PROPERTY_KEY) + " == 'Person'}.'Person.name'.toList()");
         Assert.assertTrue(r instanceof List);
         resultList = (List<Map<String, Object>>) r;
         Assert.assertTrue(resultList.size() > 0);
@@ -150,7 +165,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseHiveRepositoryTest {
         }
         
         // Query for all Vertices modified after 01/01/2015 00:00:00 GMT
-        r = discoveryService.searchByGremlin("g.V.filter{it." + Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY + " > 1420070400000}.toList()");
+        r = discoveryService.searchByGremlin("g.V.filter{" + getPropertySyntax("it", Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY) + " > 1420070400000}.toList()");
         Assert.assertTrue(r instanceof List);
         resultList = (List<Map<String, Object>>) r;
         Assert.assertTrue(resultList.size() > 0);
@@ -166,6 +181,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseHiveRepositoryTest {
 
     @DataProvider(name = "dslQueriesProvider")
     private Object[][] createDSLQueries() {
+      
         return new Object[][]{
                 {"from hive_db", 3},
                 {"hive_db", 3},
@@ -175,7 +191,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseHiveRepositoryTest {
                 {"hive_db has name", 3},
                 {"hive_db, hive_table", 8},
                 {"View is JdbcAccess", 2},
-                {"hive_db as db1, hive_table where db1.name = \"Reporting\"", 0}, //Not working - ATLAS-145
+                {"hive_db as db1, hive_table where db1.name = \"Reporting\"", isGremlin3() ? 2 : 0}, //Not working in Gremlin 2 - ATLAS-145
                 // - Final working query -> discoveryService.searchByGremlin("L:{_var_0 = [] as Set;g.V().has(\"__typeName\", \"hive_db\").fill(_var_0);g.V().has(\"__superTypeNames\", \"hive_db\").fill(_var_0);_var_0._().as(\"db1\").in(\"__hive_table.db\").back(\"db1\").and(_().has(\"hive_db.name\", T.eq, \"Reporting\")).toList()}")
                 /*
                 {"hive_db, hive_process has name"}, //Invalid query
@@ -195,8 +211,11 @@ public class GraphBackedDiscoveryServiceTest extends BaseHiveRepositoryTest {
                 {"hive_db where (name = \"Reporting\") select name as _col_0, owner as _col_1", 1},
                 {"hive_db where hive_db is JdbcAccess", 0}, //Not supposed to work
                 {"hive_db hive_table", 8},
-                {"hive_db where hive_db has name", 3},
-                {"hive_db as db1 hive_table where (db1.name = \"Reporting\")", 0}, //Not working -> ATLAS-145
+                {"hive_db where hive_db has name", 3},                
+                            
+                //this query works correctly with Gremlin 3.  Fails with Gremlin 2 --> ATLAS-145
+                {"hive_db as db1 hive_table where (db1.name = \"Reporting\")", isGremlin3() ? 2 : 0},
+                    
                 {"hive_db where (name = \"Reporting\") select name as _col_0, (createTime + 1) as _col_1 ", 1},
                 {"hive_table where (name = \"sales_fact\" and createTime > \"2014-01-01\" ) select name as _col_0, createTime as _col_1 ", 1},
                 {"hive_table where (name = \"sales_fact\" and createTime >= \"2014-12-11T02:35:58.440Z\" ) select name as _col_0, createTime as _col_1 ", 1},
@@ -238,6 +257,12 @@ public class GraphBackedDiscoveryServiceTest extends BaseHiveRepositoryTest {
                 {"hive_partition as p where values = ['2015-01-01']", 1},
 //              {"StorageDesc select cols", 6} //Not working since loading of lists needs to be fixed yet
         };
+        
+    }
+
+    private boolean isGremlin3() {
+        return AtlasGraphProvider.getGraphInstance().getSupportedGremlinVersion() == GremlinVersion.THREE;
+        
     }
 
     @Test(dataProvider = "dslQueriesProvider")
@@ -260,7 +285,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseHiveRepositoryTest {
 
         JSONArray rows = results.getJSONArray("rows");
         Assert.assertNotNull(rows);
-        Assert.assertEquals(rows.length(), expectedNumRows.intValue()); // some queries may not have any results
+        Assert.assertEquals( rows.length(), expectedNumRows.intValue(), "query [" + dslQuery + "] returned [" + rows.length() + "] rows.  Expected " + expectedNumRows.intValue() + " rows."); // some queries may not have any results
         System.out.println("query [" + dslQuery + "] returned [" + rows.length() + "] rows");
     }
 

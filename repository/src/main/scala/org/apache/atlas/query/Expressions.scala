@@ -25,6 +25,7 @@ import org.apache.atlas.AtlasException
 import org.apache.atlas.typesystem.ITypedInstance
 import org.apache.atlas.typesystem.types.DataTypes.{ArrayType, PrimitiveType, TypeCategory}
 import org.apache.atlas.typesystem.types._
+import scala.collection.mutable.HashMap
 
 object Expressions {
 
@@ -279,7 +280,7 @@ object Expressions {
 
         def `.`(fieldName: String) = field(fieldName)
 
-        def as(alias: String) = new AliasExpression(this, alias)
+        def as(alias: String) = new AliasExpression(this, Seq[String](alias))
 
         def arith(op: String)(rightExpr: Expression) = new ArithmeticExpression(op, this, rightExpr)
 
@@ -440,10 +441,11 @@ object Expressions {
         }
     }
 
-    case class AliasExpression(child: Expression, alias: String) extends Expression with UnaryNode {
-        override def namedExpressions = child.namedExpressions + (alias -> child)
+    case class AliasExpression(child: Expression, aliases: Seq[String]) extends Expression with UnaryNode {
+        
+        override def namedExpressions = child.namedExpressions ++ aliases.map { alias => alias ->child }
 
-        override def toString = s"$child as $alias"
+        override def toString = s"$child as ${aliases.mkString("[",",","]")}"
 
         lazy val dataType = {
             if (!resolved) {
@@ -452,8 +454,15 @@ object Expressions {
             }
             child.dataType
         }
+        
+        def alias = {
+            if(aliases.length > 1) {
+                throw new GremlinTranslationException(this, "This expression has multiple aliases");
+            }
+            aliases.head
+        }
     }
-
+       
     case class BackReference(alias: String, reference: Expression, child: Option[Expression]) extends Expression {
         val children = if (child.isDefined) List(child.get) else Nil
         val dataType = reference.dataType
@@ -680,8 +689,9 @@ object Expressions {
         val children = List(child) ::: selectList
         lazy val selectListWithAlias = selectList.zipWithIndex map {
             case (s: AliasExpression, _) => s
-            case (x, i) => new AliasExpression(x, s"${x}")
+            case (x, i) => new AliasExpression(x, Seq[String](s"${x}"))
         }
+        
 
         lazy val dataType = {
             if (!resolved) {

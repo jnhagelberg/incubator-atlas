@@ -98,14 +98,7 @@ trait GraphPersistenceStrategies {
         case FieldInfo(dataType, null, null, traitName) => traitLabel(dataType, traitName)
     }
 
-    def fieldPrefixInSelect(): String = {
-        if(getSupportedGremlinVersion() == GremlinVersion.TWO) {
-           "it"
-        }
-        else {
-            "__"
-        }
-    }
+    def fieldPrefixInSelect(): String = "it"
 
     /**
      * extract the Id from a Vertex.

@@ -39,9 +39,11 @@ public class Titan1Vertex extends Titan1Element<Vertex> implements AAVertex<Vert
   
     @Override
     public void removeProperty(String propertyName) {  
-        
-        element_.property(propertyName).remove();
-        
+        Iterator<VertexProperty<String>> it = element_.properties(propertyName);
+        while(it.hasNext()) {
+            VertexProperty<String> property = it.next();
+            property.remove();
+        }        
     }
 
 
@@ -95,7 +97,7 @@ public class Titan1Vertex extends Titan1Element<Vertex> implements AAVertex<Vert
               
         return result;        
     }
-
+    
     @Override
     public AAVertexQuery<Vertex, Edge> query() {
         

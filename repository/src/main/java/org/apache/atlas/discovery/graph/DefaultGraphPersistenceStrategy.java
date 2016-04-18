@@ -105,7 +105,7 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
     public <V,E> List<String> traitNames(AAVertex<V,E> vertex) {
         return GraphHelper.getTraitNames(vertex);
     }
-
+    
     @Override
     public String fieldPrefixInSelect() {
         return GraphPersistenceStrategies$class.fieldPrefixInSelect(this);

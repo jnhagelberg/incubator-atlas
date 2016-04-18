@@ -45,6 +45,7 @@ import org.apache.atlas.query.QueryProcessor;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.graph.AtlasGraphProvider;
+import org.apache.atlas.repository.graph.GraphHelper;
 import org.apache.atlas.repository.graphdb.AAGraph;
 import org.apache.atlas.repository.graphdb.AAIndexQuery;
 import org.apache.atlas.repository.graphdb.AAVertex;
@@ -196,7 +197,7 @@ public class GraphBackedDiscoveryService implements DiscoveryService {
             } else if (atlasResultEntry instanceof AAVertex) {
                 AAVertex<?,?> vertex = (AAVertex<?,?>)atlasResultEntry;               
                 for (String key : vertex.getPropertyKeys()) {
-                    Object value = vertex.getProperty(key);
+                    Object value = GraphHelper.getProperty(vertex,  key);
                     if (value != null) {
                         oRow.put(key, value.toString());
                     }

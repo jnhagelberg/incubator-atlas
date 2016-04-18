@@ -22,9 +22,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
-
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.repository.graph.GraphProviderPlugin;
@@ -35,17 +32,17 @@ import org.apache.atlas.repository.graphdb.titan1.serializer.StringListSerialize
 import org.apache.atlas.repository.graphdb.titan1.serializer.TypeCategorySerializer;
 import org.apache.atlas.typesystem.types.DataTypes.TypeCategory;
 import org.apache.commons.configuration.Configuration;
-import org.apache.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngineFactory;
-import org.apache.tinkerpop.gremlin.groovy.loaders.GremlinLoader;
 import org.apache.tinkerpop.gremlin.groovy.loaders.SugarLoader;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.thinkaurelius.titan.core.TitanFactory;
 import com.thinkaurelius.titan.core.TitanGraph;
 import com.thinkaurelius.titan.core.schema.TitanManagement;
+import com.thinkaurelius.titan.graphdb.tinkerpop.TitanIoRegistry;
 
 /**
  * Default implementation for Graph Provider that doles out Titan Graph.
@@ -107,6 +104,7 @@ public class Titan1GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
                     }
 
                     graphInstance = TitanFactory.open(config);
+                    
                     validateIndexBackend(config);
                 }
             }
@@ -114,8 +112,13 @@ public class Titan1GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
         return graphInstance;
     }
 
-    public static void clear() {
+    public static void unload() {
         synchronized (Titan1GraphPlugin.class) {
+            
+            if(graphInstance == null) {
+                return;
+            }
+            
             graphInstance.close();
             graphInstance = null;
         }
@@ -124,7 +127,7 @@ public class Titan1GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
     static void validateIndexBackend(Configuration config) {
         String configuredIndexBackend = config.getString(INDEX_BACKEND_CONF);
 
-        TitanManagement managementSystem = graphInstance.openManagement();
+        TitanManagement managementSystem = getGraphInstance().openManagement();
         String currentIndexBackend = managementSystem.get(INDEX_BACKEND_CONF);
         managementSystem.commit();
         
@@ -139,15 +142,22 @@ public class Titan1GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
     public void initialize() {
         //load the Gremlin 3 sugar plugin
         SugarLoader.load();
+        
+        //update registry
+        GraphSONMapper.build().addRegistry(TitanIoRegistry.INSTANCE).create();
     }
 
     @Override
     public AAGraph<Vertex, Edge> createGraph() {
-       return new Titan1Graph(getGraphInstance());
+       //initialize up front to make sure bootstrapping is correct in test cases,
+        //where the graph is unloaded and unloaded multiple times.  TBD - figure
+        //out how this can be avoided
+       getGraphInstance();
+       return new Titan1Graph();
     }
 
     @Override
     public void unloadGraph() { 
-        clear();
+        unload();
     }
 }

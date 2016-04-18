@@ -49,8 +49,6 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Guice;
 import org.testng.annotations.Test;
 
-import com.tinkerpop.blueprints.Compare;
-
 @Test
 @Guice(modules = RepositoryMetadataModule.class)
 public class GraphRepoMapperScaleTest {

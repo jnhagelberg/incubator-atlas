@@ -80,6 +80,10 @@ import org.apache.atlas.repository.graph.GraphProvider
 import org.apache.atlas.typesystem.types.TraitType
 import org.apache.atlas.typesystem.types.AttributeDefinition
 import org.apache.atlas.typesystem.types.DataTypes
+import org.apache.atlas.repository.graphdb.GremlinVersion
+import org.apache.atlas.services.JSONImporter
+import java.net.URL
+import org.apache.atlas.repository.MetadataRepository
 
 
 trait GraphUtils {
@@ -199,25 +203,40 @@ object QueryTestsUtils extends GraphUtils {
         ()
     }
 
-    def setupTestGraph(gp: AtlasGraphProvider): AAGraph[_,_] = {
-        var conf = getTitanConfiguration()
-        conf.setProperty("storage.directory",
-        conf.getString("storage.directory") + "/../graph-data/" + RandomStringUtils.randomAlphanumeric(10))
-       
+    def setupTestGraph(repo : MetadataRepository, gp: AtlasGraphProvider): AAGraph[_,_] = {
+        
         //start with a clean graph
         AtlasGraphProvider.unloadGraph();    
         val g = AtlasGraphProvider.getGraphInstance();
         
-        val manager: ScriptEngineManager = new ScriptEngineManager
-        val engine: ScriptEngine = manager.getEngineByName("gremlin-groovy")
-        val bindings: Bindings = engine.createBindings
-        g.injectBinding(bindings , "g")
-
-        val hiveGraphFile = FileUtils.getTempDirectory().getPath.toString + File.separator + System.nanoTime() + ".gson"
-        HiveTitanSample.writeGson(hiveGraphFile)
-        bindings.put("hiveGraphFile", hiveGraphFile)
-
-        engine.eval("g.loadGraphSON(hiveGraphFile)", bindings)
+        if(g.getSupportedGremlinVersion() == GremlinVersion.THREE) {
+            //this logic *should* also work for Gremlin 2.  However, for
+            //now continue using the old logic for Gremin 2 to minimize
+            //the disruption
+            var cl : ClassLoader = Thread.currentThread().getContextClassLoader;
+            var instancesJsonUrl : URL =  cl.getResource("hive-instances.json")
+    
+            val source = scala.io.Source.fromURL(instancesJsonUrl)
+            val json = try source.mkString finally source.close()
+            var importer = new JSONImporter(TypeSystem.getInstance(), json);
+            importer.doImport(repo);
+            g.commit();
+        }
+        else {
+            var conf = getTitanConfiguration()
+            conf.setProperty("storage.directory",
+            conf.getString("storage.directory") + "/../graph-data/" + RandomStringUtils.randomAlphanumeric(10))
+            
+            val manager: ScriptEngineManager = new ScriptEngineManager
+            val engine: ScriptEngine = manager.getEngineByName("gremlin-groovy")
+            val bindings: Bindings = engine.createBindings
+            g.injectBinding(bindings , "g")
+            val hiveGraphFile = FileUtils.getTempDirectory().getPath.toString + File.separator + System.nanoTime() + ".gson"
+            HiveTitanSample.writeGson(hiveGraphFile)
+            bindings.put("hiveGraphFile", hiveGraphFile)
+        
+            engine.eval("g.loadGraphSON(hiveGraphFile)", bindings)
+        }
         g
     }
     

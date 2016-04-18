@@ -18,9 +18,18 @@
 
 package org.apache.atlas.discovery;
 
+import java.io.File;
+import java.io.FileOutputStream;
+
+import javax.inject.Inject;
+
 import org.apache.atlas.BaseHiveRepositoryTest;
 import org.apache.atlas.RepositoryMetadataModule;
+import org.apache.atlas.repository.graphdb.titan1.Titan1GraphPlugin;
 import org.apache.atlas.typesystem.exception.EntityNotFoundException;
+import org.apache.tinkerpop.gremlin.structure.io.IoCore;
+import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONMapper;
+import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONWriter;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 import org.testng.Assert;
@@ -30,23 +39,38 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Guice;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
+import com.thinkaurelius.titan.core.TitanGraph;
+
+
 
 /**
  * Unit tests for Hive LineageService.
  */
 @Guice(modules = RepositoryMetadataModule.class)
-public class HiveLineageServiceTest extends BaseHiveRepositoryTest {
-
+public class HiveLineageServiceTest extends BaseHiveRepositoryTest {    
+    
     @Inject
     private DiscoveryService discoveryService;
 
     @Inject
     private HiveLineageService hiveLineageService;
-
+  
     @BeforeClass
     public void setUp() throws Exception {
         super.setUp();
+        //force Titan graphson initialization
+        
+        TitanGraph graph = Titan1GraphPlugin.getGraphInstance();
+        File f = new File("c:\\temp\\lineage-graph.json");
+        if(f.exists()) {
+            f.delete();
+        }
+        FileOutputStream os = new FileOutputStream(f);
+        GraphSONMapper mapper = graph.io(IoCore.graphson()).mapper().create();
+        GraphSONWriter.Builder b = GraphSONWriter.build();
+        b.mapper(mapper);
+        b.create().writeGraph(os, graph);
+        os.close();
     }
 
     @AfterClass

@@ -32,10 +32,9 @@ import com.thinkaurelius.titan.core.util.TitanCleanup;
 
 public class Titan1Graph implements AAGraph<Vertex,Edge> {
 
-    private TitanGraph titanGraph_;
     
-    public Titan1Graph(TitanGraph graph) {
-        titanGraph_ = graph;
+    public Titan1Graph() {
+
     }
 
     @Override
@@ -56,13 +55,13 @@ public class Titan1Graph implements AAGraph<Vertex,Edge> {
     @Override
     public AAGraphQuery<Vertex,Edge> query() {
               
-        TitanGraphQuery<?> query = titanGraph_.query();
+        TitanGraphQuery<?> query = getGraph().query();
         return TitanObjectFactory.createQuery(query);
     }
 
     @Override
     public AAEdge<Vertex,Edge> getEdge(String edgeId) {
-        Iterator<Edge> it = titanGraph_.edges(edgeId);
+        Iterator<Edge> it = getGraph().edges(edgeId);
         Edge e = getSingleElement(it, edgeId);
         return TitanObjectFactory.createEdge(e);
     }
@@ -84,7 +83,7 @@ public class Titan1Graph implements AAGraph<Vertex,Edge> {
     @Override
     public Iterable<AAEdge<Vertex,Edge>> getEdges() {
         
-        Iterator<Edge> edges = titanGraph_.edges();
+        Iterator<Edge> edges = getGraph().edges();
         final Iterator<AAEdge<Vertex,Edge>> resultIt = new IteratorAdapter<>(edges, EdgeMapper.INSTANCE);
         
         return new Iterable<AAEdge<Vertex,Edge>>() {
@@ -100,7 +99,7 @@ public class Titan1Graph implements AAGraph<Vertex,Edge> {
     @Override
     public Iterable<AAVertex<Vertex,Edge>> getVertices() {
         
-        Iterator<Vertex> vertices = titanGraph_.vertices();
+        Iterator<Vertex> vertices = getGraph().vertices();
         final Iterator<AAVertex<Vertex,Edge>> resultIt = new IteratorAdapter<>(vertices, VertexMapper.INSTANCE);
         
         return new Iterable<AAVertex<Vertex,Edge>>() {
@@ -116,45 +115,45 @@ public class Titan1Graph implements AAGraph<Vertex,Edge> {
     public AAVertex<Vertex,Edge> addVertex(Object id) {
         Vertex result;
         if(id == null) {
-            result = titanGraph_.addVertex();
+            result = getGraph().addVertex();
         }
         else {
-            result = titanGraph_.addVertex(T.id, id);
+            result = getGraph().addVertex(T.id, id);
         }
         return TitanObjectFactory.createVertex(result);
     }
 
     @Override
     public void commit() {
-        titanGraph_.tx().commit();        
+        getGraph().tx().commit();        
     }
 
     @Override
     public void rollback() {
-        titanGraph_.tx().rollback();
+        getGraph().tx().rollback();
     }
 
     @Override
     public AAIndexQuery<Vertex,Edge> indexQuery(String fulltextIndex, String graphQuery) {
-        TitanIndexQuery query = titanGraph_.indexQuery(fulltextIndex, graphQuery);
+        TitanIndexQuery query = getGraph().indexQuery(fulltextIndex, graphQuery);
         return new Titan1IndexQuery(query);
     }
 
     @Override
     public GraphDatabaseManager getManagementSystem() {
-        return new Titan1DatabaseManager(titanGraph_.openManagement());
+        return new Titan1DatabaseManager(getGraph().openManagement());
     }
 
     @Override
     public void shutdown() {
-        titanGraph_.close();
+        getGraph().close();
     }
 
     @Override
     public Set<String> getIndexedKeys(ElementType type) {
         Class<? extends Element> titanClass = type == ElementType.VERTEX ? Vertex.class : Edge.class;
         
-        TitanManagement mgmt = titanGraph_.openManagement();
+        TitanManagement mgmt = getGraph().openManagement();
         Iterable<TitanGraphIndex> indices = mgmt.getGraphIndexes(titanClass);
         Set<String> result = new HashSet<String>(); 
         for(TitanGraphIndex index : indices) {
@@ -167,7 +166,7 @@ public class Titan1Graph implements AAGraph<Vertex,Edge> {
 
     @Override
     public AAVertex<Vertex, Edge> getVertex(String vertexId) {
-        Iterator<Vertex> it = titanGraph_.vertices(vertexId);
+        Iterator<Vertex> it = getGraph().vertices(vertexId);
         Vertex v = getSingleElement(it, vertexId);
         return TitanObjectFactory.createVertex(v);
     }
@@ -193,14 +192,30 @@ public class Titan1Graph implements AAGraph<Vertex,Edge> {
 
     @Override
     public void injectBinding(Bindings bindings, String key) {
-        bindings.put(key, titanGraph_.traversal());
+        bindings.put(key, getGraph().traversal());
     }
 
     
     @Override
-    public Object getGremlinColumnValue(Object rowValue, String colName, int idx) {        
+    public Object getGremlinColumnValue(Object rowValue, String colName, int idx) {
+                
+        Object rawColumnValue = null;        
+        if(rowValue instanceof Map) { 
+           rawColumnValue = ((Map<?,?>)rowValue).get(colName);
+        }
+        else {
+            //when there is only one column, result does not come back as a map
+            rawColumnValue = rowValue;
+        }
         
-        Object value = ((Map<?,?>)rowValue).get(colName);
+        Object value = null;
+        if(rawColumnValue instanceof List && idx >= 0) {
+            value = ((List<?>)rawColumnValue).get(idx);
+        }
+        else {
+            value = rawColumnValue;
+        }
+        
         return convertGremlinValue(value);
     }
 
@@ -230,7 +245,11 @@ public class Titan1Graph implements AAGraph<Vertex,Edge> {
     
     @Override
     public void clear() {
-        TitanCleanup.clear(titanGraph_);
+        TitanCleanup.clear(getGraph());
         
+    }
+    
+    private TitanGraph getGraph() {
+        return Titan1GraphPlugin.getGraphInstance();
     }
 }

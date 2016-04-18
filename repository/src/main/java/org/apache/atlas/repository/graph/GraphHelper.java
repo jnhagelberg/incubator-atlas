@@ -140,7 +140,8 @@ public final class GraphHelper {
     public static String vertexString(final AAVertex<?,?> vertex) {
         StringBuilder properties = new StringBuilder();
         for (String propertyKey : vertex.getPropertyKeys()) {
-            properties.append(propertyKey).append("=").append(vertex.getProperty(propertyKey).toString()).append(", ");
+            Collection<String> propertyValues = vertex.getPropertyValues(propertyKey);
+            properties.append(propertyKey).append("=").append(propertyValues.toString()).append(", ");
         }
 
         return "v[" + vertex.getId() + "], Properties[" + properties + "]";
@@ -255,6 +256,20 @@ public final class GraphHelper {
         return typeName + "." + attrName;
     }
 
+    public static Object getProperty(AAVertex<?,?> entityVertex, String propertyName) {
+        
+        //these are the only two properties that are defined as
+        //being multiplicity many properties in Gremlin.  Todo - 
+        //generalize this.
+        if(propertyName.equals(Constants.TRAIT_NAMES_PROPERTY_KEY) ||
+           propertyName.equals(Constants.SUPER_TYPES_PROPERTY_KEY)) {
+            return entityVertex.getPropertyValues(propertyName);
+        }
+        else {
+            return entityVertex.getProperty(propertyName);
+        }
+    }
+    
     public static List<String> getTraitNames(AAVertex<?,?> entityVertex) {
         ArrayList<String> traits = new ArrayList<>();
         for(String value : entityVertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY)) {

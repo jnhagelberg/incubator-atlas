@@ -39,8 +39,9 @@ class GremlinTest2 extends BaseGremlinTest {
     TypeSystem.getInstance().reset()
     QueryTestsUtils.setupTypes
     gProvider = new AtlasGraphProvider();
-    gp = new DefaultGraphPersistenceStrategy(new GraphBackedMetadataRepository(gProvider))
-    g = QueryTestsUtils.setupTestGraph(gProvider)
+    var repo = new GraphBackedMetadataRepository(gProvider);
+    gp = new DefaultGraphPersistenceStrategy(repo)
+    g = QueryTestsUtils.setupTestGraph(repo, gProvider)
   }
 
   @AfterClass
