@@ -404,12 +404,15 @@ class GremlinTranslator(expr: Expression,
             s"""out("${gPersistenceBehavior.traitLabel(child.dataType, traitName)}")"""
         case hasFieldLeafExpression(fieldName, clsExp) => clsExp match {
             case None => s"""has("$fieldName")"""
-            case Some(x) =>
-             x match {
-                 case c: ClassExpression =>
-                     s"""has("${x.asInstanceOf[ClassExpression].clsName}.$fieldName")"""
-                 case default => s"""has("$fieldName")"""
-             }
+            case Some(x) => {
+                val fi = TypeUtils.resolveReference(clsExp.get.dataType, fieldName);
+                if(! fi.isDefined) {
+                    s"""has("$fieldName")"""
+                }
+                else {
+                    s"""has("${gPersistenceBehavior.fieldNameInVertex(fi.get.dataType, fi.get.attrInfo)}")"""    
+                }                                
+            }
         }
         case hasFieldUnaryExpression(fieldName, child) =>
             s"""${genQuery(child, inSelect)}.has("$fieldName")"""

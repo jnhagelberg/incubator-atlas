@@ -28,6 +28,8 @@ import org.apache.atlas.typesystem.persistence.Id;
 import org.apache.atlas.typesystem.persistence.ReferenceableInstance;
 import org.apache.atlas.typesystem.types.AttributeInfo;
 import org.apache.atlas.typesystem.types.ClassType;
+import org.apache.atlas.typesystem.types.DataTypes.ArrayType;
+import org.apache.atlas.typesystem.types.DataTypes.MapType;
 import org.apache.atlas.typesystem.types.DataTypes.TypeCategory;
 import org.apache.atlas.typesystem.types.IDataType;
 import org.apache.atlas.typesystem.types.Multiplicity;
@@ -92,6 +94,7 @@ public class JSONImporter {
                 continue;
             }
             Collection<Object> referencedValues;
+            //TBD: map handling
             if(value instanceof Collection) {
                 referencedValues = (Collection<Object>)value;
                 
@@ -117,10 +120,26 @@ public class JSONImporter {
 
     private boolean isReference(ClassType entityType, String key) {
         AttributeInfo info =  entityType.fieldMapping().fields.get(key);
-        IDataType<?> dt = info.dataType();
+        return isReference(info.dataType());
+    }
+    
+    private boolean isReference(IDataType< ?> dt) {
+
         //structs don't have guids.  Struct instances are always inlined in the object they
         //belong to
-        return dt.getTypeCategory() == TypeCategory.CLASS;
+        if( dt.getTypeCategory() == TypeCategory.CLASS) {
+            return true;
+        }
+        if(dt.getTypeCategory() == TypeCategory.ARRAY) {
+            ArrayType at = (ArrayType)dt;
+            return isReference(at.getElemType());            
+        }
+        if(dt.getTypeCategory() == TypeCategory.MAP) {
+            //map keys must be strings
+            MapType mt = (MapType)dt;
+            return isReference(mt.getValueType());            
+        }
+        return false;
     }
     
     

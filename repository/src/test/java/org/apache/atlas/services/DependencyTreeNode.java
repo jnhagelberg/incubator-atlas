@@ -167,4 +167,8 @@ public class DependencyTreeNode {
 
         return instance_;
     }
+    
+    public String toString() {
+        return "DependencyTreeNode<" +( oldId_ == null ? "" : oldId_.toString()) + ">";
+    }
 }

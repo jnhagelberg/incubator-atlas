@@ -812,7 +812,19 @@
         },
         "typeName": "LoadProcess",
         "values": {
-            "inputTables": null,
+            "inputTables": [{
+                    "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                    "id": "bacfa996-e88e-4d7e-9630-68c9829b10b4",
+                    "version": 0,
+                    "typeName": "Table"
+                }, {
+                    "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                    "id": "6da06805-3f56-446f-8831-672a65ac2199",
+                    "version": 0,
+                    "typeName": "Table"
+                }
+
+            ],
             "outputTable": {
                 "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
                 "id": "d5c3d6d0-aa10-44c1-b05d-ed9400d2a5ac",
@@ -843,7 +855,12 @@
         },
         "typeName": "LoadProcess",
         "values": {
-            "inputTables": null,
+            "inputTables": [{
+                "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
+                "id": "d5c3d6d0-aa10-44c1-b05d-ed9400d2a5ac",
+                "version": 0,
+                "typeName": "Table"
+            }],
             "outputTable": {
                 "jsonClass": "org.apache.atlas.typesystem.json.InstanceSerialization$_Id",
                 "id": "20bd6a60-722b-4fbb-830f-24070758be1c",
