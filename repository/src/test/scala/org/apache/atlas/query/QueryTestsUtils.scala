@@ -209,36 +209,15 @@ object QueryTestsUtils extends GraphUtils {
         AtlasGraphProvider.unloadGraph();    
         val g = AtlasGraphProvider.getGraphInstance();
         
-        if(g.getSupportedGremlinVersion() == GremlinVersion.THREE) {
-            //this logic *should* also work for Gremlin 2.  However, for
-            //now continue using the old logic for Gremin 2 to minimize
-            //the disruption
-            var cl : ClassLoader = Thread.currentThread().getContextClassLoader;
-            var instancesJsonUrl : URL =  cl.getResource("hive-instances.json")
-    
-            val source = scala.io.Source.fromURL(instancesJsonUrl)
-            val json = try source.mkString finally source.close()
-            var importer = new JSONImporter(TypeSystem.getInstance(), json);
-            importer.doImport(repo);
-            g.commit();
-            //for debugging only!
-            g.shutdown();
-        }
-        else {
-            var conf = getTitanConfiguration()
-            conf.setProperty("storage.directory",
-            conf.getString("storage.directory") + "/../graph-data/" + RandomStringUtils.randomAlphanumeric(10))
-            
-            val manager: ScriptEngineManager = new ScriptEngineManager
-            val engine: ScriptEngine = manager.getEngineByName("gremlin-groovy")
-            val bindings: Bindings = engine.createBindings
-            g.injectBinding(bindings , "g")
-            val hiveGraphFile = FileUtils.getTempDirectory().getPath.toString + File.separator + System.nanoTime() + ".gson"
-            HiveTitanSample.writeGson(hiveGraphFile)
-            bindings.put("hiveGraphFile", hiveGraphFile)
+        var cl : ClassLoader = Thread.currentThread().getContextClassLoader;
+        var instancesJsonUrl : URL =  cl.getResource("hive-instances.json")
+
+        val source = scala.io.Source.fromURL(instancesJsonUrl)
+        val json = try source.mkString finally source.close()
+        var importer = new JSONImporter(TypeSystem.getInstance(), json);
+        importer.doImport(repo);
+        g.commit();
         
-            engine.eval("g.loadGraphSON(hiveGraphFile)", bindings)
-        }
         g
     }
     

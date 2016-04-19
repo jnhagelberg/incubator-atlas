@@ -253,6 +253,9 @@ public class StructInstance implements ITypedStruct {
         } else if (i.dataType().getTypeCategory() == DataTypes.TypeCategory.CLASS) {
                 ids[pos] = null;
                 referenceables[pos] = null;
+        } else if (i.dataType().getTypeCategory() == DataTypes.TypeCategory.ENUM ||
+                   i.dataType().getTypeCategory() == DataTypes.TypeCategory.PRIMITIVE) {
+                //nothing else to do
         } else {
             throw new AtlasException(String.format("Unknown datatype %s", i.dataType()));
         }
