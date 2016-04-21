@@ -17,7 +17,7 @@ public interface AAVertex<V,E> extends AAElement {
 
     Iterable<AAEdge<V,E>> getEdges(AADirection in);
 
-    Collection<String> getPropertyValues(String propertyName);    
+    <T> Collection<T> getPropertyValues(String propertyName);    
 
     AAVertexQuery<V,E> query();
 }

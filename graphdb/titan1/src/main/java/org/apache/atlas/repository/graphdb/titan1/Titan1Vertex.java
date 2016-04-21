@@ -87,10 +87,10 @@ public class Titan1Vertex extends Titan1Element<Vertex> implements AAVertex<Vert
     }
 
     @Override
-    public Collection<String> getPropertyValues(String propertyName) {
+    public <T> Collection<T> getPropertyValues(String propertyName) {
        
-        Collection<String> result = new ArrayList<String>();
-        Iterator<VertexProperty<String>> it = element_.properties(propertyName);
+        Collection<T> result = new ArrayList<T>();
+        Iterator<VertexProperty<T>> it = element_.properties(propertyName);
         while(it.hasNext()) {
             result.add(it.next().value());
         }

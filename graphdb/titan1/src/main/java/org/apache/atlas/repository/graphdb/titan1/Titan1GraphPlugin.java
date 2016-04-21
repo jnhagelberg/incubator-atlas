@@ -121,35 +121,10 @@ public class Titan1GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
         }
         return graphInstance;
     }
-
-
-
-    private static boolean isRecreateKey(RelationType type) {
-        if(! type.isPropertyKey()) {
-            return true;
-        }
-        //check to make sure the property key is valid
-        PropertyKey pk = (PropertyKey)type;
-        if(pk.cardinality() != Cardinality.SET) {
-            return true;
-        }
-        if(pk.dataType() != String.class) {
-            return true;
-        }
-        return false;
-    }
     
-    private static void createPropertyKeyIfNeeded(String name, TitanManagement mgmt) {
-        
-        boolean create = true;
-        if(mgmt.containsRelationType(name)) {
-            RelationType type = mgmt.getRelationType(name);
-            create = isRecreateKey(type);
-            if(create) {
-                type.remove();
-            }
-        }
-        if(create) {
+    private static void createPropertyKeyIfNeeded(String name, TitanManagement mgmt) {        
+
+        if(! mgmt.containsRelationType(name)) {
             mgmt.makePropertyKey(name).dataType(String.class).cardinality(Cardinality.SET).make();
         }
     }

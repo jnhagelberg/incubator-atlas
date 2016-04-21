@@ -140,7 +140,7 @@ public final class GraphHelper {
     public static String vertexString(final AAVertex<?,?> vertex) {
         StringBuilder properties = new StringBuilder();
         for (String propertyKey : vertex.getPropertyKeys()) {
-            Collection<String> propertyValues = vertex.getPropertyValues(propertyKey);
+            Collection<?> propertyValues = vertex.getPropertyValues(propertyKey);
             properties.append(propertyKey).append("=").append(propertyValues.toString()).append(", ");
         }
 
@@ -272,7 +272,8 @@ public final class GraphHelper {
     
     public static List<String> getTraitNames(AAVertex<?,?> entityVertex) {
         ArrayList<String> traits = new ArrayList<>();
-        for(String value : entityVertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY)) {
+        Collection<String> propertyValues = entityVertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY);
+        for(String value : propertyValues) {
             traits.add(value);
         }        
         return traits;
