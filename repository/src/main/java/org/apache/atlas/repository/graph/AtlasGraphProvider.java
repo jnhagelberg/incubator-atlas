@@ -5,19 +5,20 @@ import javax.inject.Singleton;
 
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
-import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.repository.graphdb.GraphDatabase;
 import org.apache.commons.configuration.Configuration;
 
 import com.google.inject.Provides;
 
 
-public class AtlasGraphProvider implements GraphProvider<AAGraph> {
+public class AtlasGraphProvider implements GraphProvider<AtlasGraph> {
 
     private static final String IMPL_PROPERTY = "atlas.graphdb.backend";
-    private static volatile GraphProviderPlugin<?,?> plugin_;
-    private static volatile AAGraph<?,?> graph_;
+    private static volatile GraphDatabase<?,?> plugin_;
+    private static volatile AtlasGraph<?,?> graph_;
         
-    public static <V,E> AAGraph<V,E> getGraphInstance() {
+    public static <V,E> AtlasGraph<V,E> getGraphInstance() {
         
         if(graph_ == null) {
             try {
@@ -25,10 +26,10 @@ public class AtlasGraphProvider implements GraphProvider<AAGraph> {
                     String implClassName = getPluginImplClass();
                     
                     Class implClass = Thread.currentThread().getContextClassLoader().loadClass(implClassName);
-                    plugin_ = (GraphProviderPlugin)implClass.newInstance();
-                    plugin_.initialize();
+                    plugin_ = (GraphDatabase<V, E>)implClass.newInstance();
+                    
             }
-                graph_ = plugin_.createGraph();
+                graph_ = plugin_.getGraph();
             }
             catch (ClassNotFoundException e) {
                 throw new RuntimeException("Error initializing graph database provider", e);
@@ -41,7 +42,7 @@ public class AtlasGraphProvider implements GraphProvider<AAGraph> {
             }
             
         }
-        return (AAGraph<V,E>)graph_;
+        return (AtlasGraph<V,E>)graph_;
         
     }   
 
@@ -65,7 +66,7 @@ public class AtlasGraphProvider implements GraphProvider<AAGraph> {
     @Override
     @Singleton
     @Provides
-    public AAGraph<?,?> get() {
+    public AtlasGraph<?,?> get() {
        return getGraphInstance();
     }
     

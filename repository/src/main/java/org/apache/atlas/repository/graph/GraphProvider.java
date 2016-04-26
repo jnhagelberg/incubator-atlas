@@ -19,9 +19,9 @@
 package org.apache.atlas.repository.graph;
 
 import com.google.inject.throwingproviders.CheckedProvider;
-import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
 
-public interface GraphProvider<T extends AAGraph> extends CheckedProvider<T> {
+public interface GraphProvider<T extends AtlasGraph> extends CheckedProvider<T> {
     @Override
     T get();   
 }

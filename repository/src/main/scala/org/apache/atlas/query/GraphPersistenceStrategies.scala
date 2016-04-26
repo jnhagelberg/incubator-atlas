@@ -25,8 +25,8 @@ import org.apache.atlas.query.Expressions.ComparisonExpression
 import org.apache.atlas.query.Expressions.ExpressionException
 import org.apache.atlas.query.TypeUtils.FieldInfo
 import org.apache.atlas.repository.graph.GraphHelper
-import org.apache.atlas.repository.graphdb.AADirection
-import org.apache.atlas.repository.graphdb.AAVertex
+import org.apache.atlas.repository.graphdb.AtlasEdgeDirection
+import org.apache.atlas.repository.graphdb.AtlasVertex
 import org.apache.atlas.repository.graphdb.GremlinVersion
 import org.apache.atlas.typesystem.ITypedInstance
 import org.apache.atlas.typesystem.ITypedReferenceableInstance
@@ -90,7 +90,7 @@ trait GraphPersistenceStrategies {
      * @param v
      * @return
      */
-    def traitNames[V,E](v: AAVertex[V,E]): java.util.List[String]
+    def traitNames[V,E](v: AtlasVertex[V,E]): java.util.List[String]
 
     def edgeLabel(fInfo: FieldInfo): String = fInfo match {
         case FieldInfo(dataType, aInfo, null, null) => edgeLabel(dataType, aInfo)
@@ -98,7 +98,26 @@ trait GraphPersistenceStrategies {
         case FieldInfo(dataType, null, null, traitName) => traitLabel(dataType, traitName)
     }
 
-    def fieldPrefixInSelect(): String = "it"
+    def fieldPrefixInSelect(): String = {
+        
+        if(getSupportedGremlinVersion() == GremlinVersion.THREE) {
+            //this logic is needed to remove extra results from
+            //what is emitted by repeat loops.  Technically 
+            //for queries that don't have a loop in them we could just use "it"
+            //the reason for this is that in repeat loops with an alias,
+            //although the alias gets set to the right value, for some
+            //reason the select actually includes all vertices that were traversed
+            //through in the loop.  In these cases, we only want the last vertex
+            //traversed in the loop to be selected.  The logic here handles that
+            //case by converting the result to a list and just selecting the
+            //last item from it.
+            "(((it as Object[]) as List).last())"
+        }
+        else {
+            "it"
+        }
+        
+    }
 
     /**
      * extract the Id from a Vertex.
@@ -106,7 +125,7 @@ trait GraphPersistenceStrategies {
      * @param v
      * @return
      */
-    def getIdFromVertex[V,E](dataTypeNm: String, v: AAVertex[V,E]): Id
+    def getIdFromVertex[V,E](dataTypeNm: String, v: AtlasVertex[V,E]): Id
 
     def constructInstance[U,V,E](dataType: IDataType[U], v: java.lang.Object): U
 
@@ -246,10 +265,10 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
 
     def fieldNameInVertex(dataType: IDataType[_], aInfo: AttributeInfo) = GraphHelper.getQualifiedFieldName(dataType, aInfo.name)
 
-    def getIdFromVertex[V,E](dataTypeNm: String, v: AAVertex[V,E]): Id =
+    def getIdFromVertex[V,E](dataTypeNm: String, v: AtlasVertex[V,E]): Id =
         new Id(v.getId.toString, 0, dataTypeNm)
 
-    def traitNames[V,E](v: AAVertex[V,E]): java.util.List[String] = {
+    def traitNames[V,E](v: AtlasVertex[V,E]): java.util.List[String] = {
         val s = v.getProperty[String]("traitNames")
         if (s != null) {
             Seq[String](s.split(","): _*)
@@ -267,7 +286,7 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
               if dataType.getName == TypeSystem.getInstance().getIdType.getName => {
               val sType = dataType.asInstanceOf[StructType]
               val sInstance = sType.createInstance()
-              val tV = v.asInstanceOf[AAVertex[V,E]]
+              val tV = v.asInstanceOf[AtlasVertex[V,E]]
               sInstance.set(TypeSystem.getInstance().getIdType.typeNameAttrName,
                 tV.getProperty[java.lang.String](typeAttributeName))
               sInstance.set(TypeSystem.getInstance().getIdType.idAttrName,
@@ -277,7 +296,7 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
             case DataTypes.TypeCategory.STRUCT => {
                 val sType = dataType.asInstanceOf[StructType]
                 val sInstance = sType.createInstance()
-                loadStructInstance(sType, sInstance, v.asInstanceOf[AAVertex[V,E]])
+                loadStructInstance(sType, sInstance, v.asInstanceOf[AtlasVertex[V,E]])
                 dataType.convert(sInstance, Multiplicity.OPTIONAL)
             }
             case DataTypes.TypeCategory.TRAIT => {
@@ -287,12 +306,12 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
                  * this is not right, we should load the Instance associated with this trait.
                  * for now just loading the trait struct.
                  */
-                loadStructInstance(tType, tInstance, v.asInstanceOf[AAVertex[V,E]])
+                loadStructInstance(tType, tInstance, v.asInstanceOf[AtlasVertex[V,E]])
                 dataType.convert(tInstance, Multiplicity.OPTIONAL)
             }
             case DataTypes.TypeCategory.CLASS => {
                 val cType = dataType.asInstanceOf[ClassType]
-                val cInstance = constructClassInstance(dataType.asInstanceOf[ClassType], v.asInstanceOf[AAVertex[V,E]])
+                val cInstance = constructClassInstance(dataType.asInstanceOf[ClassType], v.asInstanceOf[AtlasVertex[V,E]])
                 dataType.convert(cInstance, Multiplicity.OPTIONAL)
             }
             case DataTypes.TypeCategory.ENUM => dataType.convert(v, Multiplicity.OPTIONAL)
@@ -301,7 +320,7 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
     }
 
     def loadStructInstance[V,E](dataType: IConstructableType[_, _ <: ITypedInstance],
-                           typInstance: ITypedInstance, v: AAVertex[V,E]): Unit = {
+                           typInstance: ITypedInstance, v: AtlasVertex[V,E]): Unit = {
         import scala.collection.JavaConversions._
         dataType.fieldMapping().fields.foreach { t =>
             val fName = t._1
@@ -310,15 +329,15 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
         }
     }
 
-    def constructClassInstance[V,E](dataType: ClassType, v: AAVertex[V,E]): ITypedReferenceableInstance = {
+    def constructClassInstance[V,E](dataType: ClassType, v: AtlasVertex[V,E]): ITypedReferenceableInstance = {
         val id = getIdFromVertex(dataType.name, v)
         val tNms = traitNames(v)
         val cInstance = dataType.createInstance(id, tNms: _*)
         // load traits
         tNms.foreach { tNm =>
             val tLabel = traitLabel(dataType, tNm)
-            val edges = v.getEdges(AADirection.OUT, tLabel)
-            val tVertex = edges.iterator().next().getVertex(AADirection.IN).asInstanceOf[AAVertex[V,E]]
+            val edges = v.getEdges(AtlasEdgeDirection.OUT, tLabel)
+            val tVertex = edges.iterator().next().getInVertex().asInstanceOf[AtlasVertex[V,E]]
             val tType = TypeSystem.getInstance().getDataType[TraitType](classOf[TraitType], tNm)
             val tInstance = cInstance.getTrait(tNm).asInstanceOf[ITypedInstance]
             loadStructInstance(tType, tInstance, tVertex)
@@ -327,7 +346,7 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
         cInstance
     }
 
-    def loadAttribute[V,E](dataType: IDataType[_], aInfo: AttributeInfo, i: ITypedInstance, v: AAVertex[V,E]): Unit = {
+    def loadAttribute[V,E](dataType: IDataType[_], aInfo: AttributeInfo, i: ITypedInstance, v: AtlasVertex[V,E]): Unit = {
         aInfo.dataType.getTypeCategory match {
             case DataTypes.TypeCategory.PRIMITIVE => loadPrimitiveAttribute(dataType, aInfo, i, v)
             case DataTypes.TypeCategory.ENUM => loadEnumAttribute(dataType, aInfo, i, v)
@@ -342,14 +361,14 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
         }
     }
 
-    private def loadEnumAttribute[V,E](dataType: IDataType[_], aInfo: AttributeInfo, i: ITypedInstance, v: AAVertex[V,E])
+    private def loadEnumAttribute[V,E](dataType: IDataType[_], aInfo: AttributeInfo, i: ITypedInstance, v: AtlasVertex[V,E])
     : Unit = {
         val fName = fieldNameInVertex(dataType, aInfo)
         i.setInt(aInfo.name, v.getProperty[java.lang.Integer](fName))
     }
 
     private def loadPrimitiveAttribute[V,E](dataType: IDataType[_], aInfo: AttributeInfo,
-                                       i: ITypedInstance, v: AAVertex[V,E]): Unit = {
+                                       i: ITypedInstance, v: AtlasVertex[V,E]): Unit = {
         val fName = fieldNameInVertex(dataType, aInfo)
         aInfo.dataType() match {
             case x: BooleanType => i.setBoolean(aInfo.name, v.getProperty[java.lang.Boolean](fName))
@@ -370,7 +389,7 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
 
 
     private def loadArrayAttribute[T,V,E](dataType: IDataType[_], aInfo: AttributeInfo,
-                                    i: ITypedInstance, v: AAVertex[V,E]): Unit = {
+                                    i: ITypedInstance, v: AtlasVertex[V,E]): Unit = {
         import scala.collection.JavaConversions._
         val list: java.util.List[_] = v.getProperty(aInfo.name)
         val arrayType: DataTypes.ArrayType = aInfo.dataType.asInstanceOf[ArrayType]
@@ -383,13 +402,13 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
     }
 
     private def loadStructAttribute[V,E](dataType: IDataType[_], aInfo: AttributeInfo,
-                                    i: ITypedInstance, v: AAVertex[V,E], edgeLbl: Option[String] = None): Unit = {
+                                    i: ITypedInstance, v: AtlasVertex[V,E], edgeLbl: Option[String] = None): Unit = {
         val eLabel = edgeLbl match {
             case Some(x) => x
             case None => edgeLabel(FieldInfo(dataType, aInfo, null))
         }
-        val edges = v.getEdges(AADirection.OUT, eLabel)
-        val sVertex = edges.iterator().next().getVertex(AADirection.IN).asInstanceOf[AAVertex[V,E]]
+        val edges = v.getEdges(AtlasEdgeDirection.OUT, eLabel)
+        val sVertex = edges.iterator().next().getInVertex().asInstanceOf[AtlasVertex[V,E]]
         if (aInfo.dataType().getTypeCategory == DataTypes.TypeCategory.STRUCT) {
             val sType = aInfo.dataType().asInstanceOf[StructType]
             val sInstance = sType.createInstance()
@@ -403,7 +422,7 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
 
 
 
-    private def mapVertexToCollectionEntry[V,E](instanceVertex: AAVertex[V,E], attributeInfo: AttributeInfo, elementType: IDataType[_], i: ITypedInstance,  value: Any): Any = {
+    private def mapVertexToCollectionEntry[V,E](instanceVertex: AtlasVertex[V,E], attributeInfo: AttributeInfo, elementType: IDataType[_], i: ITypedInstance,  value: Any): Any = {
         elementType.getTypeCategory match {
             case DataTypes.TypeCategory.PRIMITIVE => value
             case DataTypes.TypeCategory.ENUM => value

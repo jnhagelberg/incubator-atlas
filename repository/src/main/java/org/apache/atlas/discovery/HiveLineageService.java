@@ -32,7 +32,7 @@ import org.apache.atlas.query.HiveLineageQuery;
 import org.apache.atlas.query.HiveWhereUsedQuery;
 import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.graph.AtlasGraphProvider;
-import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.typesystem.exception.EntityNotFoundException;
 import org.apache.atlas.typesystem.persistence.ReferenceableInstance;
 import org.apache.atlas.utils.ParamChecker;
@@ -83,14 +83,14 @@ public class HiveLineageService<V,E> implements LineageService {
     }
 
 
-    private final AAGraph<V,E> graph;
+    private final AtlasGraph<V,E> graph;
     private final DefaultGraphPersistenceStrategy graphPersistenceStrategy;
     private final GraphBackedDiscoveryService discoveryService;
 
     @Inject
     HiveLineageService(AtlasGraphProvider graphProvider, MetadataRepository metadataRepository,
             GraphBackedDiscoveryService discoveryService) throws DiscoveryException {
-        this.graph = (AAGraph<V,E>)graphProvider.get();
+        this.graph = (AtlasGraph<V,E>)graphProvider.get();
         this.graphPersistenceStrategy = new DefaultGraphPersistenceStrategy(metadataRepository);
         this.discoveryService = discoveryService;
     }

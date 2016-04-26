@@ -26,9 +26,9 @@ import javax.script.{Bindings, ScriptEngine, ScriptEngineManager}
 
 import org.apache.atlas.repository.Constants
 import org.apache.atlas.repository.graph.AtlasGraphProvider
-import org.apache.atlas.repository.graphdb.AAGraph
-import org.apache.atlas.repository.graphdb.AAVertex
-import org.apache.atlas.repository.graphdb.AAEdge
+import org.apache.atlas.repository.graphdb.AtlasGraph
+import org.apache.atlas.repository.graphdb.AtlasVertex
+import org.apache.atlas.repository.graphdb.AtlasEdge
 import org.apache.atlas.TestUtils
 import org.apache.commons.io.FileUtils
 

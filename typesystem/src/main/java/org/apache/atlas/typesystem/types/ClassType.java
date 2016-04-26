@@ -139,12 +139,7 @@ public class ClassType extends HierarchicalType<ClassType, IReferenceableInstanc
                     }
 
                     try {
-                        if(aVal != null) {
-                            tr.set(attrKey, aVal);
-                        }
-                        else {
-                            tr.setNull(attrKey);
-                        }
+                        tr.set(attrKey, aVal);
                     } catch (ValueConversionException ve) {
                         throw new ValueConversionException(this, val, ve);
                     }

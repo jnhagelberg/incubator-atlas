@@ -32,9 +32,9 @@ import java.util.Set;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.RepositoryException;
-import org.apache.atlas.repository.graphdb.AADirection;
-import org.apache.atlas.repository.graphdb.AAEdge;
-import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
+import org.apache.atlas.repository.graphdb.AtlasEdge;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.typesystem.IReferenceableInstance;
 import org.apache.atlas.typesystem.ITypedInstance;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
@@ -64,7 +64,7 @@ import org.slf4j.LoggerFactory;
 public final class TypedInstanceToGraphMapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(TypedInstanceToGraphMapper.class);
-    private final Map<Id, AAVertex> idToVertexMap = new HashMap<>();
+    private final Map<Id, AtlasVertex> idToVertexMap = new HashMap<>();
     //Maintains a set of Guid based Ids that are referenced/created during graph walk
     private final Set<Id> referencedIds = new HashSet<>();
     private final TypeSystem typeSystem = TypeSystem.getInstance();
@@ -163,7 +163,7 @@ public final class TypedInstanceToGraphMapper {
             throw new RepositoryException("id cannot be null");
         }
 
-        AAVertex<?,?> instanceVertex = idToVertexMap.get(id);
+        AtlasVertex<?,?> instanceVertex = idToVertexMap.get(id);
 
         // add the attributes for the instance
         ClassType classType = typeSystem.getDataType(ClassType.class, typedInstance.getTypeName());
@@ -180,7 +180,7 @@ public final class TypedInstanceToGraphMapper {
         return getId(typedInstance)._getId();
     }
 
-    void mapInstanceToVertex(ITypedInstance typedInstance, AAVertex<?,?> instanceVertex,
+    void mapInstanceToVertex(ITypedInstance typedInstance, AtlasVertex<?,?> instanceVertex,
                              Map<String, AttributeInfo> fields, boolean mapOnlyUniqueAttributes, Operation operation)
             throws AtlasException {
         
@@ -203,7 +203,7 @@ public final class TypedInstanceToGraphMapper {
 
     }
 
-    private String getInstanceName(AAVertex<?,?> referencingVertex, IConstructableType referencingType) {
+    private String getInstanceName(AtlasVertex<?,?> referencingVertex, IConstructableType referencingType) {
 
         if (referencingType.getTypeCategory() == TypeCategory.CLASS) {
             Id idFromVertex = GraphHelper.getIdFromVertex(referencingType.getName(), referencingVertex);
@@ -215,7 +215,7 @@ public final class TypedInstanceToGraphMapper {
         }
     }
 
-    <V,E> void mapAttributesToVertex(ITypedInstance typedInstance, AAVertex<V,E> instanceVertex,
+    <V,E> void mapAttributesToVertex(ITypedInstance typedInstance, AtlasVertex<V,E> instanceVertex,
                                AttributeInfo attributeInfo, Operation operation) throws AtlasException {
         Object attrValue = typedInstance.get(attributeInfo.name);
         LOG.debug("mapping attribute {} = {}", attributeInfo.name, attrValue);
@@ -241,7 +241,7 @@ public final class TypedInstanceToGraphMapper {
                 case CLASS:
                     final String propertyName = GraphHelper.getQualifiedFieldName(typedInstance, attributeInfo);
                     String edgeLabel = GraphHelper.getEdgeLabel(typedInstance, attributeInfo);
-                    Iterator<AAEdge<V,E>> outGoingEdgesIterator =
+                    Iterator<AtlasEdge<V,E>> outGoingEdgesIterator =
                             GraphHelper.getOutGoingEdgesByLabel(instanceVertex, edgeLabel).iterator();
                     String currentEntry =
                             outGoingEdgesIterator.hasNext() ? outGoingEdgesIterator.next().getId().toString() : null;
@@ -271,7 +271,7 @@ public final class TypedInstanceToGraphMapper {
             Id id = instance.getId();
 
             if (!idToVertexMap.containsKey(id)) {
-                AAVertex<?,?> instanceVertex;
+                AtlasVertex<?,?> instanceVertex;
                 if (id.isAssigned()) {  // has a GUID
                     LOG.debug("Instance {} has an assigned id", instance.getId()._getId());
                     instanceVertex = graphHelper.getVertexForGUID(id.id);
@@ -321,13 +321,13 @@ public final class TypedInstanceToGraphMapper {
     private void addFullTextProperty(List<ITypedReferenceableInstance> instances) throws AtlasException {
         FullTextMapper fulltextMapper = new FullTextMapper(graphToTypedInstanceMapper);
         for (ITypedReferenceableInstance typedInstance : instances) { // Traverse
-            AAVertex<?,?> instanceVertex = getClassVertex(typedInstance);
+            AtlasVertex<?,?> instanceVertex = getClassVertex(typedInstance);
             String fullText = fulltextMapper.mapRecursive(instanceVertex, true);
             GraphHelper.setProperty(instanceVertex, Constants.ENTITY_TEXT_PROPERTY_KEY, fullText);
         }
     }
 
-    private void addTraits(ITypedReferenceableInstance typedInstance, AAVertex<?,?> instanceVertex, ClassType classType)
+    private void addTraits(ITypedReferenceableInstance typedInstance, AtlasVertex<?,?> instanceVertex, ClassType classType)
             throws AtlasException {
         for (String traitName : typedInstance.getTraits()) {
             LOG.debug("mapping trait {}", traitName);
@@ -341,10 +341,10 @@ public final class TypedInstanceToGraphMapper {
 
     /******************************************** STRUCT **************************************************/
 
-    private <V,E> TypeUtils.Pair<AAVertex<V,E>, AAEdge<V,E>> updateStructVertex(ITypedStruct structInstance, AAEdge<V,E> relEdge,
+    private <V,E> TypeUtils.Pair<AtlasVertex<V,E>, AtlasEdge<V,E>> updateStructVertex(ITypedStruct structInstance, AtlasEdge<V,E> relEdge,
                                                             Operation operation) throws AtlasException {
         //Already existing vertex. Update
-        AAVertex<V,E> structInstanceVertex = relEdge.getVertex(AADirection.IN);
+        AtlasVertex<V,E> structInstanceVertex = relEdge.getInVertex();
 
         // Update attributes
         final MessageDigest digester = MD5Utils.getDigester();
@@ -360,24 +360,24 @@ public final class TypedInstanceToGraphMapper {
         return TypeUtils.Pair.of(structInstanceVertex, relEdge);
     }
 
-    private <V,E> TypeUtils.Pair<AAVertex<V,E>, AAEdge<V,E>> addStructVertex(ITypedStruct structInstance, AAVertex<V,E> instanceVertex,
+    private <V,E> TypeUtils.Pair<AtlasVertex<V,E>, AtlasEdge<V,E>> addStructVertex(ITypedStruct structInstance, AtlasVertex<V,E> instanceVertex,
                                                          AttributeInfo attributeInfo, String edgeLabel) throws AtlasException {
         // add a new vertex for the struct or trait instance
-        AAVertex<V,E> structInstanceVertex = graphHelper.createVertexWithoutIdentity(structInstance.getTypeName(), null,
+        AtlasVertex<V,E> structInstanceVertex = graphHelper.createVertexWithoutIdentity(structInstance.getTypeName(), null,
                 Collections.<String>emptySet()); // no super types for struct type
         LOG.debug("created vertex {} for struct {} value {}", structInstanceVertex, attributeInfo.name, structInstance);
 
         // map all the attributes to this new vertex
         mapInstanceToVertex(structInstance, structInstanceVertex, structInstance.fieldMapping().fields, false, Operation.CREATE);
         // add an edge to the newly created vertex from the parent
-        AAEdge<V,E> relEdge = graphHelper.addEdge(instanceVertex, structInstanceVertex, edgeLabel);
+        AtlasEdge<V,E> relEdge = graphHelper.addEdge(instanceVertex, structInstanceVertex, edgeLabel);
 
         return TypeUtils.Pair.of(structInstanceVertex, relEdge);
     }
 
     /******************************************** ARRAY **************************************************/
 
-    private <V,E> void mapArrayCollectionToVertex(ITypedInstance typedInstance, AAVertex<V,E> instanceVertex,
+    private <V,E> void mapArrayCollectionToVertex(ITypedInstance typedInstance, AtlasVertex<V,E> instanceVertex,
         AttributeInfo attributeInfo, Operation operation) throws AtlasException {
         LOG.debug("Mapping instance {} to vertex {} for name {}", typedInstance.getTypeName(), instanceVertex,
                 attributeInfo.name);
@@ -406,7 +406,7 @@ public final class TypedInstanceToGraphMapper {
                             if (elementType.getTypeCategory() == TypeCategory.CLASS) {
                                 final String edgeId = currentEntries.get(index);
                                 GraphHelper graphHelper = GraphHelper.getInstance();
-                                final Pair<AAEdge<V,E>, AAVertex<V,E>> edgeAndTargetVertex = graphHelper.getEdgeAndTargetVertex(edgeId);
+                                final Pair<AtlasEdge<V,E>, AtlasVertex<V,E>> edgeAndTargetVertex = graphHelper.getEdgeAndTargetVertex(edgeId);
                                 Id guid = GraphHelper.getIdFromVertex(elementType.getName(), edgeAndTargetVertex.right);
                                 removeUnusedClassReference(edgeId, attributeInfo, elementType, !referencedIds.contains(guid));
                             } else if (elementType.getTypeCategory() == TypeCategory.STRUCT) {
@@ -436,7 +436,7 @@ public final class TypedInstanceToGraphMapper {
 
     /******************************************** MAP **************************************************/
 
-    private void mapMapCollectionToVertex(ITypedInstance typedInstance, AAVertex<?,?> instanceVertex,
+    private void mapMapCollectionToVertex(ITypedInstance typedInstance, AtlasVertex<?,?> instanceVertex,
         AttributeInfo attributeInfo, Operation operation) throws AtlasException {
         LOG.debug("Mapping instance {} to vertex {} for name {}", typedInstance.getTypeName(), instanceVertex,
                 attributeInfo.name);
@@ -469,13 +469,13 @@ public final class TypedInstanceToGraphMapper {
                 }
                 for (Object unusedKey : origKeys) {
                     String edgeLabel = GraphHelper.getEdgeLabel(typedInstance, attributeInfo) + "." + unusedKey;
-                    if (instanceVertex.getEdges(AADirection.OUT, edgeLabel).iterator().hasNext()) {
-                        AAEdge<?,?> edge = instanceVertex.getEdges(AADirection.OUT, edgeLabel).iterator().next();
+                    if (instanceVertex.getEdges(AtlasEdgeDirection.OUT, edgeLabel).iterator().hasNext()) {
+                        AtlasEdge<?,?> edge = instanceVertex.getEdges(AtlasEdgeDirection.OUT, edgeLabel).iterator().next();
                         if (TypeCategory.STRUCT.equals(((DataTypes.MapType) attributeInfo.dataType()).getValueType().getTypeCategory())) {
                            removeUnusedStructReference(edge.getId().toString(), attributeInfo,
                                ((DataTypes.MapType) attributeInfo.dataType()).getValueType());
                         } else if(TypeCategory.CLASS.equals(((DataTypes.MapType) attributeInfo.dataType()).getValueType().getTypeCategory())){
-                            final AAVertex<?,?> targetVertex = edge.getVertex(AADirection.OUT);
+                            final AtlasVertex<?,?> targetVertex = edge.getOutVertex();
                             Id guid = GraphHelper.getIdFromVertex(elementType.getName(), targetVertex);
                             removeUnusedClassReference(edge.getId().toString(), attributeInfo, elementType, !referencedIds.contains(guid));                        }
                     }
@@ -489,7 +489,7 @@ public final class TypedInstanceToGraphMapper {
 
     /******************************************** ARRAY & MAP **************************************************/
 
-    private String addOrUpdateCollectionEntry(AAVertex<?,?> instanceVertex, AttributeInfo attributeInfo,
+    private String addOrUpdateCollectionEntry(AtlasVertex<?,?> instanceVertex, AttributeInfo attributeInfo,
                                               IDataType elementType, Object newVal, String curVal, String propertyName,
                                               Operation operation)
         throws AtlasException {
@@ -518,16 +518,16 @@ public final class TypedInstanceToGraphMapper {
         }
     }
 
-    private <V,E> String addOrUpdateStruct(AAVertex<V,E> instanceVertex, AttributeInfo attributeInfo, IDataType elementType,
+    private <V,E> String addOrUpdateStruct(AtlasVertex<V,E> instanceVertex, AttributeInfo attributeInfo, IDataType elementType,
                                      ITypedStruct structAttr, String curVal,
                                      String edgeLabel, Operation operation) throws AtlasException {
-        TypeUtils.Pair<AAVertex<V,E>, AAEdge<V,E>> vertexEdgePair = null;
+        TypeUtils.Pair<AtlasVertex<V,E>, AtlasEdge<V,E>> vertexEdgePair = null;
         if (curVal != null && structAttr == null) {
             //remove edge
             removeUnusedStructReference(curVal, attributeInfo, elementType);
         } else if (curVal != null && structAttr != null) {
             //update            
-            AAEdge<V,E> edge = graphHelper.getOutGoingEdgeById(curVal);
+            AtlasEdge<V,E> edge = graphHelper.getOutGoingEdgeById(curVal);
             vertexEdgePair = updateStructVertex(structAttr, edge, operation);
         } else if (structAttr != null) {
             //add
@@ -537,21 +537,21 @@ public final class TypedInstanceToGraphMapper {
         return (vertexEdgePair != null) ? vertexEdgePair.right.getId().toString() : null;
     }
 
-    private <V,E> String addOrUpdateClassVertex(AAVertex<V,E> instanceVertex, AttributeInfo attributeInfo, IDataType<?> elementType,
+    private <V,E> String addOrUpdateClassVertex(AtlasVertex<V,E> instanceVertex, AttributeInfo attributeInfo, IDataType<?> elementType,
                                           ITypedReferenceableInstance newVal, String curVal,
                                           String edgeLabel, Operation operation) throws AtlasException {
-        AAVertex<V,E> toVertex = getClassVertex(newVal);
+        AtlasVertex<V,E> toVertex = getClassVertex(newVal);
         if(toVertex == null && newVal != null) {
             LOG.error("Could not find vertex for Class Reference " + newVal);
             throw new EntityNotFoundException("Could not find vertex for Class Reference " + newVal);
         }
 
-        TypeUtils.Pair<AAVertex<V,E>, AAEdge<V,E>> vertexEdgePair = null;
+        TypeUtils.Pair<AtlasVertex<V,E>, AtlasEdge<V,E>> vertexEdgePair = null;
         if (curVal != null && newVal == null) {
             //remove edge
             removeUnusedClassReference(curVal, attributeInfo, elementType, true);
         } else if (curVal != null && newVal != null) {
-            AAEdge<V,E> edge = graphHelper.getOutGoingEdgeById(curVal);
+            AtlasEdge<V,E> edge = graphHelper.getOutGoingEdgeById(curVal);
             Id classRefId = getId(newVal);
             vertexEdgePair = updateClassEdge(classRefId, newVal, instanceVertex, edge, toVertex, attributeInfo,
                     elementType, edgeLabel, operation);
@@ -564,14 +564,14 @@ public final class TypedInstanceToGraphMapper {
 
     /******************************************** CLASS **************************************************/
 
-    private <V,E> TypeUtils.Pair<AAVertex<V,E>, AAEdge<V,E>> addClassEdge(AAVertex<V,E> instanceVertex, AAVertex<V,E> toVertex, String edgeLabel) throws AtlasException {
+    private <V,E> TypeUtils.Pair<AtlasVertex<V,E>, AtlasEdge<V,E>> addClassEdge(AtlasVertex<V,E> instanceVertex, AtlasVertex<V,E> toVertex, String edgeLabel) throws AtlasException {
             // add an edge to the class vertex from the instance
-          AAEdge<V,E> edge = graphHelper.addEdge(instanceVertex, toVertex, edgeLabel);
+          AtlasEdge<V,E> edge = graphHelper.addEdge(instanceVertex, toVertex, edgeLabel);
           return TypeUtils.Pair.of(toVertex, edge);
     }
 
-    private <V,E> AAVertex<V,E> getClassVertex(ITypedReferenceableInstance typedReference) throws EntityNotFoundException {
-        AAVertex<V,E> referenceVertex = null;
+    private <V,E> AtlasVertex<V,E> getClassVertex(ITypedReferenceableInstance typedReference) throws EntityNotFoundException {
+        AtlasVertex<V,E> referenceVertex = null;
         Id id = null;
         if (typedReference != null) {
             id = typedReference instanceof Id ? (Id) typedReference : typedReference.getId();
@@ -592,7 +592,7 @@ public final class TypedInstanceToGraphMapper {
         Id id = typedReference instanceof Id ? (Id) typedReference : typedReference.getId();
 
         if (id.isUnassigned()) {
-            AAVertex<?,?> classVertex = idToVertexMap.get(id);
+            AtlasVertex<?,?> classVertex = idToVertexMap.get(id);
             String guid = classVertex.getProperty(Constants.GUID_PROPERTY_KEY);
             id = new Id(guid, 0, typedReference.getTypeName());
         }
@@ -600,14 +600,14 @@ public final class TypedInstanceToGraphMapper {
     }
 
 
-    private <V,E> TypeUtils.Pair<AAVertex<V,E>, AAEdge<V,E>> updateClassEdge(Id id, final ITypedReferenceableInstance typedInstance,
-                                               AAVertex<V,E> instanceVertex, AAEdge<V,E> edge, AAVertex<V,E> toVertex,
+    private <V,E> TypeUtils.Pair<AtlasVertex<V,E>, AtlasEdge<V,E>> updateClassEdge(Id id, final ITypedReferenceableInstance typedInstance,
+                                               AtlasVertex<V,E> instanceVertex, AtlasEdge<V,E> edge, AtlasVertex<V,E> toVertex,
                                                AttributeInfo attributeInfo, IDataType dataType,
                                                String edgeLabel, Operation operation) throws AtlasException {
-        TypeUtils.Pair<AAVertex<V,E>, AAEdge<V,E>> result = TypeUtils.Pair.of(toVertex, edge);
-        AAEdge<V, E> newEdge = edge;
+        TypeUtils.Pair<AtlasVertex<V,E>, AtlasEdge<V,E>> result = TypeUtils.Pair.of(toVertex, edge);
+        AtlasEdge<V, E> newEdge = edge;
         // Update edge if it exists
-        AAVertex<V,E> invertex = edge.getVertex(AADirection.IN);
+        AtlasVertex<V,E> invertex = edge.getInVertex();
         String currentGUID = invertex.getProperty(Constants.GUID_PROPERTY_KEY);
         Id currentId = new Id(currentGUID, 0, (String) invertex.getProperty(Constants.ENTITY_TYPE_PROPERTY_KEY));
         if (!currentId.equals(id)) {
@@ -637,11 +637,11 @@ public final class TypedInstanceToGraphMapper {
 
     /******************************************** TRAITS ****************************************************/
 
-    <V,E> void mapTraitInstanceToVertex(ITypedStruct traitInstance, IDataType entityType, AAVertex<V,E> parentInstanceVertex)
+    <V,E> void mapTraitInstanceToVertex(ITypedStruct traitInstance, IDataType entityType, AtlasVertex<V,E> parentInstanceVertex)
         throws AtlasException {
         // add a new vertex for the struct or trait instance
         final String traitName = traitInstance.getTypeName();
-        AAVertex<V,E> traitInstanceVertex = graphHelper.createVertexWithoutIdentity(traitInstance.getTypeName(), null,
+        AtlasVertex<V,E> traitInstanceVertex = graphHelper.createVertexWithoutIdentity(traitInstance.getTypeName(), null,
                 typeSystem.getDataType(TraitType.class, traitName).getAllSuperTypeNames());
         LOG.debug("created vertex {} for trait {}", traitInstanceVertex, traitName);
 
@@ -655,7 +655,7 @@ public final class TypedInstanceToGraphMapper {
 
     /******************************************** PRIMITIVES **************************************************/
 
-    private void mapPrimitiveOrEnumToVertex(ITypedInstance typedInstance, AAVertex<?,?> instanceVertex,
+    private void mapPrimitiveOrEnumToVertex(ITypedInstance typedInstance, AtlasVertex<?,?> instanceVertex,
                                             AttributeInfo attributeInfo) throws AtlasException {
         Object attrValue = typedInstance.get(attributeInfo.name);
 
@@ -698,11 +698,11 @@ public final class TypedInstanceToGraphMapper {
         GraphHelper.setProperty(instanceVertex, vertexPropertyName, propertyValue);
     }
 
-    private <V,E> AAEdge<V,E> removeUnusedClassReference(String edgeId, AttributeInfo attributeInfo, IDataType<?> elementType, boolean deleteReferredVertex) throws AtlasException {
+    private <V,E> AtlasEdge<V,E> removeUnusedClassReference(String edgeId, AttributeInfo attributeInfo, IDataType<?> elementType, boolean deleteReferredVertex) throws AtlasException {
         // Remove edge to disconnect struct or class reference.
         // For struct or composite class reference, also delete the target instance.
-        AAEdge<V,E> removedRelation = null;
-        TypeUtils.Pair<AAEdge<V,E>, AAVertex<V,E>> edgeAndVertex = graphHelper.getEdgeAndTargetVertex(edgeId);
+        AtlasEdge<V,E> removedRelation = null;
+        TypeUtils.Pair<AtlasEdge<V,E>, AtlasVertex<V,E>> edgeAndVertex = graphHelper.getEdgeAndTargetVertex(edgeId);
         if (attributeInfo.isComposite) {
             // For uni-directional reference, remove the edge.
             // For bi-directional reference, the edges are removed
@@ -715,7 +715,7 @@ public final class TypedInstanceToGraphMapper {
             // Delete the contained entity.
             if (deleteReferredVertex) {
                 if (LOG.isDebugEnabled()) {
-                    AAVertex<?,?> sourceVertex = edgeAndVertex.left.getVertex(AADirection.OUT);
+                    AtlasVertex<?,?> sourceVertex = edgeAndVertex.left.getOutVertex();
                     String sourceTypeName = GraphHelper.getTypeName(sourceVertex);
                     LOG.debug("Deleting composite entity {}:{} contained by {}:{} through reference {}",
                         elementType.getName(), GraphHelper.getIdFromVertex(elementType.getName(), edgeAndVertex.right)._getId(),
@@ -739,11 +739,11 @@ public final class TypedInstanceToGraphMapper {
 
     }
 
-    private <V,E> AAEdge<V,E> removeUnusedStructReference(String edgeId, AttributeInfo attributeInfo, IDataType<?> elementType) throws AtlasException {
+    private <V,E> AtlasEdge<V,E> removeUnusedStructReference(String edgeId, AttributeInfo attributeInfo, IDataType<?> elementType) throws AtlasException {
         // Remove edge to disconnect struct or class reference.
         // For struct or composite class reference, also delete the target instance.
-        AAEdge<V,E> removedRelation = null;
-        TypeUtils.Pair<AAEdge<V,E>, AAVertex<V,E>> edgeAndVertex = getGraphHelper().getEdgeAndTargetVertex(edgeId);
+        AtlasEdge<V,E> removedRelation = null;
+        TypeUtils.Pair<AtlasEdge<V,E>, AtlasVertex<V,E>> edgeAndVertex = getGraphHelper().getEdgeAndTargetVertex(edgeId);
         getGraphHelper().removeEdge(edgeAndVertex.left);
         removedRelation = edgeAndVertex.left;
 
@@ -763,10 +763,10 @@ public final class TypedInstanceToGraphMapper {
      * @param attributeInfo
      * @throws AtlasException
      */
-    private <V,E> void removeReverseReference(TypeUtils.Pair<AAEdge<V,E>, AAVertex<V,E>> edgeAndVertex, 
+    private <V,E> void removeReverseReference(TypeUtils.Pair<AtlasEdge<V,E>, AtlasVertex<V,E>> edgeAndVertex, 
         AttributeInfo attributeInfo) throws AtlasException {
         
-        AAVertex<V,E> sourceVertex = edgeAndVertex.left.getVertex(AADirection.OUT);
+        AtlasVertex<V,E> sourceVertex = edgeAndVertex.left.getOutVertex();
         String inverseTypeName = GraphHelper.getTypeName(edgeAndVertex.right);
         IConstructableType inverseType = typeSystem.getDataType(IConstructableType.class, inverseTypeName);
         AttributeInfo inverseAttributeInfo = inverseType.fieldMapping().fields.get(attributeInfo.reverseAttributeName);
@@ -774,11 +774,11 @@ public final class TypedInstanceToGraphMapper {
         TypeCategory inverseTypeCategory = inverseAttributeInfo.dataType().getTypeCategory();
     
         // Find and remove the edge which represents the inverse reference value.
-        Iterable<AAEdge<V,E>> inverseEdges = GraphHelper.getOutGoingEdgesByLabel(edgeAndVertex.right, inverseEdgeLabel);
-        AAEdge<?,?> removedEdge = null;
+        Iterable<AtlasEdge<V,E>> inverseEdges = GraphHelper.getOutGoingEdgesByLabel(edgeAndVertex.right, inverseEdgeLabel);
+        AtlasEdge<?,?> removedEdge = null;
         // Search for the edge which references the source vertex.
-        for (AAEdge<?,?> edge : inverseEdges) {
-            AAVertex<?,?> vertex = edge.getVertex(AADirection.IN);
+        for (AtlasEdge<?,?> edge : inverseEdges) {
+            AtlasVertex<?,?> vertex = edge.getInVertex();
             if (vertex.equals(sourceVertex)) {
                 // Found the edge which points back at source vertex.
                 // Disconnect the reference by removing the edge and
@@ -822,15 +822,15 @@ public final class TypedInstanceToGraphMapper {
      * @param targetVertex a vertex which represents a class, struct, or trait instance
      * @throws AtlasException
      */
-    private <V,E> void removeUnidirectionalReferences(AAVertex<V,E> targetVertex) throws AtlasException {
+    private <V,E> void removeUnidirectionalReferences(AtlasVertex<V,E> targetVertex) throws AtlasException {
     
         // Search for any remaining incoming edges that represent unidirectional references
         // to the target vertex.
-        Iterable<AAEdge<V,E>> incomingEdges = targetVertex.getEdges(AADirection.IN);
-        for (AAEdge<?,?> edge : incomingEdges) {
+        Iterable<AtlasEdge<V,E>> incomingEdges = targetVertex.getEdges(AtlasEdgeDirection.IN);
+        for (AtlasEdge<?,?> edge : incomingEdges) {
             String label = edge.getLabel();
             AtlasEdgeLabel atlasEdgeLabel = new AtlasEdgeLabel(label);
-            AAVertex<?,?> referencingVertex = edge.getVertex(AADirection.OUT);
+            AtlasVertex<?,?> referencingVertex = edge.getOutVertex();
             String typeName = atlasEdgeLabel.getTypeName();
             IConstructableType referencingType = typeSystem.getDataType(IConstructableType.class, typeName);
             
@@ -847,8 +847,8 @@ public final class TypedInstanceToGraphMapper {
         }
     }
 
-    private Pair<String, Boolean> removeReferenceValue(AAEdge<?,?> edge, AtlasEdgeLabel atlasEdgeLabel,
-            AAVertex<?,?> referencingVertex, IConstructableType referencingType, TypeCategory attrTypeCategory) 
+    private Pair<String, Boolean> removeReferenceValue(AtlasEdge<?,?> edge, AtlasEdgeLabel atlasEdgeLabel,
+            AtlasVertex<?,?> referencingVertex, IConstructableType referencingType, TypeCategory attrTypeCategory) 
         throws AtlasException {
     
         graphHelper.removeEdge(edge);
@@ -888,8 +888,8 @@ public final class TypedInstanceToGraphMapper {
         return refValueRemoved;
     }
 
-    private TypeUtils.Pair<String, Boolean> removeArrayReferenceValue(AtlasEdgeLabel atlasEdgeLabel, AAVertex<?,?> referencingVertex, 
-        AAEdge edge, List<String> newRefValues) {
+    private TypeUtils.Pair<String, Boolean> removeArrayReferenceValue(AtlasEdgeLabel atlasEdgeLabel, AtlasVertex<?,?> referencingVertex, 
+        AtlasEdge edge, List<String> newRefValues) {
         
         String refValueToRemove = edge.getId().toString();
         boolean valueRemoved = newRefValues.remove(refValueToRemove);
@@ -899,12 +899,12 @@ public final class TypedInstanceToGraphMapper {
         return new TypeUtils.Pair<String, Boolean>(refValueToRemove, Boolean.valueOf(valueRemoved));
     }
 
-    private TypeUtils.Pair<String, Boolean>  removeMapReferenceValue(AtlasEdgeLabel atlasEdgeLabel, AAVertex<?,?> referencingVertex, 
-        AAEdge edge, List<String> newRefValues) throws AtlasException {
+    private TypeUtils.Pair<String, Boolean>  removeMapReferenceValue(AtlasEdgeLabel atlasEdgeLabel, AtlasVertex<?,?> referencingVertex, 
+        AtlasEdge edge, List<String> newRefValues) throws AtlasException {
         
         String refValueToRemove = atlasEdgeLabel.getMapKey();
         if (refValueToRemove == null) {
-            // AAEdge label is missing the map key - throw an exception.
+            // AtlasEdge label is missing the map key - throw an exception.
             String typeName = atlasEdgeLabel.getTypeName();
             throw new AtlasException("Outgoing edge " + edge.getId().toString()  
                 + " for vertex " + referencingVertex + "): label " + atlasEdgeLabel.getEdgeLabel()
@@ -920,7 +920,7 @@ public final class TypedInstanceToGraphMapper {
         return new TypeUtils.Pair<String, Boolean>(refValueToRemove, Boolean.valueOf(valueRemoved));
     }
 
-    void deleteEntity(String typeName, AAVertex<?,?> instanceVertex) throws AtlasException {
+    void deleteEntity(String typeName, AtlasVertex<?,?> instanceVertex) throws AtlasException {
         // Check if this entity has already been processed.
         Id id = GraphHelper.getIdFromVertex(typeName, instanceVertex);
         if (deletedEntityGuids.contains(id._getId())) {
@@ -946,15 +946,15 @@ public final class TypedInstanceToGraphMapper {
      * @param instanceVertex
      * @throws AtlasException 
      */
-    private <V,E> void deleteAllTraits(AAVertex<V,E> instanceVertex) throws AtlasException {
+    private <V,E> void deleteAllTraits(AtlasVertex<V,E> instanceVertex) throws AtlasException {
         List<String> traitNames = GraphHelper.getTraitNames(instanceVertex);
         final String entityTypeName = GraphHelper.getTypeName(instanceVertex);
         for (String traitNameToBeDeleted : traitNames) {
             String relationshipLabel = GraphHelper.getTraitLabel(entityTypeName, traitNameToBeDeleted);
-            Iterator<AAEdge<V,E>> results = instanceVertex.getEdges(AADirection.OUT, relationshipLabel).iterator();
+            Iterator<AtlasEdge<V,E>> results = instanceVertex.getEdges(AtlasEdgeDirection.OUT, relationshipLabel).iterator();
             if (results.hasNext()) { // there should only be one edge for this label
-                final AAEdge<V,E> traitEdge = results.next();
-                final AAVertex<V,E> traitVertex = traitEdge.getVertex(AADirection.IN);
+                final AtlasEdge<V,E> traitEdge = results.next();
+                final AtlasVertex<V,E> traitVertex = traitEdge.getInVertex();
     
                 // remove the edge to the trait instance from the repository
                 graphHelper.removeEdge(traitEdge);
@@ -966,7 +966,7 @@ public final class TypedInstanceToGraphMapper {
         }
     }
 
-    void deleteTraitVertex(String traitName, final AAVertex<?,?> traitVertex) throws AtlasException {
+    void deleteTraitVertex(String traitName, final AtlasVertex<?,?> traitVertex) throws AtlasException {
 
         TraitType traitType = typeSystem.getDataType(TraitType.class, traitName);
         ITypedStruct traitStruct = traitType.createInstance();

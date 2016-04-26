@@ -28,9 +28,9 @@ import java.io.File;
 import java.util.Collection;
 
 import org.apache.atlas.repository.graph.GraphHelper;
-import org.apache.atlas.repository.graphdb.AAEdge;
-import org.apache.atlas.repository.graphdb.AAGraph;
-import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.repository.graphdb.AtlasEdge;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.Referenceable;
 import org.apache.atlas.typesystem.TypesDef;
@@ -69,18 +69,18 @@ public final class TestUtils {
      * @return path to the dump file
      * @throws Exception
      */
-    public static String dumpGraph(AAGraph<?,?> graph) throws Exception {
+    public static String dumpGraph(AtlasGraph<?,?> graph) throws Exception {
         File tempFile = File.createTempFile("graph", ".gson");
         System.out.println("tempFile.getPath() = " + tempFile.getPath());
         //GraphSONWriter.outputGraph(graph, tempFile.getPath());
 
         System.out.println("Vertices:");
-        for (AAVertex<?,?> vertex : graph.getVertices()) {
+        for (AtlasVertex<?,?> vertex : graph.getVertices()) {
             System.out.println(GraphHelper.vertexString(vertex));
         }
 
-        System.out.println("AAEdge<V,E>s:");
-        for (AAEdge<?,?> edge: graph.getEdges()) {
+        System.out.println("AtlasEdge<V,E>s:");
+        for (AtlasEdge<?,?> edge: graph.getEdges()) {
             System.out.println(GraphHelper.edgeString(edge));
         }
 

@@ -1,17 +1,19 @@
 
 package org.apache.atlas.repository.graphdb.titan0;
 
-import org.apache.atlas.repository.graphdb.AADirection;
-import org.apache.atlas.repository.graphdb.AAEdge;
-import org.apache.atlas.repository.graphdb.AAVertex;
-import org.apache.atlas.repository.graphdb.AAVertexQuery;
-import org.apache.atlas.utils.IterableAdapter;
+import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
+import org.apache.atlas.repository.graphdb.AtlasEdge;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
+import org.apache.atlas.repository.graphdb.AtlasVertexQuery;
+import org.apache.atlas.utils.adapters.IterableAdapter;
+import org.apache.atlas.utils.adapters.impl.EdgeMapper;
+import org.apache.atlas.utils.adapters.impl.VertexMapper;
 
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.VertexQuery;
 
-public class Titan0VertexQuery implements AAVertexQuery<Vertex, Edge> {
+public class Titan0VertexQuery implements AtlasVertexQuery<Titan0Vertex, Titan0Edge> {
 
     private VertexQuery query_;
 
@@ -20,22 +22,22 @@ public class Titan0VertexQuery implements AAVertexQuery<Vertex, Edge> {
     }
 
     @Override
-    public AAVertexQuery<Vertex, Edge> direction(AADirection queryDirection) {
+    public AtlasVertexQuery<Titan0Vertex, Titan0Edge> direction(AtlasEdgeDirection queryDirection) {
         query_.direction(TitanObjectFactory.createDirection(queryDirection));
         return this;
         
     }
 
     @Override
-    public Iterable<AAVertex<Vertex, Edge>> vertices() {
+    public Iterable<AtlasVertex<Titan0Vertex, Titan0Edge>> vertices() {
         Iterable<Vertex> vertices = query_.vertices();
-        return new IterableAdapter<Vertex,AAVertex<Vertex, Edge>>(vertices, VertexMapper.INSTANCE);
+        return new IterableAdapter<Vertex,AtlasVertex<Titan0Vertex, Titan0Edge>>(vertices, VertexMapper.INSTANCE);
     }
 
     @Override
-    public Iterable<AAEdge<Vertex, Edge>> edges() {
+    public Iterable<AtlasEdge<Titan0Vertex, Titan0Edge>> edges() {
         Iterable<Edge> vertices = query_.edges();
-        return new IterableAdapter<Edge,AAEdge<Vertex, Edge>>(vertices, EdgeMapper.INSTANCE);
+        return new IterableAdapter<Edge,AtlasEdge<Titan0Vertex, Titan0Edge>>(vertices, EdgeMapper.INSTANCE);
    
     }
 

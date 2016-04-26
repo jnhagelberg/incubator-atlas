@@ -1,10 +1,9 @@
 
 package org.apache.atlas.repository.graphdb.titan0;
 
-import org.apache.atlas.repository.graphdb.AADirection;
-import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.typesystem.types.Multiplicity;
-import org.apache.atlas.utils.LruMap;
 
 import com.thinkaurelius.titan.core.Cardinality;
 import com.tinkerpop.blueprints.Direction;
@@ -13,20 +12,16 @@ import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Vertex;
 
 public class TitanObjectFactory {
-
-    private static LruMap<Edge, Titan0Edge> edgeMap = new LruMap<Edge, Titan0Edge>(1000);
-    private static LruMap<Vertex, Titan0Vertex> vertexMap = new LruMap<Vertex, Titan0Vertex>(1000);
     
-    public static Titan0Edge createEdge(Edge source) {
-        Titan0Edge result = edgeMap.get(source);
-        if(result == null) {
-            result = new Titan0Edge(source);
-            edgeMap.put(source, result);
-        }
-        return result;
+    private TitanObjectFactory() {
+        
     }
     
-    public static Direction createDirection(AADirection dir) {
+    public static Titan0Edge createEdge(Edge source) {
+        return new Titan0Edge(source);
+    }
+    
+    public static Direction createDirection(AtlasEdgeDirection dir) {
         switch(dir) {
         case IN:
             return Direction.IN;      
@@ -46,7 +41,7 @@ public class TitanObjectFactory {
         } else if (multiplicity == Multiplicity.SET) {
             return Cardinality.SET;
         }
-        // todo - default to LIST as this is the most forgiving
+        // default to LIST as this is the most forgiving
         return Cardinality.LIST;
     }
 
@@ -56,16 +51,8 @@ public class TitanObjectFactory {
        return new Titan0GraphQuery(query);
     }
 
-    public static AAVertex<Vertex, Edge> createVertex(Vertex source) {
-        Titan0Vertex result = vertexMap.get(source);
-        if(result == null) {
-            result = new Titan0Vertex(source);
-            vertexMap.put(source, result);
-        }
-        return result;
+    public static AtlasVertex<Titan0Vertex, Titan0Edge> createVertex(Vertex source) {
+        return new Titan0Vertex(source);
     }
-
-   
-    
-    
+ 
 }

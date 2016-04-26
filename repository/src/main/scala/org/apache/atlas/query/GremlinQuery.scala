@@ -379,7 +379,8 @@ class GremlinTranslator(expr: Expression,
                val inputQry = genQuery(input, inSelect)
                val repeatExpr = s"""repeat(__.${genQuery(loopExpr, inSelect)})"""
                val optTimesExpr = if (t.isDefined) s".times(${t.get.value})" else ""
-               val emitExpr = s""".emit(${gPersistenceBehavior.loopObjectExpression(input.dataType)})"""
+               val emitExpr = s""".emit(${gPersistenceBehavior.loopObjectExpression(input.dataType)})"""               
+               
                s"""${inputQry}.${repeatExpr}${optTimesExpr}${emitExpr}"""
                 
             }
@@ -431,7 +432,7 @@ class GremlinTranslator(expr: Expression,
                  s"${genQuery(child, inSelect)}.path"
             }
             else {
-                s"${genQuery(child, inSelect)}.path()"
+                s"${genQuery(child, inSelect)}.simplePath().path()"
             }
         }
         case x => throw new GremlinTranslationException(x, "expression not yet supported")

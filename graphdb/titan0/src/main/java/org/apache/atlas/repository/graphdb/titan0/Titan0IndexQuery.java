@@ -3,16 +3,16 @@ package org.apache.atlas.repository.graphdb.titan0;
 
 import java.util.Iterator;
 
-import org.apache.atlas.repository.graphdb.AAIndexQuery;
-import org.apache.atlas.repository.graphdb.AAVertex;
-import org.apache.atlas.utils.IteratorAdapter;
-import org.apache.atlas.utils.Mapper;
+import org.apache.atlas.repository.graphdb.AtlasIndexQuery;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
+import org.apache.atlas.utils.adapters.IteratorAdapter;
+import org.apache.atlas.utils.adapters.Mapper;
 
 import com.thinkaurelius.titan.core.TitanIndexQuery;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 
-public class Titan0IndexQuery implements AAIndexQuery<Vertex, Edge> {
+public class Titan0IndexQuery implements AtlasIndexQuery<Titan0Vertex, Titan0Edge> {
 
     private TitanIndexQuery query_;
     private static final IndexQueryResultMapper QUERY_RESULT_MAPPER = new IndexQueryResultMapper();
@@ -22,22 +22,22 @@ public class Titan0IndexQuery implements AAIndexQuery<Vertex, Edge> {
     }
 
     @Override
-    public Iterator<AAIndexQuery.Result<Vertex, Edge>> vertices() {
+    public Iterator<AtlasIndexQuery.Result<Titan0Vertex, Titan0Edge>> vertices() {
         Iterator<TitanIndexQuery.Result<Vertex>> results = query_.vertices().iterator();
 
-        return new IteratorAdapter<TitanIndexQuery.Result<Vertex>, AAIndexQuery.Result<Vertex, Edge>>(results,
+        return new IteratorAdapter<TitanIndexQuery.Result<Vertex>, AtlasIndexQuery.Result<Titan0Vertex, Titan0Edge>>(results,
                 QUERY_RESULT_MAPPER);
     }
 
     private static final class IndexQueryResultMapper
-            implements Mapper<TitanIndexQuery.Result<Vertex>, AAIndexQuery.Result<Vertex, Edge>> {
+            implements Mapper<TitanIndexQuery.Result<Vertex>, AtlasIndexQuery.Result<Titan0Vertex, Titan0Edge>> {
         @Override
-        public AAIndexQuery.Result<Vertex, Edge> map(TitanIndexQuery.Result<Vertex> source) {
+        public AtlasIndexQuery.Result<Titan0Vertex, Titan0Edge> map(TitanIndexQuery.Result<Vertex> source) {
             return new ResultImpl(source);
         }
     }
     
-    static class ResultImpl implements AAIndexQuery.Result<Vertex, Edge> {
+    static class ResultImpl implements AtlasIndexQuery.Result<Titan0Vertex, Titan0Edge> {
         TitanIndexQuery.Result<Vertex> source_;
 
         public ResultImpl(TitanIndexQuery.Result<Vertex> source) {
@@ -45,7 +45,7 @@ public class Titan0IndexQuery implements AAIndexQuery<Vertex, Edge> {
         }
 
         @Override
-        public AAVertex<Vertex, Edge> getVertex() {
+        public AtlasVertex<Titan0Vertex, Titan0Edge> getVertex() {
             return TitanObjectFactory.createVertex(source_.getElement());
         }
 

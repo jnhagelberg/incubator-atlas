@@ -20,7 +20,7 @@ package org.apache.atlas;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.apache.atlas.repository.graph.GraphProvider;
-import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.GremlinVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,15 +29,15 @@ import com.google.inject.Inject;
 
 public class GraphTransactionInterceptor implements MethodInterceptor {
     private static final Logger LOG = LoggerFactory.getLogger(GraphTransactionInterceptor.class);
-    private AAGraph<?,?> graph;
+    private AtlasGraph<?,?> graph;
 
     @Inject
-    GraphProvider<AAGraph> graphProvider;
+    GraphProvider<AtlasGraph> graphProvider;
 
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
         if (graph == null) {
-            graph = (AAGraph<?,?>)graphProvider.get();
+            graph = (AtlasGraph<?,?>)graphProvider.get();
         }
 
         try {

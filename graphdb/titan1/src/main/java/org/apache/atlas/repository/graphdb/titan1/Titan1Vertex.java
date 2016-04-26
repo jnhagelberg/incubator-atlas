@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.apache.atlas.repository.graphdb.AADirection;
-import org.apache.atlas.repository.graphdb.AAEdge;
-import org.apache.atlas.repository.graphdb.AAVertex;
-import org.apache.atlas.repository.graphdb.AAVertexQuery;
-import org.apache.atlas.utils.IterableAdapter;
+import org.apache.atlas.repository.graphdb.AtlasEdge;
+import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
+import org.apache.atlas.repository.graphdb.AtlasVertexQuery;
+import org.apache.atlas.utils.adapters.IterableAdapter;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
@@ -17,7 +17,7 @@ import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 
 import com.thinkaurelius.titan.core.TitanVertex;
 
-public class Titan1Vertex extends Titan1Element<Vertex> implements AAVertex<Vertex, Edge> {
+public class Titan1Vertex extends Titan1Element<Vertex> implements AtlasVertex<Titan1Vertex, Titan1Edge> {
 
     private static final class EdgesIterable implements Iterable<Edge> {
         private final Iterator<Edge> edges;
@@ -53,19 +53,13 @@ public class Titan1Vertex extends Titan1Element<Vertex> implements AAVertex<Vert
     }
 
     @Override
-    public Iterable<AAEdge<Vertex, Edge>> getEdges(AADirection dir, String edgeLabel) {
+    public Iterable<AtlasEdge<Titan1Vertex, Titan1Edge>> getEdges(AtlasEdgeDirection dir, String edgeLabel) {
         
         Direction d = TitanObjectFactory.createDirection(dir);
         Iterator<Edge> edges = element_.edges(d, edgeLabel);        
         Iterable<Edge> result = new EdgesIterable(edges);
-        return new IterableAdapter<Edge, AAEdge<Vertex,Edge>>(result, EdgeMapper.INSTANCE);
+        return new IterableAdapter<Edge, AtlasEdge<Titan1Vertex, Titan1Edge>>(result, EdgeMapper.INSTANCE);
         
-    }
-
-    @Override
-    public Vertex getWrappedVertex() {
-
-        return element_;
     }
     
     private TitanVertex getAsTitanVertex() {
@@ -73,11 +67,11 @@ public class Titan1Vertex extends Titan1Element<Vertex> implements AAVertex<Vert
     }
 
     @Override
-    public Iterable<AAEdge<Vertex, Edge>> getEdges(AADirection in) {
+    public Iterable<AtlasEdge<Titan1Vertex, Titan1Edge>> getEdges(AtlasEdgeDirection in) {
         Direction d = TitanObjectFactory.createDirection(in);
         Iterator<Edge> edges = element_.edges(d);        
         Iterable<Edge> result = new EdgesIterable(edges);
-        return new IterableAdapter<Edge, AAEdge<Vertex,Edge>>(result, EdgeMapper.INSTANCE);
+        return new IterableAdapter<Edge, AtlasEdge<Titan1Vertex, Titan1Edge>>(result, EdgeMapper.INSTANCE);
     }
 
     @Override
@@ -99,9 +93,16 @@ public class Titan1Vertex extends Titan1Element<Vertex> implements AAVertex<Vert
     }
     
     @Override
-    public AAVertexQuery<Vertex, Edge> query() {
+    public AtlasVertexQuery<Titan1Vertex, Titan1Edge> query() {
         
        return new Titan1VertexQuery(getAsTitanVertex().query());
     }
 
+
+    @Override
+    public Titan1Vertex getV() {
+        return this;
+    }
+
+    
 }

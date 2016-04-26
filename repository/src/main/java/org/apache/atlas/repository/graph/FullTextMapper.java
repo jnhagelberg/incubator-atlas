@@ -17,7 +17,7 @@
  */
 package org.apache.atlas.repository.graph;
 
-import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.typesystem.ITypedInstance;
@@ -43,7 +43,7 @@ public class FullTextMapper {
         this.graphToTypedInstanceMapper = graphToTypedInstanceMapper;
     }
 
-    public <V,E> String mapRecursive(AAVertex<V,E> instanceVertex, boolean followReferences) throws AtlasException {
+    public <V,E> String mapRecursive(AtlasVertex<V,E> instanceVertex, boolean followReferences) throws AtlasException {
         String guid = instanceVertex.getProperty(Constants.GUID_PROPERTY_KEY);
         ITypedReferenceableInstance typedReference =
             graphToTypedInstanceMapper.mapGraphToTypedInstance(guid, instanceVertex);
@@ -107,7 +107,7 @@ public class FullTextMapper {
         case CLASS:
             if (followReferences) {
                 String refGuid = ((ITypedReferenceableInstance) value).getId()._getId();
-                AAVertex refVertex = graphHelper.getVertexForGUID(refGuid);
+                AtlasVertex refVertex = graphHelper.getVertexForGUID(refGuid);
                 return mapRecursive(refVertex, false);
             }
             break;

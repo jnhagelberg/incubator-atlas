@@ -17,7 +17,7 @@ import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.RepositoryException;
 import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.repository.graph.GraphBackedMetadataRepository;
-import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.typesystem.IReferenceableInstance;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.Referenceable;
@@ -247,7 +247,7 @@ public class JSONImporter {
         AtlasGraphProvider gProvider = new AtlasGraphProvider();
         MetadataRepository repo = new GraphBackedMetadataRepository(gProvider);
         DefaultGraphPersistenceStrategy gp = new DefaultGraphPersistenceStrategy(repo);
-        AAGraph<?,?> g = QueryTestsUtils.setupTestGraph(repo, gProvider);
+        AtlasGraph<?,?> g = QueryTestsUtils.setupTestGraph(repo, gProvider);
     }
 
 }

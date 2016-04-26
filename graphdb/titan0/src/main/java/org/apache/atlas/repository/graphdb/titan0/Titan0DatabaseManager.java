@@ -2,8 +2,7 @@
 package org.apache.atlas.repository.graphdb.titan0;
 
 
-import org.apache.atlas.repository.graphdb.ElementType;
-import org.apache.atlas.repository.graphdb.GraphDatabaseManager;
+import org.apache.atlas.repository.graphdb.AtlasGraphManagement;
 import org.apache.atlas.typesystem.types.Multiplicity;
 
 import com.thinkaurelius.titan.core.Cardinality;
@@ -16,7 +15,7 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
 
-public class Titan0DatabaseManager implements GraphDatabaseManager {
+public class Titan0DatabaseManager implements AtlasGraphManagement {
 
     private TitanManagement management_;
     
@@ -24,12 +23,22 @@ public class Titan0DatabaseManager implements GraphDatabaseManager {
         management_ = managementSystem;
     }
 
+    
     @Override
-    public void buildMixedIndex(String index, ElementType type, String backingIndex) {
-       
-       Class<? extends Element> titanClass = type == ElementType.VERTEX ? Vertex.class : Edge.class;
+    public void buildMixedVertexIndex(String index, String backingIndex) {
+       buildMixedIndex(index, Vertex.class, backingIndex);
+    }
+    
+    @Override
+    public void buildMixedEdgeIndex(String index, String backingIndex) {
+       buildMixedIndex(index, Edge.class, backingIndex);
+    }
+    
+    private void buildMixedIndex(String index, Class<? extends Element> titanClass, String backingIndex) {
+          
        management_.buildIndex(index, titanClass).buildMixedIndex(backingIndex);
     }
+    
     
     @Override
     public void createFullTextIndex(String indexName, String propertyKey, String backingIndex) { 

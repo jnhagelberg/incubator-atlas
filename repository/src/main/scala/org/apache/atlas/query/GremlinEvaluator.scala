@@ -19,14 +19,14 @@
 package org.apache.atlas.query
 
 import javax.script.{ Bindings, ScriptEngine, ScriptEngineManager }
-import org.apache.atlas.repository.graphdb.AAGraph
+import org.apache.atlas.repository.graphdb.AtlasGraph
 import org.apache.atlas.query.TypeUtils.ResultWithPathStruct
 import org.apache.atlas.typesystem.json._
 import org.apache.atlas.typesystem.types._
 import org.json4s._
 import org.json4s.native.Serialization._
 import scala.language.existentials
-import org.apache.atlas.repository.graphdb.AAVertex
+import org.apache.atlas.repository.graphdb.AtlasVertex
 import java.util.Collections
 
 case class GremlinQueryResult(query: String,
@@ -35,7 +35,7 @@ case class GremlinQueryResult(query: String,
     def toJson = JsonHelper.toJson(this)
 }
 
-class GremlinEvaluator[V, E](qry: GremlinQuery, persistenceStrategy: GraphPersistenceStrategies, g: AAGraph[V, E]) {
+class GremlinEvaluator[V, E](qry: GremlinQuery, persistenceStrategy: GraphPersistenceStrategies, g: AtlasGraph[V, E]) {
 
     val manager: ScriptEngineManager = new ScriptEngineManager
     val engine: ScriptEngine = manager.getEngineByName("gremlin-groovy")
@@ -54,7 +54,7 @@ class GremlinEvaluator[V, E](qry: GremlinQuery, persistenceStrategy: GraphPersis
         } else {
             import scala.collection.JavaConversions._
             import scala.collection.JavaConverters._
-            val pathList = g.convertPathQueryResultToList(gResultObj)
+            val pathList = g.convertPathQueryResultToList(gResultObj);
             val iPaths = pathList.asInstanceOf[java.util.List[AnyRef]].init
 
             val oPaths = iPaths.map { p =>

@@ -21,8 +21,8 @@ package org.apache.atlas.query
 import java.io.File
 import javax.script.{Bindings, ScriptEngine, ScriptEngineManager}
 import com.google.common.collect.ImmutableList
-import org.apache.atlas.repository.graphdb.AAVertex
-import org.apache.atlas.repository.graphdb.AAGraph
+import org.apache.atlas.repository.graphdb.AtlasVertex
+import org.apache.atlas.repository.graphdb.AtlasGraph
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.repository.graph.AtlasGraphProvider
 import org.apache.atlas.typesystem.types._
@@ -203,7 +203,7 @@ object QueryTestsUtils extends GraphUtils {
         ()
     }
 
-    def setupTestGraph(repo : MetadataRepository, gp: AtlasGraphProvider): AAGraph[_,_] = {
+    def setupTestGraph(repo : MetadataRepository, gp: AtlasGraphProvider): AtlasGraph[_,_] = {
         
         //start with a clean graph
         AtlasGraphProvider.unloadGraph();    

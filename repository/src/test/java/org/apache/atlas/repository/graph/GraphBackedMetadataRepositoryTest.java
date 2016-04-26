@@ -33,10 +33,10 @@ import org.apache.atlas.TestUtils;
 import org.apache.atlas.discovery.graph.GraphBackedDiscoveryService;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.RepositoryException;
-import org.apache.atlas.repository.graphdb.AAGraphQuery;
-import org.apache.atlas.repository.graphdb.AAGraphQuery.ComparisionOperator;
-import org.apache.atlas.repository.graphdb.AAGraph;
-import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.repository.graphdb.AtlasGraphQuery;
+import org.apache.atlas.repository.graphdb.AtlasGraphQuery.ComparisionOperator;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.typesystem.IStruct;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.ITypedStruct;
@@ -199,7 +199,7 @@ public class GraphBackedMetadataRepositoryTest {
 
     @GraphTransaction
     String getGUID() {
-        AAVertex tableVertex = getTableEntityVertex();
+        AtlasVertex tableVertex = getTableEntityVertex();
 
         String guid = tableVertex.getProperty(Constants.GUID_PROPERTY_KEY);
         if (guid == null) {
@@ -209,12 +209,12 @@ public class GraphBackedMetadataRepositoryTest {
     }
 
     @GraphTransaction
-    <V,E> AAVertex<V,E> getTableEntityVertex() {
-        AAGraph<V,E> graph = (AAGraph<V,E>)graphProvider.get();
-        AAGraphQuery query = graph.query().has(Constants.ENTITY_TYPE_PROPERTY_KEY, ComparisionOperator.EQUAL, TestUtils.TABLE_TYPE);
-        Iterator<AAVertex> results = query.vertices().iterator();
+    <V,E> AtlasVertex<V,E> getTableEntityVertex() {
+        AtlasGraph<V,E> graph = (AtlasGraph<V,E>)graphProvider.get();
+        AtlasGraphQuery query = graph.query().has(Constants.ENTITY_TYPE_PROPERTY_KEY, ComparisionOperator.EQUAL, TestUtils.TABLE_TYPE);
+        Iterator<AtlasVertex> results = query.vertices().iterator();
         // returning one since guid should be unique
-        AAVertex tableVertex = results.hasNext() ? results.next() : null;
+        AtlasVertex tableVertex = results.hasNext() ? results.next() : null;
         if (tableVertex == null) {
             Assert.fail();
         }
@@ -244,7 +244,7 @@ public class GraphBackedMetadataRepositoryTest {
     @Test(dependsOnMethods = "testGetTraitNames")
     public void testAddTrait() throws Exception {
         final String aGUID = getGUID();
-        AAVertex<?,?> vertex = GraphHelper.getInstance().getVertexForGUID(aGUID);
+        AtlasVertex<?,?> vertex = GraphHelper.getInstance().getVertexForGUID(aGUID);
         Long modificationTimestampPreUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY);
         Assert.assertNull(modificationTimestampPreUpdate);
 
@@ -316,7 +316,7 @@ public class GraphBackedMetadataRepositoryTest {
     @Test(dependsOnMethods = "testAddTrait")
     public void testDeleteTrait() throws Exception {
         final String aGUID = getGUID();
-        AAVertex<?,?> vertex = GraphHelper.getInstance().getVertexForGUID(aGUID);
+        AtlasVertex<?,?> vertex = GraphHelper.getInstance().getVertexForGUID(aGUID);
         Long modificationTimestampPreUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY);
         Assert.assertNotNull(modificationTimestampPreUpdate);
 
@@ -356,7 +356,7 @@ public class GraphBackedMetadataRepositoryTest {
 
     @Test(dependsOnMethods = "testCreateEntity")
     public void testGetIdFromVertex() throws Exception {
-        AAVertex<?,?> tableVertex = getTableEntityVertex();
+        AtlasVertex<?,?> tableVertex = getTableEntityVertex();
 
         String guid = tableVertex.getProperty(Constants.GUID_PROPERTY_KEY);
         if (guid == null) {
@@ -369,7 +369,7 @@ public class GraphBackedMetadataRepositoryTest {
 
     @Test(dependsOnMethods = "testCreateEntity")
     public void testGetTypeName() throws Exception {
-        AAVertex tableVertex = getTableEntityVertex();
+        AtlasVertex tableVertex = getTableEntityVertex();
         Assert.assertEquals(GraphHelper.getTypeName(tableVertex), TestUtils.TABLE_TYPE);
     }
 
@@ -506,7 +506,7 @@ public class GraphBackedMetadataRepositoryTest {
 
         ITypedReferenceableInstance max = repositoryService.getEntityDefinition("Person", "name", "Max");
         String maxGuid = max.getId()._getId();
-        AAVertex vertex = GraphHelper.getInstance().getVertexForGUID(maxGuid);
+        AtlasVertex vertex = GraphHelper.getInstance().getVertexForGUID(maxGuid);
         Long creationTimestamp = vertex.getProperty(Constants.TIMESTAMP_PROPERTY_KEY);
         Assert.assertNotNull(creationTimestamp);
 

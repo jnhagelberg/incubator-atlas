@@ -29,10 +29,10 @@ import org.apache.atlas.GraphTransaction;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.repository.graph.GraphHelper;
-import org.apache.atlas.repository.graphdb.AADirection;
-import org.apache.atlas.repository.graphdb.AAEdge;
-import org.apache.atlas.repository.graphdb.AAGraph;
-import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
+import org.apache.atlas.repository.graphdb.AtlasEdge;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.typesystem.TypesDef;
 import org.apache.atlas.typesystem.types.AttributeDefinition;
 import org.apache.atlas.typesystem.types.AttributeInfo;
@@ -67,11 +67,11 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
 
     private static Logger LOG = LoggerFactory.getLogger(GraphBackedTypeStore.class);
 
-    private final AAGraph<V,E> graph;
+    private final AtlasGraph<V,E> graph;
 
     @Inject
     public GraphBackedTypeStore(AtlasGraphProvider graphProvider) {
-        graph = (AAGraph<V,E>)graphProvider.get();
+        graph = (AtlasGraph<V,E>)graphProvider.get();
     }
 
     @Override
@@ -104,18 +104,18 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
         }
     }
 
-    private void addProperty(AAVertex<V,E> vertex, String propertyName, Object value) {
+    private void addProperty(AtlasVertex<V,E> vertex, String propertyName, Object value) {
         LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, vertex);
         vertex.setProperty(propertyName, value);
     }
     
-    private void addListProperty(AAVertex<V,E> vertex, String propertyName, List<String> value) {
+    private void addListProperty(AtlasVertex<V,E> vertex, String propertyName, List<String> value) {
         LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, vertex);
         vertex.setProperty(propertyName, value);
     }
 
     private void storeInGraph(EnumType dataType) {
-        AAVertex<V,E> vertex = createVertex(dataType.getTypeCategory(), dataType.getName(), dataType.getDescription());
+        AtlasVertex<V,E> vertex = createVertex(dataType.getTypeCategory(), dataType.getName(), dataType.getDescription());
         List<String> values = new ArrayList<>(dataType.values().size());
         for (EnumValue enumValue : dataType.values()) {
             String key = getPropertyKey(dataType.getName(), enumValue.value);
@@ -139,7 +139,7 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
 
     private void storeInGraph(TypeSystem typeSystem, DataTypes.TypeCategory category, String typeName, String typeDescription,
             ImmutableList<AttributeInfo> attributes, ImmutableSet<String> superTypes) throws AtlasException {
-        AAVertex<V,E> vertex = createVertex(category, typeName, typeDescription);
+        AtlasVertex<V,E> vertex = createVertex(category, typeName, typeDescription);
         List<String> attrNames = new ArrayList<>();
         if (attributes != null) {
             for (AttributeInfo attribute : attributes) {
@@ -159,13 +159,13 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
         if (superTypes != null) {
             for (String superTypeName : superTypes) {
                 HierarchicalType superType = typeSystem.getDataType(HierarchicalType.class, superTypeName);
-                AAVertex<V,E> superVertex = createVertex(superType.getTypeCategory(), superTypeName, superType.getDescription());
+                AtlasVertex<V,E> superVertex = createVertex(superType.getTypeCategory(), superTypeName, superType.getDescription());
                 addEdge(vertex, superVertex, SUPERTYPE_EDGE_LABEL);
             }
         }
     }
 
-    private void addReferencesForAttribute(TypeSystem typeSystem, AAVertex<V,E> vertex, AttributeInfo attribute)
+    private void addReferencesForAttribute(TypeSystem typeSystem, AtlasVertex<V,E> vertex, AttributeInfo attribute)
             throws AtlasException {
         ImmutableList<String> coreTypes = typeSystem.getCoreTypes();
         List<IDataType> attrDataTypes = new ArrayList<>();
@@ -203,32 +203,32 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
 
         for (IDataType attrType : attrDataTypes) {
             if (!coreTypes.contains(attrType.getName())) {
-                AAVertex<V,E> attrVertex = createVertex(attrType.getTypeCategory(), attrType.getName(), attrType.getDescription());
+                AtlasVertex<V,E> attrVertex = createVertex(attrType.getTypeCategory(), attrType.getName(), attrType.getDescription());
                 String label = getEdgeLabel(vertexTypeName, attribute.name);
                 addEdge(vertex, attrVertex, label);
             }
         }
     }
 
-    private void addEdge(AAVertex<V,E> fromVertex, AAVertex<V,E> toVertex, String label) {
-        Iterable<AAEdge<V,E>> edges = GraphHelper.getOutGoingEdgesByLabel(fromVertex, label);
+    private void addEdge(AtlasVertex<V,E> fromVertex, AtlasVertex<V,E> toVertex, String label) {
+        Iterable<AtlasEdge<V,E>> edges = GraphHelper.getOutGoingEdgesByLabel(fromVertex, label);
         // ATLAS-474: Check if this type system edge already exists, to avoid duplicates.
-        for (AAEdge<V,E> edge : edges) {
-            if (edge.getVertex(AADirection.IN).equals(toVertex)) {
+        for (AtlasEdge<V,E> edge : edges) {
+            if (edge.getInVertex().equals(toVertex)) {
                 LOG.debug("Edge from {} to {} with label {} already exists", 
                     toString(fromVertex), toString(toVertex), label);
                 return;
             }
         }        
         LOG.debug("Adding edge from {} to {} with label {}", toString(fromVertex), toString(toVertex), label);
-        graph.addEdge(null, fromVertex, toVertex, label);
+        graph.addEdge(fromVertex, toVertex, label);
     }
 
     @Override
     @GraphTransaction
     public TypesDef restore() throws AtlasException {
         //Get all vertices for type system
-        Iterator<AAVertex<V,E>> vertices =
+        Iterator<AtlasVertex<V,E>> vertices =
                 graph.query().has(Constants.VERTEX_TYPE_PROPERTY_KEY, VERTEX_TYPE).vertices().iterator();
 
         ImmutableList.Builder<EnumTypeDefinition> enums = ImmutableList.builder();
@@ -237,7 +237,7 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
         ImmutableList.Builder<HierarchicalTypeDefinition<TraitType>> traits = ImmutableList.builder();
 
         while (vertices.hasNext()) {
-            AAVertex<V,E> vertex = vertices.next();
+            AtlasVertex<V,E> vertex = vertices.next();
             DataTypes.TypeCategory typeCategory = vertex.getProperty(Constants.TYPE_CATEGORY_PROPERTY_KEY);
             String typeName = vertex.getProperty(Constants.TYPENAME_PROPERTY_KEY);
             String typeDescription = vertex.getProperty(Constants.TYPEDESCRIPTION_PROPERTY_KEY);
@@ -271,7 +271,7 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
         return TypesUtil.getTypesDef(enums.build(), structs.build(), traits.build(), classTypes.build());
     }
 
-    private EnumTypeDefinition getEnumType(AAVertex<V,E> vertex) {
+    private EnumTypeDefinition getEnumType(AtlasVertex<V,E> vertex) {
         String typeName = vertex.getProperty(Constants.TYPENAME_PROPERTY_KEY);
         String typeDescription = vertex.getProperty(Constants.TYPEDESCRIPTION_PROPERTY_KEY);
         List<EnumValue> enumValues = new ArrayList<>();
@@ -283,17 +283,17 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
         return new EnumTypeDefinition(typeName, typeDescription, enumValues.toArray(new EnumValue[enumValues.size()]));
     }
 
-    private ImmutableSet<String> getSuperTypes(AAVertex<V,E> vertex) {
+    private ImmutableSet<String> getSuperTypes(AtlasVertex<V,E> vertex) {
         Set<String> superTypes = new HashSet<>();
-        Iterator<AAEdge<V,E>> edges = vertex.getEdges(AADirection.OUT, SUPERTYPE_EDGE_LABEL).iterator();
+        Iterator<AtlasEdge<V,E>> edges = vertex.getEdges(AtlasEdgeDirection.OUT, SUPERTYPE_EDGE_LABEL).iterator();
         while (edges.hasNext()) {
-            AAEdge<V,E> edge = edges.next();
-            superTypes.add((String) edge.getVertex(AADirection.IN).getProperty(Constants.TYPENAME_PROPERTY_KEY));
+            AtlasEdge<V,E> edge = edges.next();
+            superTypes.add((String) edge.getInVertex().getProperty(Constants.TYPENAME_PROPERTY_KEY));
         }
         return ImmutableSet.copyOf(superTypes);
     }
 
-    private AttributeDefinition[] getAttributes(AAVertex<V,E> vertex, String typeName) throws AtlasException {
+    private AttributeDefinition[] getAttributes(AtlasVertex<V,E> vertex, String typeName) throws AtlasException {
         List<AttributeDefinition> attributes = new ArrayList<>();
         List<String> attrNames = vertex.getProperty(getPropertyKey(typeName));
         if (attrNames != null) {
@@ -309,7 +309,7 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
         return attributes.toArray(new AttributeDefinition[attributes.size()]);
     }
 
-    private String toString(AAVertex<V,E> vertex) {
+    private String toString(AtlasVertex<V,E> vertex) {
         return PROPERTY_PREFIX + vertex.getProperty(Constants.TYPENAME_PROPERTY_KEY);
     }
 
@@ -319,11 +319,11 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
      * @param typeName
      * @return vertex
      */
-    AAVertex<V,E> findVertex(DataTypes.TypeCategory category, String typeName) {
+    AtlasVertex<V,E> findVertex(DataTypes.TypeCategory category, String typeName) {
         LOG.debug("Finding vertex for {}.{}", category, typeName);
 
-        Iterator<AAVertex<V,E>> results = graph.query().has(Constants.TYPENAME_PROPERTY_KEY, typeName).vertices().iterator();
-        AAVertex<V,E> vertex = null;
+        Iterator<AtlasVertex<V,E>> results = graph.query().has(Constants.TYPENAME_PROPERTY_KEY, typeName).vertices().iterator();
+        AtlasVertex<V,E> vertex = null;
         if (results != null && results.hasNext()) {
             //There should be just one vertex with the given typeName
             vertex = results.next();
@@ -331,11 +331,11 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
         return vertex;
     }
 
-    private AAVertex<V,E> createVertex(DataTypes.TypeCategory category, String typeName, String typeDescription) {
-        AAVertex<V,E> vertex = findVertex(category, typeName);
+    private AtlasVertex<V,E> createVertex(DataTypes.TypeCategory category, String typeName, String typeDescription) {
+        AtlasVertex<V,E> vertex = findVertex(category, typeName);
         if (vertex == null) {
             LOG.debug("Adding vertex {}{}", PROPERTY_PREFIX, typeName);
-            vertex = graph.addVertex(null);
+            vertex = graph.addVertex();
             addProperty(vertex, Constants.VERTEX_TYPE_PROPERTY_KEY, VERTEX_TYPE); // Mark as type vertex
             addProperty(vertex, Constants.TYPE_CATEGORY_PROPERTY_KEY, category);
             addProperty(vertex, Constants.TYPENAME_PROPERTY_KEY, typeName);

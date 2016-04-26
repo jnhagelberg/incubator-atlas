@@ -35,10 +35,10 @@ import org.apache.atlas.RepositoryMetadataModule;
 import org.apache.atlas.TestUtils;
 import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.repository.graph.GraphHelper;
-import org.apache.atlas.repository.graphdb.AADirection;
-import org.apache.atlas.repository.graphdb.AAEdge;
-import org.apache.atlas.repository.graphdb.AAGraph;
-import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
+import org.apache.atlas.repository.graphdb.AtlasEdge;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.typesystem.TypesDef;
 import org.apache.atlas.typesystem.types.AttributeDefinition;
 import org.apache.atlas.typesystem.types.ClassType;
@@ -100,10 +100,10 @@ public class GraphBackedTypeStoreTest {
     }
 
     private void dumpGraph() {
-        AAGraph<?,?> graph = graphProvider.get();
-        for (AAVertex<?,?> v : graph.getVertices()) {
+        AtlasGraph<?,?> graph = graphProvider.get();
+        for (AtlasVertex<?,?> v : graph.getVertices()) {
             System.out.println("****v = " + GraphHelper.vertexString(v));
-            for (AAEdge<?,?> e : v.getEdges(AADirection.OUT)) {
+            for (AtlasEdge<?,?> e : v.getEdges(AtlasEdgeDirection.OUT)) {
                 System.out.println("****e = " + GraphHelper.edgeString(e));
             }
         }
@@ -189,7 +189,7 @@ public class GraphBackedTypeStoreTest {
         // ATLAS-474: verify that type update did not write duplicate edges to the type store.
         if (typeStore instanceof GraphBackedTypeStore) {
             GraphBackedTypeStore gbTypeStore = (GraphBackedTypeStore) typeStore;
-            AAVertex typeVertex = gbTypeStore.findVertex(TypeCategory.CLASS, "Department");
+            AtlasVertex typeVertex = gbTypeStore.findVertex(TypeCategory.CLASS, "Department");
             int edgeCount = countOutgoingEdges(typeVertex, GraphBackedTypeStore.SUPERTYPE_EDGE_LABEL);
             Assert.assertEquals(edgeCount, 1);
             edgeCount = countOutgoingEdges(typeVertex, gbTypeStore.getEdgeLabel("Department", "employees"));
@@ -237,7 +237,7 @@ public class GraphBackedTypeStoreTest {
         // ATLAS-474: verify that type update did not write duplicate edges to the type store.
         if (typeStore instanceof GraphBackedTypeStore) {
             GraphBackedTypeStore gbTypeStore = (GraphBackedTypeStore) typeStore;
-            AAVertex typeVertex = gbTypeStore.findVertex(TypeCategory.CLASS, "Department");
+            AtlasVertex typeVertex = gbTypeStore.findVertex(TypeCategory.CLASS, "Department");
             // There should now be 2 super type outgoing edges on the Department type vertex.
             int edgeCount = countOutgoingEdges(typeVertex, GraphBackedTypeStore.SUPERTYPE_EDGE_LABEL);
             Assert.assertEquals(edgeCount, 2);
@@ -266,11 +266,11 @@ public class GraphBackedTypeStoreTest {
             Arrays.asList("Division", superTypeDef2.typeName)));
    }
     
-    private int countOutgoingEdges(AAVertex typeVertex, String edgeLabel) {
+    private int countOutgoingEdges(AtlasVertex typeVertex, String edgeLabel) {
 
-        Iterable<AAEdge<?,?>> outGoingEdgesByLabel = GraphHelper.getOutGoingEdgesByLabel(typeVertex, edgeLabel);
+        Iterable<AtlasEdge<?,?>> outGoingEdgesByLabel = GraphHelper.getOutGoingEdgesByLabel(typeVertex, edgeLabel);
         int edgeCount = 0;
-        for (Iterator<AAEdge<?,?>> iterator = outGoingEdgesByLabel.iterator(); iterator.hasNext();) {
+        for (Iterator<AtlasEdge<?,?>> iterator = outGoingEdgesByLabel.iterator(); iterator.hasNext();) {
             iterator.next();
             edgeCount++;
         }

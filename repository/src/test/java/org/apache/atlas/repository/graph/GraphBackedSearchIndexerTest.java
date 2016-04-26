@@ -27,8 +27,8 @@ import org.apache.atlas.ha.HAConfiguration;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.IndexException;
 import org.apache.atlas.repository.RepositoryException;
-import org.apache.atlas.repository.graphdb.AAGraph;
-import org.apache.atlas.repository.graphdb.GraphDatabaseManager;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.repository.graphdb.AtlasGraphManagement;
 import org.apache.commons.configuration.Configuration;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -41,13 +41,13 @@ public class GraphBackedSearchIndexerTest {
     private Configuration configuration;
 
     @Mock
-    private GraphProvider<AAGraph> graphProvider;
+    private GraphProvider<AtlasGraph> graphProvider;
 
     @Mock
-    private AAGraph<Object,Object> titanGraph;
+    private AtlasGraph<Object,Object> titanGraph;
 
     @Mock
-    private GraphDatabaseManager titanManagement;
+    private AtlasGraphManagement titanManagement;
 
     @BeforeMethod
     public void setup() {

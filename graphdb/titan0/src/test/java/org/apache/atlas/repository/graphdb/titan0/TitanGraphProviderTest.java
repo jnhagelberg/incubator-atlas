@@ -19,7 +19,7 @@ package org.apache.atlas.repository.graphdb.titan0;
 
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
-import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.commons.configuration.Configuration;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
@@ -30,13 +30,13 @@ import org.testng.annotations.Test;
 public class TitanGraphProviderTest {
 
    private Configuration configuration;
-   private AAGraph<?,?> graph;
+   private AtlasGraph<?,?> graph;
 
    @BeforeTest
    public void setUp() throws AtlasException {
        //First get Instance
        graph = new Titan0Graph();
-       configuration = ApplicationProperties.getSubsetConfiguration(ApplicationProperties.get(), Titan0GraphPlugin.GRAPH_PREFIX);
+       configuration = ApplicationProperties.getSubsetConfiguration(ApplicationProperties.get(), Titan0Database.GRAPH_PREFIX);
    }
 
     @AfterClass
@@ -57,15 +57,15 @@ public class TitanGraphProviderTest {
    @Test
    public void testValidate() throws AtlasException {
        try {
-           Titan0GraphPlugin.validateIndexBackend(configuration);
+           Titan0Database.validateIndexBackend(configuration);
        } catch(Exception e){
            Assert.fail("Unexpected exception ", e);
        }
 
        //Change backend
-       configuration.setProperty(Titan0GraphPlugin.INDEX_BACKEND_CONF, Titan0GraphPlugin.INDEX_BACKEND_LUCENE);
+       configuration.setProperty(Titan0Database.INDEX_BACKEND_CONF, Titan0Database.INDEX_BACKEND_LUCENE);
        try {
-           Titan0GraphPlugin.validateIndexBackend(configuration);
+           Titan0Database.validateIndexBackend(configuration);
            Assert.fail("Expected exception");
        } catch(Exception e){
            Assert.assertEquals(e.getMessage(), "Configured Index Backend lucene differs from earlier configured Index Backend elasticsearch. Aborting!");

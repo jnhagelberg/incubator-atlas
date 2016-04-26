@@ -19,14 +19,14 @@
 package org.apache.atlas.query
 
 import org.apache.atlas.repository.graphdb.GremlinVersion
-import org.apache.atlas.repository.graphdb.AAGraph
+import org.apache.atlas.repository.graphdb.AtlasGraph
 import org.apache.atlas.query.Expressions._
 import org.slf4j.{Logger, LoggerFactory}
 
 object QueryProcessor {
     val LOG : Logger = LoggerFactory.getLogger("org.apache.atlas.query.QueryProcessor")
 
-    def evaluate[V,E](e: Expression, g: AAGraph[V,E], gP : GraphPersistenceStrategies = null):
+    def evaluate[V,E](e: Expression, g: AtlasGraph[V,E], gP : GraphPersistenceStrategies = null):
     GremlinQueryResult = {
         var strategy = gP;
         if(strategy == null) {

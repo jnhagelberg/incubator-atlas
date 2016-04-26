@@ -31,11 +31,11 @@ import org.apache.atlas.GraphTransaction;
 import org.apache.atlas.RepositoryMetadataModule;
 import org.apache.atlas.TestUtils;
 import org.apache.atlas.repository.Constants;
-import org.apache.atlas.repository.graphdb.AAGraph;
-import org.apache.atlas.repository.graphdb.AAGraphQuery;
-import org.apache.atlas.repository.graphdb.AAGraphQuery.ComparisionOperator;
-import org.apache.atlas.repository.graphdb.AAIndexQuery;
-import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.repository.graphdb.AtlasGraphQuery;
+import org.apache.atlas.repository.graphdb.AtlasGraphQuery.ComparisionOperator;
+import org.apache.atlas.repository.graphdb.AtlasIndexQuery;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.Referenceable;
 import org.apache.atlas.typesystem.Struct;
@@ -133,13 +133,13 @@ public class GraphRepoMapperScaleTest {
     }
 
     private void searchWithOutIndex(String key, String value) {
-        AAGraph graph = graphProvider.get();
+        AtlasGraph graph = graphProvider.get();
         long start = System.currentTimeMillis();
         int count = 0;
         try {
-            AAGraphQuery query = graph.query().has(key, ComparisionOperator.EQUAL, value);
-            Iterable<AAVertex> result = query.vertices();
-            for (AAVertex ignored : result) {
+            AtlasGraphQuery query = graph.query().has(key, ComparisionOperator.EQUAL, value);
+            Iterable<AtlasVertex> result = query.vertices();
+            for (AtlasVertex ignored : result) {
                 count++;
             }
         } finally {
@@ -149,13 +149,13 @@ public class GraphRepoMapperScaleTest {
     }
 
     private void searchWithIndex(String key, String value) {
-        AAGraph graph = graphProvider.get();
+        AtlasGraph graph = graphProvider.get();
         long start = System.currentTimeMillis();
         int count = 0;
         try {
             String queryString = "v.\"" + key + "\":(" + value + ")";
-            AAIndexQuery query = graph.indexQuery(Constants.VERTEX_INDEX, queryString);
-            Iterator<AAIndexQuery.Result> result = query.vertices();
+            AtlasIndexQuery query = graph.indexQuery(Constants.VERTEX_INDEX, queryString);
+            Iterator<AtlasIndexQuery.Result> result = query.vertices();
             while(result.hasNext()) {
                 result.next();
                 count++;
@@ -167,13 +167,13 @@ public class GraphRepoMapperScaleTest {
     }
 
     private void  searchWithIndex(String key, ComparisionOperator op, Object value, int expectedResults) {
-        AAGraph graph = graphProvider.get();
+        AtlasGraph graph = graphProvider.get();
         long start = System.currentTimeMillis();
         int count = 0;
         try {
-            AAGraphQuery query = graph.query().has(key, op, value);
-            Iterable<AAVertex> itrble = query.vertices();
-            for (AAVertex ignored : itrble) {
+            AtlasGraphQuery query = graph.query().has(key, op, value);
+            Iterable<AtlasVertex> itrble = query.vertices();
+            for (AtlasVertex ignored : itrble) {
                 count++;
             }
         } finally {

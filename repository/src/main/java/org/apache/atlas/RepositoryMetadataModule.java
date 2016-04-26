@@ -33,7 +33,8 @@ import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.repository.graph.GraphBackedMetadataRepository;
 import org.apache.atlas.repository.graph.GraphBackedSearchIndexer;
 import org.apache.atlas.repository.graph.GraphProvider;
-import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.repository.graphdb.GraphDatabase;
 import org.apache.atlas.repository.typestore.GraphBackedTypeStore;
 import org.apache.atlas.repository.typestore.ITypeStore;
 import org.apache.atlas.services.DefaultMetadataService;
@@ -54,13 +55,13 @@ import com.google.inject.throwingproviders.ThrowingProviderBinder;
  */
 public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
 
+    
     @Override
     protected void configure() {
         // special wiring for Titan Graph
-
-
-        //todo - move class resolution here, bind to actual plugin impl class
-        ThrowingProviderBinder.create(binder()).bind(GraphProvider.class, AAGraph.class).to(AtlasGraphProvider.class)
+        
+        
+        ThrowingProviderBinder.create(binder()).bind(GraphProvider.class, AtlasGraph.class).to(AtlasGraphProvider.class)
                 .asEagerSingleton();
 
         // allow for dynamic binding of the metadata repo & graph service
@@ -87,6 +88,8 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
         bind(LineageService.class).to(HiveLineageService.class).asEagerSingleton();
 
         bindAuditRepository(binder());
+        
+        
 
         //Add EntityAuditListener as EntityChangeListener
         Multibinder<EntityChangeListener> entityChangeListenerBinder =

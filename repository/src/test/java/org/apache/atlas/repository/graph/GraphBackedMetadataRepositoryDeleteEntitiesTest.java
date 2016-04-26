@@ -31,8 +31,8 @@ import org.apache.atlas.TestUtils;
 import org.apache.atlas.discovery.graph.GraphBackedDiscoveryService;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.RepositoryException;
-import org.apache.atlas.repository.graphdb.AAGraph;
-import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.typesystem.IStruct;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.ITypedStruct;
@@ -198,7 +198,7 @@ public class GraphBackedMetadataRepositoryDeleteEntitiesTest {
         String edgeLabel = GraphHelper.getEdgeLabel(mapOwnerType, mapOwnerType.fieldMapping.fields.get("map"));
         String mapEntryLabel = edgeLabel + "." + "value1";
         AtlasEdgeLabel atlasEdgeLabel = new AtlasEdgeLabel(mapEntryLabel);
-        AAVertex mapOwnerVertex = GraphHelper.getInstance().getVertexForGUID(mapOwnerGuid);
+        AtlasVertex mapOwnerVertex = GraphHelper.getInstance().getVertexForGUID(mapOwnerGuid);
         object = mapOwnerVertex.getProperty(atlasEdgeLabel.getQualifiedMapKey());
         Assert.assertNotNull(object);
         
@@ -513,7 +513,7 @@ public class GraphBackedMetadataRepositoryDeleteEntitiesTest {
         
         // Verify MapOwner.map attribute has expected value.
         String mapValueGuid = null;
-        AAVertex<?,?> mapOwnerVertex = null;
+        AtlasVertex<?,?> mapOwnerVertex = null;
         mapOwnerInstance = repositoryService.getEntityDefinition(mapOwnerGuid);
         for (String mapAttrName : Arrays.asList("map", "biMap")) {
             Object object = mapOwnerInstance.get(mapAttrName);
@@ -592,10 +592,10 @@ public class GraphBackedMetadataRepositoryDeleteEntitiesTest {
     }
     
     private <V,E> int countVertices(String propertyName, Object value) {
-        AAGraph<V,E> graph = (AAGraph<V,E>)graphProvider.get();
-        Iterable<AAVertex<V,E>> vertices = graph.getVertices(propertyName, value);
+        AtlasGraph<V,E> graph = (AtlasGraph<V,E>)graphProvider.get();
+        Iterable<AtlasVertex<V,E>> vertices = graph.getVertices(propertyName, value);
         int vertexCount = 0;
-        for (AAVertex<?,?> vertex : vertices) {
+        for (AtlasVertex<?,?> vertex : vertices) {
             vertexCount++;
         }
         return vertexCount;

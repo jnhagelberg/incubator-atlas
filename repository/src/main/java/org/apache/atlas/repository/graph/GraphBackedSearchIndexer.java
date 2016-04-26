@@ -31,14 +31,13 @@ import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.discovery.SearchIndexer;
 import org.apache.atlas.ha.HAConfiguration;
+import org.apache.atlas.listener.ActiveStateChangeHandler;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.IndexCreationException;
 import org.apache.atlas.repository.IndexException;
 import org.apache.atlas.repository.RepositoryException;
-import org.apache.atlas.listener.ActiveStateChangeHandler;
-import org.apache.atlas.repository.graphdb.AAGraph;
-import org.apache.atlas.repository.graphdb.ElementType;
-import org.apache.atlas.repository.graphdb.GraphDatabaseManager;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.repository.graphdb.AtlasGraphManagement;
 import org.apache.atlas.typesystem.types.AttributeInfo;
 import org.apache.atlas.typesystem.types.ClassType;
 import org.apache.atlas.typesystem.types.DataTypes;
@@ -57,7 +56,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphBackedSearchIndexer.class);
 
-    private final AAGraph<?,?> graph;
+    private final AtlasGraph<?,?> graph;
     
     List<Class> MIXED_INDEX_EXCLUSIONS = new ArrayList<Class>() {{
             add(Boolean.class);
@@ -70,20 +69,20 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         this(graphProvider, ApplicationProperties.get());
     }
     
-    GraphBackedSearchIndexer( GraphProvider<AAGraph> graphProvider, Configuration configuration)
+    GraphBackedSearchIndexer( GraphProvider<AtlasGraph> graphProvider, Configuration configuration)
             throws IndexException, RepositoryException {
-        this.graph = (AAGraph<?,?>)graphProvider.get();
+        this.graph = (AtlasGraph<?,?>)graphProvider.get();
 	    if (!HAConfiguration.isHAEnabled(configuration)) {
             initialize();
         }
     }
 
     /**
-     * Initializes the indices for the graph - create indices for Global AAVertex Keys
+     * Initializes the indices for the graph - create indices for Global AtlasVertex Keys
      */
     private void initialize() throws RepositoryException, IndexException {
         
-        GraphDatabaseManager management = graph.getManagementSystem();
+        AtlasGraphManagement management = graph.getManagementSystem();
         
         try {
             
@@ -94,8 +93,8 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
 
             /* This is called only once, which is the first time Atlas types are made indexable .*/
             LOG.info("Indexes do not exist, Creating indexes for graph.");
-            management.buildMixedIndex(Constants.VERTEX_INDEX, ElementType.VERTEX, Constants.BACKING_INDEX);
-            management.buildMixedIndex(Constants.EDGE_INDEX, ElementType.EDGE, Constants.BACKING_INDEX);
+            management.buildMixedVertexIndex(Constants.VERTEX_INDEX, Constants.BACKING_INDEX);
+            management.buildMixedEdgeIndex(Constants.EDGE_INDEX, Constants.BACKING_INDEX);
     
             // create a composite index for guid as its unique
             createCompositeAndMixedIndex(management, Constants.GUID_PROPERTY_KEY, String.class, true, Multiplicity.OPTIONAL, true);
@@ -126,13 +125,13 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         }
     }
 
-    private void createFullTextIndex(GraphDatabaseManager management) {
+    private void createFullTextIndex(AtlasGraphManagement management) {
         management.createFullTextIndex(Constants.FULLTEXT_INDEX, Constants.ENTITY_TEXT_PROPERTY_KEY, Constants.BACKING_INDEX);
         
         LOG.info("Created mixed index for {}", Constants.ENTITY_TEXT_PROPERTY_KEY);
     }
 
-    private void createTypeStoreIndexes(GraphDatabaseManager management) {
+    private void createTypeStoreIndexes(AtlasGraphManagement management) {
         //Create unique index on typeName
         createCompositeAndMixedIndex(management, Constants.TYPENAME_PROPERTY_KEY, String.class, true, Multiplicity.OPTIONAL, true);
 
@@ -148,7 +147,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
      */
     @Override
     public void onAdd(Collection<? extends IDataType> dataTypes) throws AtlasException {
-        GraphDatabaseManager management = graph.getManagementSystem();
+        AtlasGraphManagement management = graph.getManagementSystem();
         for (IDataType dataType : dataTypes) {
             LOG.info("Creating indexes for type name={}, definition={}", dataType.getName(), dataType.getClass());
             try {
@@ -171,7 +170,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         onAdd(dataTypes);
     }
 
-    private void addIndexForType(GraphDatabaseManager management, IDataType dataType) {
+    private void addIndexForType(AtlasGraphManagement management, IDataType dataType) {
         switch (dataType.getTypeCategory()) {
         case PRIMITIVE:
         case ENUM:
@@ -201,7 +200,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         }
     }
 
-    private void createIndexForFields(GraphDatabaseManager management, IDataType dataType, Map<String, AttributeInfo> fields) {
+    private void createIndexForFields(AtlasGraphManagement management, IDataType dataType, Map<String, AttributeInfo> fields) {
         for (AttributeInfo field : fields.values()) {
             if (field.isIndexable) {
                 createIndexForAttribute(management, dataType.getName(), field);
@@ -209,7 +208,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         }
     }
 
-    private void createIndexForAttribute(GraphDatabaseManager management, String typeName, AttributeInfo field) {
+    private void createIndexForAttribute(AtlasGraphManagement management, String typeName, AttributeInfo field) {
         final String propertyName = typeName + "." + field.name;
         switch (field.dataType().getTypeCategory()) {
         case PRIMITIVE:
@@ -278,7 +277,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
     }
 
 
-    private void createCompositeAndMixedIndex(GraphDatabaseManager management, String propertyName, Class propertyClass,
+    private void createCompositeAndMixedIndex(AtlasGraphManagement management, String propertyName, Class propertyClass,
             boolean isUnique, Multiplicity cardinality, boolean force) {
 
         if(management.containsPropertyKey(propertyName)) {
@@ -310,7 +309,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         return !(MIXED_INDEX_EXCLUSIONS.contains(propertyClass) || cardinality.isMany());
     }
 
-    public void commit(GraphDatabaseManager management) throws IndexException {
+    public void commit(AtlasGraphManagement management) throws IndexException {
         try {
             management.commit();
         } catch (Exception e) {
@@ -319,7 +318,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         }
     }
 
-    public void rollback(GraphDatabaseManager management) throws IndexException {
+    public void rollback(AtlasGraphManagement management) throws IndexException {
         try {
             management.rollback();
         } catch (Exception e) {
@@ -355,7 +354,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         EdgeLabel edgeLabel = management.getEdgeLabel(propertyName);
         if (edgeLabel == null) {
             edgeLabel = management.makeEdgeLabel(propertyName).make();
-            management.buildEdgeIndex(edgeLabel, propertyName, AADirection.BOTH, Order.DEFAULT);
+            management.buildEdgeIndex(edgeLabel, propertyName, AtlasEdgeDirection.BOTH, Order.DEFAULT);
             LOG.info("Created index for edge label {}", propertyName);
         }
     }*/

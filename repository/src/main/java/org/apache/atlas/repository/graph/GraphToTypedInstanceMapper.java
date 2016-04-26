@@ -19,10 +19,10 @@ package org.apache.atlas.repository.graph;
 
 
 
-import org.apache.atlas.repository.graphdb.AAGraph;
-import org.apache.atlas.repository.graphdb.AAEdge;
-import org.apache.atlas.repository.graphdb.AAVertex;
-import org.apache.atlas.repository.graphdb.AADirection;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.repository.graphdb.AtlasEdge;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
+import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.typesystem.ITypedInstance;
@@ -53,13 +53,13 @@ public final class GraphToTypedInstanceMapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphToTypedInstanceMapper.class);
     private static TypeSystem typeSystem = TypeSystem.getInstance();
-    private final AAGraph<?,?> graph;
+    private final AtlasGraph<?,?> graph;
 
-    public GraphToTypedInstanceMapper(AAGraph<?,?> graph) {
+    public GraphToTypedInstanceMapper(AtlasGraph<?,?> graph) {
         this.graph = graph;
     }
 
-    public ITypedReferenceableInstance mapGraphToTypedInstance(String guid, AAVertex<?,?> instanceVertex)
+    public ITypedReferenceableInstance mapGraphToTypedInstance(String guid, AtlasVertex<?,?> instanceVertex)
         throws AtlasException {
 
         LOG.debug("Mapping graph root vertex {} to typed instance for guid {}", instanceVertex, guid);
@@ -79,7 +79,7 @@ public final class GraphToTypedInstanceMapper {
         return typedInstance;
     }
 
-    private void mapVertexToInstanceTraits(AAVertex instanceVertex, ITypedReferenceableInstance typedInstance,
+    private void mapVertexToInstanceTraits(AtlasVertex instanceVertex, ITypedReferenceableInstance typedInstance,
         List<String> traits) throws AtlasException {
         for (String traitName : traits) {
             LOG.debug("mapping trait {} to instance", traitName);
@@ -88,7 +88,7 @@ public final class GraphToTypedInstanceMapper {
         }
     }
 
-    public void mapVertexToInstance(AAVertex instanceVertex, ITypedInstance typedInstance,
+    public void mapVertexToInstance(AtlasVertex instanceVertex, ITypedInstance typedInstance,
         Map<String, AttributeInfo> fields) throws AtlasException {
 
         LOG.debug("Mapping vertex {} to instance {} for fields", instanceVertex, typedInstance.getTypeName(),
@@ -99,7 +99,7 @@ public final class GraphToTypedInstanceMapper {
     }
 
 
-    private void mapVertexToAttribute(AAVertex instanceVertex, ITypedInstance typedInstance,
+    private void mapVertexToAttribute(AtlasVertex instanceVertex, ITypedInstance typedInstance,
         AttributeInfo attributeInfo) throws AtlasException {
         LOG.debug("Mapping attributeInfo {}", attributeInfo.name);
         final IDataType dataType = attributeInfo.dataType();
@@ -150,12 +150,12 @@ public final class GraphToTypedInstanceMapper {
         }
     }
 
-    private <V,E> Object mapVertexToClassReference(AAVertex<V,E> instanceVertex, AttributeInfo attributeInfo,
+    private <V,E> Object mapVertexToClassReference(AtlasVertex<V,E> instanceVertex, AttributeInfo attributeInfo,
         String relationshipLabel, IDataType dataType) throws AtlasException {
         LOG.debug("Finding edge for {} -> label {} ", instanceVertex, relationshipLabel);
-        Iterator<AAEdge<V,E>> results = instanceVertex.getEdges(AADirection.OUT, relationshipLabel).iterator();
+        Iterator<AtlasEdge<V,E>> results = instanceVertex.getEdges(AtlasEdgeDirection.OUT, relationshipLabel).iterator();
         if (results.hasNext()) {
-            final AAVertex<?,?> referenceVertex = results.next().getVertex(AADirection.IN);
+            final AtlasVertex<?,?> referenceVertex = results.next().getInVertex();
             if (referenceVertex != null) {
                 final String guid = referenceVertex.getProperty(Constants.GUID_PROPERTY_KEY);
                 LOG.debug("Found vertex {} for label {} with guid {}", referenceVertex, relationshipLabel, guid);
@@ -177,7 +177,7 @@ public final class GraphToTypedInstanceMapper {
     }
 
     @SuppressWarnings("unchecked")
-    private void mapVertexToArrayInstance(AAVertex<?,?> instanceVertex, ITypedInstance typedInstance,
+    private void mapVertexToArrayInstance(AtlasVertex<?,?> instanceVertex, ITypedInstance typedInstance,
         AttributeInfo attributeInfo, String propertyName) throws AtlasException {
         LOG.debug("mapping vertex {} to array {}", instanceVertex, attributeInfo.name);
         List list = instanceVertex.getProperty(propertyName);
@@ -199,7 +199,7 @@ public final class GraphToTypedInstanceMapper {
         }
     }
 
-    private Object mapVertexToCollectionEntry(AAVertex instanceVertex, AttributeInfo attributeInfo,
+    private Object mapVertexToCollectionEntry(AtlasVertex instanceVertex, AttributeInfo attributeInfo,
         IDataType elementType, Object value, String edgeLabel) throws AtlasException {
         switch (elementType.getTypeCategory()) {
         case PRIMITIVE:
@@ -227,7 +227,7 @@ public final class GraphToTypedInstanceMapper {
     }
 
     @SuppressWarnings("unchecked")
-    private void mapVertexToMapInstance(AAVertex<?,?> instanceVertex, ITypedInstance typedInstance,
+    private void mapVertexToMapInstance(AtlasVertex<?,?> instanceVertex, ITypedInstance typedInstance,
         AttributeInfo attributeInfo, final String propertyName) throws AtlasException {
         LOG.debug("mapping vertex {} to array {}", instanceVertex, attributeInfo.name);
         List<String> keys = instanceVertex.getProperty(propertyName);
@@ -253,12 +253,12 @@ public final class GraphToTypedInstanceMapper {
         }
     }
 
-    private ITypedStruct getStructInstanceFromVertex(AAVertex<?,?> instanceVertex, IDataType elemType,
+    private ITypedStruct getStructInstanceFromVertex(AtlasVertex<?,?> instanceVertex, IDataType elemType,
         String attributeName, String relationshipLabel, String edgeId) throws AtlasException {
         LOG.debug("Finding edge for {} -> label {} ", instanceVertex, relationshipLabel);
-        for (AAEdge<?,?> edge : instanceVertex.getEdges(AADirection.OUT, relationshipLabel)) {
+        for (AtlasEdge<?,?> edge : instanceVertex.getEdges(AtlasEdgeDirection.OUT, relationshipLabel)) {
             if (edgeId.equals(String.valueOf(edge.getId()))) {
-                AAVertex structInstanceVertex = edge.getVertex(AADirection.IN);
+                AtlasVertex structInstanceVertex = edge.getInVertex();
                 LOG.debug("mapping vertex {} to struct {}", structInstanceVertex, attributeName);
 
                 if (structInstanceVertex != null) {
@@ -277,12 +277,12 @@ public final class GraphToTypedInstanceMapper {
         return null;
     }
 
-    private Object mapVertexToClassReference(AAVertex<?,?> instanceVertex, AttributeInfo attributeInfo,
+    private Object mapVertexToClassReference(AtlasVertex<?,?> instanceVertex, AttributeInfo attributeInfo,
         String relationshipLabel, IDataType dataType, String edgeId) throws AtlasException {
         LOG.debug("Finding edge for {} -> label {} ", instanceVertex, relationshipLabel);
-        for (AAEdge<?,?> edge : instanceVertex.getEdges(AADirection.OUT, relationshipLabel)) {
+        for (AtlasEdge<?,?> edge : instanceVertex.getEdges(AtlasEdgeDirection.OUT, relationshipLabel)) {
             if (edgeId.equals(String.valueOf(edge.getId()))) {
-                final AAVertex<?,?> referenceVertex = edge.getVertex(AADirection.IN);
+                final AtlasVertex<?,?> referenceVertex = edge.getInVertex();
                 if (referenceVertex != null) {
                     final String guid = referenceVertex.getProperty(Constants.GUID_PROPERTY_KEY);
                     LOG.debug("Found vertex {} for label {} with guid {}", referenceVertex, relationshipLabel,
@@ -307,7 +307,7 @@ public final class GraphToTypedInstanceMapper {
         return null;
     }
 
-    private <V,E> void mapVertexToStructInstance(AAVertex<V,E> instanceVertex, ITypedInstance typedInstance,
+    private <V,E> void mapVertexToStructInstance(AtlasVertex<V,E> instanceVertex, ITypedInstance typedInstance,
         AttributeInfo attributeInfo) throws AtlasException {
         LOG.debug("mapping vertex {} to struct {}", instanceVertex, attributeInfo.name);
         StructType structType = typeSystem.getDataType(StructType.class, attributeInfo.dataType().getName());
@@ -315,14 +315,14 @@ public final class GraphToTypedInstanceMapper {
 
         String relationshipLabel = GraphHelper.getEdgeLabel(typedInstance, attributeInfo);
         LOG.debug("Finding edge for {} -> label {} ", instanceVertex, relationshipLabel);
-        final Iterable<AAEdge<V,E>> edges = instanceVertex.getEdges(AADirection.OUT, relationshipLabel);
+        final Iterable<AtlasEdge<V,E>> edges = instanceVertex.getEdges(AtlasEdgeDirection.OUT, relationshipLabel);
         if (edges.iterator().hasNext()) {
             structInstance = structType.createInstance();
             typedInstance.set(attributeInfo.name, structInstance);
         }
 
-        for (AAEdge<V,E> edge : edges) {
-            final AAVertex<V,E> structInstanceVertex = edge.getVertex(AADirection.IN);
+        for (AtlasEdge<V,E> edge : edges) {
+            final AtlasVertex<V,E> structInstanceVertex = edge.getInVertex();
             if (structInstanceVertex != null) {
                 LOG.debug("Found struct instance vertex {}, mapping to instance {} ", structInstanceVertex,
                     structInstance.getTypeName());
@@ -332,19 +332,19 @@ public final class GraphToTypedInstanceMapper {
         }
     }
 
-    private void mapVertexToTraitInstance(AAVertex<?,?> instanceVertex, ITypedReferenceableInstance typedInstance,
+    private void mapVertexToTraitInstance(AtlasVertex<?,?> instanceVertex, ITypedReferenceableInstance typedInstance,
         String traitName, TraitType traitType) throws AtlasException {
         ITypedStruct traitInstance = (ITypedStruct) typedInstance.getTrait(traitName);
 
         mapVertexToTraitInstance(instanceVertex, typedInstance.getTypeName(), traitName, traitType, traitInstance);
     }
 
-    private void mapVertexToTraitInstance(AAVertex<?,?> instanceVertex, String typedInstanceTypeName, String traitName,
+    private void mapVertexToTraitInstance(AtlasVertex<?,?> instanceVertex, String typedInstanceTypeName, String traitName,
         TraitType traitType, ITypedStruct traitInstance) throws AtlasException {
         String relationshipLabel = GraphHelper.getTraitLabel(typedInstanceTypeName, traitName);
         LOG.debug("Finding edge for {} -> label {} ", instanceVertex, relationshipLabel);
-        for (AAEdge<?,?> edge : instanceVertex.getEdges(AADirection.OUT, relationshipLabel)) {
-            final AAVertex<?,?> traitInstanceVertex = edge.getVertex(AADirection.IN);
+        for (AtlasEdge<?,?> edge : instanceVertex.getEdges(AtlasEdgeDirection.OUT, relationshipLabel)) {
+            final AtlasVertex<?,?> traitInstanceVertex = edge.getInVertex();
             if (traitInstanceVertex != null) {
                 LOG.debug("Found trait instance vertex {}, mapping to instance {} ", traitInstanceVertex,
                     traitInstance.getTypeName());
@@ -354,7 +354,7 @@ public final class GraphToTypedInstanceMapper {
         }
     }
 
-    private void mapVertexToPrimitive(AAVertex<?,?> instanceVertex, ITypedInstance typedInstance,
+    private void mapVertexToPrimitive(AtlasVertex<?,?> instanceVertex, ITypedInstance typedInstance,
         AttributeInfo attributeInfo) throws AtlasException {
         LOG.debug("Adding primitive {} from vertex {}", attributeInfo, instanceVertex);
         final String vertexPropertyName = GraphHelper.getQualifiedFieldName(typedInstance, attributeInfo);
@@ -390,9 +390,9 @@ public final class GraphToTypedInstanceMapper {
     }
 
     public ITypedInstance getReferredEntity(String edgeId, IDataType<?> referredType) throws AtlasException {
-        final AAEdge<?,?> edge = graph.getEdge(edgeId);
+        final AtlasEdge<?,?> edge = graph.getEdge(edgeId);
         if (edge != null) {
-            final AAVertex<?,?> referredVertex = edge.getVertex(AADirection.IN);
+            final AtlasVertex<?,?> referredVertex = edge.getInVertex();
             if (referredVertex != null) {
                 switch (referredType.getTypeCategory()) {
                 case STRUCT:

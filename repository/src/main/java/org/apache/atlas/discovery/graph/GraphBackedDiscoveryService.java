@@ -46,9 +46,9 @@ import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.repository.graph.GraphHelper;
-import org.apache.atlas.repository.graphdb.AAGraph;
-import org.apache.atlas.repository.graphdb.AAIndexQuery;
-import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.repository.graphdb.AtlasIndexQuery;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -66,7 +66,7 @@ public class GraphBackedDiscoveryService implements DiscoveryService {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphBackedDiscoveryService.class);
 
-    private final AAGraph graph;
+    private final AtlasGraph graph;
     private final DefaultGraphPersistenceStrategy graphPersistenceStrategy;
 
     public final static String SCORE = "score";
@@ -74,7 +74,7 @@ public class GraphBackedDiscoveryService implements DiscoveryService {
     @Inject
     GraphBackedDiscoveryService(AtlasGraphProvider graphProvider, MetadataRepository metadataRepository)
     throws DiscoveryException {
-        this.graph = (AAGraph<?,?>)graphProvider.get();
+        this.graph = (AtlasGraph<?,?>)graphProvider.get();
         this.graphPersistenceStrategy = new DefaultGraphPersistenceStrategy(metadataRepository);
     }
 
@@ -86,13 +86,13 @@ public class GraphBackedDiscoveryService implements DiscoveryService {
     public String searchByFullText(String query) throws DiscoveryException {
         String graphQuery = String.format("v.%s:(%s)", Constants.ENTITY_TEXT_PROPERTY_KEY, query);
         LOG.debug("Full text query: {}", graphQuery);
-        Iterator<AAIndexQuery.Result<?, ?>> results =
+        Iterator<AtlasIndexQuery.Result<?, ?>> results =
                 graph.indexQuery(Constants.FULLTEXT_INDEX, graphQuery).vertices();
         JSONArray response = new JSONArray();
 
         while (results.hasNext()) {
-            AAIndexQuery.Result<?,?> result = results.next();
-            AAVertex<?,?> vertex = result.getVertex();
+            AtlasIndexQuery.Result<?,?> result = results.next();
+            AtlasVertex<?,?> vertex = result.getVertex();
 
             JSONObject row = new JSONObject();
             String guid = vertex.getProperty(Constants.GUID_PROPERTY_KEY);
@@ -194,8 +194,8 @@ public class GraphBackedDiscoveryService implements DiscoveryService {
                     Object v = e.getValue();
                     oRow.put(k.toString(), v.toString());
                 }
-            } else if (atlasResultEntry instanceof AAVertex) {
-                AAVertex<?,?> vertex = (AAVertex<?,?>)atlasResultEntry;               
+            } else if (atlasResultEntry instanceof AtlasVertex) {
+                AtlasVertex<?,?> vertex = (AtlasVertex<?,?>)atlasResultEntry;               
                 for (String key : vertex.getPropertyKeys()) {
                     Object value = GraphHelper.getProperty(vertex,  key);
                     if (value != null) {

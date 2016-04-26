@@ -18,7 +18,7 @@
 
 package org.apache.atlas.query
 
-import org.apache.atlas.repository.graphdb.AAGraph
+import org.apache.atlas.repository.graphdb.AtlasGraph
 import org.apache.atlas.discovery.graph.DefaultGraphPersistenceStrategy
 import org.apache.atlas.query.Expressions._
 import org.apache.atlas.repository.graph.{AtlasGraphProvider, GraphBackedMetadataRepository}
@@ -46,7 +46,7 @@ import org.apache.atlas.services.JSONImporter
 
 class GremlinTest extends BaseGremlinTest {
 
-  var g: AAGraph[_,_] = null
+  var g: AtlasGraph[_,_] = null
   var gp: GraphPersistenceStrategies = null;
   var gProvider: AtlasGraphProvider = null;
 

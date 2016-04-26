@@ -20,7 +20,7 @@ package org.apache.atlas.query
 
 import java.util
 
-import org.apache.atlas.repository.graphdb.AAGraph
+import org.apache.atlas.repository.graphdb.AtlasGraph
 import org.apache.atlas.query.Expressions._
 import org.apache.atlas.typesystem.ITypedStruct
 import org.apache.atlas.typesystem.json.{InstanceSerialization, Serialization}
@@ -116,7 +116,7 @@ trait ClosureQuery[V,E] {
   def withPath : Boolean
 
   def persistenceStrategy: GraphPersistenceStrategies
-  def g: AAGraph[V,E]
+  def g: AtlasGraph[V,E]
 
   def pathExpr : Expressions.Expression = {
     closureRelation.tail.foldLeft(closureRelation.head.toExpr)((b,a) => b.field(a.toFieldName))
@@ -265,7 +265,7 @@ case class HiveLineageQuery[V,E](tableTypeName : String,
                       selectAttributes : Option[List[String]],
                       withPath : Boolean,
                         persistenceStrategy: GraphPersistenceStrategies,
-                        g: AAGraph[V,E]
+                        g: AtlasGraph[V,E]
                         ) extends SingleInstanceClosureQuery[String,V,E] {
 
   val closureType : String = tableTypeName
@@ -305,7 +305,7 @@ case class HiveWhereUsedQuery[V,E](tableTypeName : String,
                             selectAttributes : Option[List[String]],
                             withPath : Boolean,
                             persistenceStrategy: GraphPersistenceStrategies,
-                            g: AAGraph[V,E]
+                            g: AtlasGraph[V,E]
                              ) extends SingleInstanceClosureQuery[String,V,E] {
 
   val closureType : String = tableTypeName

@@ -11,10 +11,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.atlas.repository.graphdb.AADirection;
-import org.apache.atlas.repository.graphdb.AAEdge;
-import org.apache.atlas.repository.graphdb.AAElement;
-import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.repository.graphdb.AtlasEdge;
+import org.apache.atlas.repository.graphdb.AtlasElement;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.repository.graphdb.titan1.graphson.AtlasElementPropertyConfig.ElementPropertiesRule;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -84,7 +83,7 @@ public class AtlasGraphSONUtility {
     /*
      * Creates GraphSON for a single graph element.
      */
-    private JSONObject jsonFromElement(final AAElement element) throws JSONException {
+    private JSONObject jsonFromElement(final AtlasElement element) throws JSONException {
         final ObjectNode objectNode = this.objectNodeFromElement(element);
 
         try {
@@ -99,8 +98,8 @@ public class AtlasGraphSONUtility {
     /**
      * Creates GraphSON for a single graph element.
      */
-    private ObjectNode objectNodeFromElement(final AAElement element) {
-        final boolean isEdge = element instanceof AAEdge;
+    private ObjectNode objectNodeFromElement(final AtlasElement element) {
+        final boolean isEdge = element instanceof AtlasEdge;
         final boolean showTypes = mode == AtlasGraphSONMode.EXTENDED;
         final List<String> propertyKeys = isEdge ? this.edgePropertyKeys : this.vertexPropertyKeys;
         final ElementPropertiesRule elementPropertyConfig = isEdge ? this.edgePropertiesRule : this.vertexPropertiesRule;
@@ -111,10 +110,10 @@ public class AtlasGraphSONUtility {
             putObject(jsonElement, AtlasGraphSONTokens._ID, element.getId());
         }
 
-        // it's important to keep the order of these straight.  check AAEdge first and then AAVertex because there
-        // are graph implementations that have AAEdge extend from AAVertex
-        if (element instanceof AAEdge) {
-            final AAEdge edge = (AAEdge) element;
+        // it's important to keep the order of these straight.  check AtlasEdge first and then AtlasVertex because there
+        // are graph implementations that have AtlasEdge extend from AtlasVertex
+        if (element instanceof AtlasEdge) {
+            final AtlasEdge edge = (AtlasEdge) element;
 
             if (this.includeReservedEdgeId) {
                 putObject(jsonElement, AtlasGraphSONTokens._ID, element.getId());
@@ -125,17 +124,17 @@ public class AtlasGraphSONUtility {
             }
 
             if (this.includeReservedEdgeOutV) {
-                putObject(jsonElement, AtlasGraphSONTokens._OUT_V, edge.getVertex(AADirection.OUT).getId());
+                putObject(jsonElement, AtlasGraphSONTokens._OUT_V, edge.getOutVertex().getId());
             }
 
             if (this.includeReservedEdgeInV) {
-                putObject(jsonElement, AtlasGraphSONTokens._IN_V, edge.getVertex(AADirection.IN).getId());
+                putObject(jsonElement, AtlasGraphSONTokens._IN_V, edge.getInVertex().getId());
             }
 
             if (this.includeReservedEdgeLabel) {
                 jsonElement.put(AtlasGraphSONTokens._LABEL, edge.getLabel());
             }
-        } else if (element instanceof AAVertex) {
+        } else if (element instanceof AtlasVertex) {
             if (this.includeReservedVertexId) {
                 putObject(jsonElement, AtlasGraphSONTokens._ID, element.getId());
             }
@@ -157,15 +156,15 @@ public class AtlasGraphSONUtility {
      * @param propertyKeys The property getPropertyKeys() at the root of the element to serialize.  If null, then all getPropertyKeys() are serialized.
      * @param mode         the type of GraphSON to be generated.
      */
-    public static JSONObject jsonFromElement(final AAElement element, final Set<String> propertyKeys,
+    public static JSONObject jsonFromElement(final AtlasElement element, final Set<String> propertyKeys,
                                              final AtlasGraphSONMode mode) throws JSONException {
-        final AtlasGraphSONUtility graphson = element instanceof AAEdge ? new AtlasGraphSONUtility(mode, null, propertyKeys)
+        final AtlasGraphSONUtility graphson = element instanceof AtlasEdge ? new AtlasGraphSONUtility(mode, null, propertyKeys)
                 : new AtlasGraphSONUtility(mode, propertyKeys, null);
         return graphson.jsonFromElement(element);
     }
 
-    private static ObjectNode objectNodeFromElement(final AAElement element, final List<String> propertyKeys, final AtlasGraphSONMode mode) {
-        final AtlasGraphSONUtility graphson = element instanceof AAEdge ? new AtlasGraphSONUtility(mode, null, new HashSet<String>(propertyKeys))
+    private static ObjectNode objectNodeFromElement(final AtlasElement element, final List<String> propertyKeys, final AtlasGraphSONMode mode) {
+        final AtlasGraphSONUtility graphson = element instanceof AtlasEdge ? new AtlasGraphSONUtility(mode, null, new HashSet<String>(propertyKeys))
                 : new AtlasGraphSONUtility(mode, new HashSet<String>(propertyKeys), null);
         return graphson.objectNodeFromElement(element);
     }
@@ -204,8 +203,8 @@ public class AtlasGraphSONUtility {
     private static ArrayNode createJSONList(final List<Object> list, final List<String> propertyKeys, final boolean showTypes) {
         final ArrayNode jsonList = jsonNodeFactory.arrayNode();
         for (Object item : list) {
-            if (item instanceof AAElement) {
-                jsonList.add(objectNodeFromElement((AAElement) item, propertyKeys,
+            if (item instanceof AtlasElement) {
+                jsonList.add(objectNodeFromElement((AtlasElement) item, propertyKeys,
                         showTypes ? AtlasGraphSONMode.EXTENDED : AtlasGraphSONMode.NORMAL));
             } else if (item instanceof List) {
                 jsonList.add(createJSONList((List<Object>) item, propertyKeys, showTypes));
@@ -229,8 +228,8 @@ public class AtlasGraphSONUtility {
                     value = createJSONList((List<Object>) value, propertyKeys, showTypes);
                 } else if (value instanceof Map) {
                     value = createJSONMap((Map<String, Object>) value, propertyKeys, showTypes);
-                } else if (value instanceof AAElement) {
-                    value = objectNodeFromElement((AAElement) value, propertyKeys,
+                } else if (value instanceof AtlasElement) {
+                    value = objectNodeFromElement((AtlasElement) value, propertyKeys,
                             showTypes ? AtlasGraphSONMode.EXTENDED : AtlasGraphSONMode.NORMAL);
                 } else if (value.getClass().isArray()) {
                     value = createJSONList(convertArrayToList(value), propertyKeys, showTypes);
@@ -299,7 +298,7 @@ public class AtlasGraphSONUtility {
         }
     }
 
-    private static Map<String, Object> createPropertyMap(final AAElement element, final List<String> propertyKeys,
+    private static Map<String, Object> createPropertyMap(final AtlasElement element, final List<String> propertyKeys,
                                          final ElementPropertiesRule rule, final boolean normalized) {
         final Map<String, Object> map = new HashMap<String, Object>();
         final List<String> propertyKeyList;

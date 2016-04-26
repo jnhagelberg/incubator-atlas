@@ -39,7 +39,7 @@ import org.apache.atlas.RepositoryMetadataModule;
 import org.apache.atlas.ha.HAConfiguration;
 import org.apache.atlas.notification.NotificationModule;
 import org.apache.atlas.repository.graph.GraphProvider;
-import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.service.Services;
 import org.apache.atlas.web.filters.ActiveServerFilter;
 import org.apache.atlas.web.filters.AtlasAuthenticationFilter;
@@ -182,12 +182,12 @@ public class GuiceServletConfig extends GuiceServletContextListener {
     public void contextDestroyed(ServletContextEvent servletContextEvent) {
         super.contextDestroyed(servletContextEvent);
         if(injector != null) {
-            TypeLiteral<GraphProvider<AAGraph>> graphProviderType = new TypeLiteral<GraphProvider<AAGraph>>() {};
-            Provider<GraphProvider<AAGraph>> graphProviderProvider = injector.getProvider(Key.get(graphProviderType));
+            TypeLiteral<GraphProvider<AtlasGraph>> graphProviderType = new TypeLiteral<GraphProvider<AtlasGraph>>() {};
+            Provider<GraphProvider<AtlasGraph>> graphProviderProvider = injector.getProvider(Key.get(graphProviderType));
             
-            GraphProvider<AAGraph> graphProvider = graphProviderProvider.get();
+            GraphProvider<AtlasGraph> graphProvider = graphProviderProvider.get();
             
-            final AAGraph<?,?> graph = graphProvider.get();
+            final AtlasGraph<?,?> graph = graphProvider.get();
 
             try {
                 graph.shutdown();

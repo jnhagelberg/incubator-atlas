@@ -32,7 +32,7 @@ import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.graph.GraphBackedMetadataRepository;
 import org.apache.atlas.repository.graph.GraphHelper;
-import org.apache.atlas.repository.graphdb.AAVertex;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.repository.graphdb.GremlinVersion;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.ITypedStruct;
@@ -102,7 +102,7 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
     }
 
     @Override
-    public <V,E> List<String> traitNames(AAVertex<V,E> vertex) {
+    public <V,E> List<String> traitNames(AtlasVertex<V,E> vertex) {
         return GraphHelper.getTraitNames(vertex);
     }
     
@@ -112,7 +112,7 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
     }
 
     @Override
-    public <V,E> Id getIdFromVertex(String dataTypeName, AAVertex<V,E> vertex) {
+    public <V,E> Id getIdFromVertex(String dataTypeName, AtlasVertex<V,E> vertex) {
         return GraphHelper.getIdFromVertex(dataTypeName, vertex);
     }
 
@@ -140,7 +140,7 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
                 break;
 
             case STRUCT:
-                AAVertex<V,E> structVertex = (AAVertex) value;
+                AtlasVertex<V,E> structVertex = (AtlasVertex) value;
                 StructType structType = (StructType) dataType;
                 ITypedStruct structInstance = structType.createInstance();
 
@@ -157,7 +157,7 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
                 return dataType.convert(structInstance, Multiplicity.OPTIONAL);
 
             case TRAIT:
-                AAVertex<V,E> traitVertex = (AAVertex<V,E>) value;
+                AtlasVertex<V,E> traitVertex = (AtlasVertex<V,E>) value;
                 TraitType traitType = (TraitType) dataType;
                 ITypedStruct traitInstance = traitType.createInstance();
                 // todo - this is not right, we should load the Instance associated with this
@@ -169,7 +169,7 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
                 break;
 
             case CLASS:
-                AAVertex<V,E> classVertex = (AAVertex<V,E>) value;
+                AtlasVertex<V,E> classVertex = (AtlasVertex<V,E>) value;
                 ITypedReferenceableInstance classInstance = metadataRepository.getGraphToInstanceMapper()
                     .mapGraphToTypedInstance(classVertex.<String>getProperty(Constants.GUID_PROPERTY_KEY),
                         classVertex);

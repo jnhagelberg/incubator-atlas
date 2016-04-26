@@ -18,7 +18,7 @@
 
 package org.apache.atlas.query
 
-import org.apache.atlas.repository.graphdb.AAGraph
+import org.apache.atlas.repository.graphdb.AtlasGraph
 
 import org.apache.atlas.discovery.graph.DefaultGraphPersistenceStrategy
 import org.apache.atlas.query.Expressions._
@@ -28,7 +28,7 @@ import org.testng.annotations.{Test,BeforeClass,AfterClass}
 
 class LineageQueryTest extends BaseGremlinTest {
 
-    var g: AAGraph[_,_] = null
+    var g: AtlasGraph[_,_] = null
     var gProvider:AtlasGraphProvider = null;
     var gp:GraphPersistenceStrategies = null;
 

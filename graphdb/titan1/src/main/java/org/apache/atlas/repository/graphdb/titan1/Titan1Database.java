@@ -24,8 +24,8 @@ import java.util.ArrayList;
 
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
-import org.apache.atlas.repository.graph.GraphProviderPlugin;
-import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.repository.graphdb.GraphDatabase;
 import org.apache.atlas.repository.graphdb.titan1.serializer.BigDecimalSerializer;
 import org.apache.atlas.repository.graphdb.titan1.serializer.BigIntegerSerializer;
 import org.apache.atlas.repository.graphdb.titan1.serializer.StringListSerializer;
@@ -50,9 +50,9 @@ import com.thinkaurelius.titan.graphdb.tinkerpop.TitanIoRegistry;
 /**
  * Default implementation for Graph Provider that doles out Titan Graph.
  */
-public class Titan1GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
+public class Titan1Database implements GraphDatabase<Titan1Vertex, Titan1Edge> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Titan1GraphPlugin.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Titan1Database.class);
 
     /**
      * Constant for the configuration property that indicates the prefix.
@@ -67,6 +67,15 @@ public class Titan1GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
 
     private static volatile TitanGraph graphInstance;
 
+    public Titan1Database() {
+        
+        //load the Gremlin 3 sugar plugin
+         SugarLoader.load();
+         
+         //update registry
+         GraphSONMapper.build().addRegistry(TitanIoRegistry.INSTANCE).create();           
+    }
+    
     public static Configuration getConfiguration() throws AtlasException {
         Configuration configProperties = ApplicationProperties.get();        
         
@@ -97,7 +106,7 @@ public class Titan1GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
 
     public static TitanGraph getGraphInstance() {
         if (graphInstance == null) {
-            synchronized (Titan1GraphPlugin.class) {
+            synchronized (Titan1Database.class) {
                 if (graphInstance == null) {
                     Configuration config;
                     try {
@@ -131,7 +140,7 @@ public class Titan1GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
      
 
     public static void unload() {
-        synchronized (Titan1GraphPlugin.class) {
+        synchronized (Titan1Database.class) {
             
             if(graphInstance == null) {
                 return;
@@ -155,20 +164,8 @@ public class Titan1GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
 
     }
 
-
     @Override
-    public void initialize() {
-        //load the Gremlin 3 sugar plugin
-        SugarLoader.load();
-        
-        //update registry
-        GraphSONMapper.build().addRegistry(TitanIoRegistry.INSTANCE).create();
-        
-        
-    }
-
-    @Override
-    public AAGraph<Vertex, Edge> createGraph() {
+    public AtlasGraph<Titan1Vertex, Titan1Edge> getGraph() {
        //initialize up front to make sure bootstrapping is correct in test cases,
         //where the graph is unloaded and unloaded multiple times.  TBD - figure
         //out how this can be avoided
@@ -179,5 +176,10 @@ public class Titan1GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
     @Override
     public void unloadGraph() { 
         unload();
+    }
+
+    @Override
+    public boolean isGraphLoaded() {
+        return graphInstance != null;
     }
 }

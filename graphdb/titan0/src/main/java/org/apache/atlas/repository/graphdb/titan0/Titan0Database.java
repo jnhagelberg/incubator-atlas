@@ -25,8 +25,8 @@ import java.util.Map;
 
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
-import org.apache.atlas.repository.graph.GraphProviderPlugin;
-import org.apache.atlas.repository.graphdb.AAGraph;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.repository.graphdb.GraphDatabase;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,15 +37,13 @@ import com.thinkaurelius.titan.core.TitanGraph;
 import com.thinkaurelius.titan.core.schema.TitanManagement;
 import com.thinkaurelius.titan.diskstorage.StandardIndexProvider;
 import com.thinkaurelius.titan.diskstorage.solr.Solr5Index;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Vertex;
 
 /**
  * Default implementation for Graph Provider that doles out Titan Graph.
  */
-public class Titan0GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
+public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(Titan0GraphPlugin.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Titan0Database.class);
 
     /**
      * Constant for the configuration property that indicates the prefix.
@@ -96,7 +94,7 @@ public class Titan0GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
 
     public static TitanGraph getGraphInstance() {
         if (graphInstance == null) {
-            synchronized (Titan0GraphPlugin.class) {
+            synchronized (Titan0Database.class) {
                 if (graphInstance == null) {
                     Configuration config;
                     try {
@@ -115,7 +113,7 @@ public class Titan0GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
 
     public static void unload() {
     	
-        synchronized (Titan0GraphPlugin.class) {
+        synchronized (Titan0Database.class) {
         	if(graphInstance == null) {
         		return;
         	}
@@ -144,16 +142,10 @@ public class Titan0GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
             return o2 == null;
         }
         return o1.equals(o2);
-    }
-    
-    @Override
-    public void initialize() {
-      
-        
-    }
+    }    
 
     @Override
-    public AAGraph<Vertex, Edge> createGraph() {
+    public AtlasGraph<Titan0Vertex, Titan0Edge> getGraph() {
        //force graph loading now to try to debug issue
        getGraphInstance();
        return new Titan0Graph();
@@ -162,6 +154,11 @@ public class Titan0GraphPlugin implements GraphProviderPlugin<Vertex,Edge> {
     @Override
     public void unloadGraph() { 
         unload();
+    }
+
+    @Override
+    public boolean isGraphLoaded() {
+        return graphInstance != null;
     }
     
 

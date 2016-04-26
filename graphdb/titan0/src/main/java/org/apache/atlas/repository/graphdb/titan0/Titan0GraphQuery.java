@@ -1,17 +1,19 @@
 
 package org.apache.atlas.repository.graphdb.titan0;
 
-import org.apache.atlas.repository.graphdb.AAEdge;
-import org.apache.atlas.repository.graphdb.AAGraphQuery;
-import org.apache.atlas.repository.graphdb.AAVertex;
-import org.apache.atlas.utils.IterableAdapter;
+import org.apache.atlas.repository.graphdb.AtlasEdge;
+import org.apache.atlas.repository.graphdb.AtlasGraphQuery;
+import org.apache.atlas.repository.graphdb.AtlasVertex;
+import org.apache.atlas.utils.adapters.IterableAdapter;
+import org.apache.atlas.utils.adapters.impl.EdgeMapper;
+import org.apache.atlas.utils.adapters.impl.VertexMapper;
 
 import com.tinkerpop.blueprints.Compare;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Vertex;
 
-public class Titan0GraphQuery implements AAGraphQuery<Vertex,Edge> {
+public class Titan0GraphQuery implements AtlasGraphQuery<Titan0Vertex, Titan0Edge> {
 
     private GraphQuery wrapped_;
     
@@ -20,13 +22,13 @@ public class Titan0GraphQuery implements AAGraphQuery<Vertex,Edge> {
     }
 
     @Override
-    public AAGraphQuery<Vertex,Edge> has(String propertyKey, Object value) {
+    public AtlasGraphQuery<Titan0Vertex, Titan0Edge> has(String propertyKey, Object value) {
         GraphQuery result = wrapped_.has(propertyKey, value);
         return wrapResult(result);
         
     }
 
-    private AAGraphQuery<Vertex, Edge> wrapResult(GraphQuery result) {
+    private AtlasGraphQuery<Titan0Vertex, Titan0Edge> wrapResult(GraphQuery result) {
         if(result == wrapped_) {
             return this;
         }
@@ -34,19 +36,19 @@ public class Titan0GraphQuery implements AAGraphQuery<Vertex,Edge> {
     }
 
     @Override
-    public Iterable<AAVertex<Vertex,Edge>> vertices() {
+    public Iterable<AtlasVertex<Titan0Vertex, Titan0Edge>> vertices() {
         Iterable<Vertex> result = wrapped_.vertices();
-        return new IterableAdapter<Vertex,AAVertex<Vertex,Edge>>(result, VertexMapper.INSTANCE);
+        return new IterableAdapter<Vertex,AtlasVertex<Titan0Vertex, Titan0Edge>>(result, VertexMapper.INSTANCE);
     }
 
     @Override
-    public Iterable<AAEdge<Vertex, Edge>> edges() {
+    public Iterable<AtlasEdge<Titan0Vertex, Titan0Edge>> edges() {
         Iterable<Edge> result = wrapped_.edges();
-        return new IterableAdapter<Edge,AAEdge<Vertex,Edge>>(result, EdgeMapper.INSTANCE);
+        return new IterableAdapter<Edge,AtlasEdge<Titan0Vertex, Titan0Edge>>(result, EdgeMapper.INSTANCE);
     }
 
     @Override
-    public AAGraphQuery<Vertex, Edge> has(String propertyKey, ComparisionOperator operator, Object value) {
+    public AtlasGraphQuery<Titan0Vertex, Titan0Edge> has(String propertyKey, ComparisionOperator operator, Object value) {
         Compare c = getGremlinPredicate(operator);
         GraphQuery result = wrapped_.has(propertyKey, c, value);
         return wrapResult(result);

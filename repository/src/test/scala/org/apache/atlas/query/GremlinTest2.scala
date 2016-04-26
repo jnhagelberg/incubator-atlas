@@ -18,7 +18,7 @@
 
 package org.apache.atlas.query
 
-import org.apache.atlas.repository.graphdb.AAGraph
+import org.apache.atlas.repository.graphdb.AtlasGraph
 import org.apache.atlas.discovery.graph.DefaultGraphPersistenceStrategy
 import org.apache.atlas.query.Expressions._
 import org.apache.atlas.repository.graph.{AtlasGraphProvider,GraphBackedMetadataRepository}
@@ -30,7 +30,7 @@ import org.apache.atlas.repository.graphdb.GremlinVersion
 
 class GremlinTest2 extends BaseGremlinTest {
 
-  var g: AAGraph[_,_] = null
+  var g: AtlasGraph[_,_] = null
   var gProvider: AtlasGraphProvider = null;
   var gp:GraphPersistenceStrategies = null;
 
@@ -147,7 +147,7 @@ class GremlinTest2 extends BaseGremlinTest {
     println(r.toInstanceJson)
   }
 
-  private def getPersistenceStrategy(g: AAGraph[_,_]) : GraphPersistenceStrategies = {
+  private def getPersistenceStrategy(g: AtlasGraph[_,_]) : GraphPersistenceStrategies = {
        if(g.getSupportedGremlinVersion == GremlinVersion.TWO) {
            Gremlin2GraphPersistenceStrategy1
        }

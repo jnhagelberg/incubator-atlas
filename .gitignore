@@ -18,6 +18,7 @@
 target
 dependency-reduced-pom.xml
 core*.dmp
+.cache-tests
 
 
 # IntelliJ
