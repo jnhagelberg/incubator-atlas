@@ -79,7 +79,7 @@ public final class TestUtils {
             System.out.println(GraphHelper.vertexString(vertex));
         }
 
-        System.out.println("AtlasEdge<V,E>s:");
+        System.out.println("Edges:");
         for (AtlasEdge<?,?> edge: graph.getEdges()) {
             System.out.println(GraphHelper.edgeString(edge));
         }

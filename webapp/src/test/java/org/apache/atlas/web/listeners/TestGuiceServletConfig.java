@@ -16,20 +16,20 @@
  */
 package org.apache.atlas.web.listeners;
 
-import com.google.inject.Key;
-import com.google.inject.Module;
-import com.google.inject.Provider;
-import com.google.inject.TypeLiteral;
-import com.thinkaurelius.titan.core.TitanGraph;
-import com.thinkaurelius.titan.core.util.TitanCleanup;
+import javax.servlet.ServletContextEvent;
+
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.repository.graph.GraphProvider;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.ServletContextEvent;
+import com.google.inject.Key;
+import com.google.inject.Module;
+import com.google.inject.Provider;
+import com.google.inject.TypeLiteral;
 
 public class TestGuiceServletConfig extends GuiceServletConfig {
 
@@ -47,13 +47,16 @@ public class TestGuiceServletConfig extends GuiceServletConfig {
         super.contextDestroyed(servletContextEvent);
 
         if(injector != null) {
-            TypeLiteral<GraphProvider<TitanGraph>> graphProviderType = new TypeLiteral<GraphProvider<TitanGraph>>() {};
-            Provider<GraphProvider<TitanGraph>> graphProvider = injector.getProvider(Key.get(graphProviderType));
-            TitanGraph graph = graphProvider.get().get();
+            TypeLiteral<GraphProvider<AtlasGraph>> graphProviderType = new TypeLiteral<GraphProvider<AtlasGraph>>() {};
+            Provider<GraphProvider<AtlasGraph>> graphProviderProvider = injector.getProvider(Key.get(graphProviderType));
+            
+            GraphProvider<AtlasGraph> graphProvider = graphProviderProvider.get();
+            
+            AtlasGraph<?,?> graph = graphProvider.get();
 
             LOG.info("Clearing graph store");
             try {
-                TitanCleanup.clear(graph);
+                graph.clear();
             } catch (Exception e) {
                 LOG.warn("Clearing graph store failed ", e);
             }

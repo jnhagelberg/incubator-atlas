@@ -454,19 +454,9 @@ class GremlinTranslator(expr: Expression,
         if(gPersistenceBehavior.addGraphVertexPrefix(preStatements)) {
             q = s"g.V.$q"
         }
-        
-        if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.THREE) {
-            q = expr match {
-                // pure select expression generates a HashMap if there is one result and there are multiple output columns.  This is not compatible with List.
-                case e1: SelectExpression =>  s"$q.toList()"
-                case pe@PathExpression(se@SelectExpression(_, _)) => s"$q.toList()"
-                case e1 => s"$q.toList()"
-            }        
-        }
-        else {
-            q = s"$q.toList()"
-        }
-      
+               
+        q = s"$q.toList()"
+             
         q = (preStatements ++ Seq(q) ++ postStatements).mkString("", ";", "")
         /*
          * the L:{} represents a groovy code block; the label is needed
