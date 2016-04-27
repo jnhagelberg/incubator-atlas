@@ -13,6 +13,9 @@ import com.thinkaurelius.titan.core.TitanGraphQuery;
 public class TitanObjectFactory {
     
     public static Titan1Edge createEdge(Edge source) {
+        if(source == null) {
+            return null;
+        }
         return new Titan1Edge(source);
     }
     
@@ -47,10 +50,10 @@ public class TitanObjectFactory {
     }
 
     public static Titan1Vertex createVertex(Vertex source) {
+        if(source == null) {
+            return null;
+        }
         return new Titan1Vertex(source);
     }
 
-   
-    
-    
 }

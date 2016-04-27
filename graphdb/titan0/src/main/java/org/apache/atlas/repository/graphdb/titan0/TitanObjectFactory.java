@@ -18,6 +18,9 @@ public class TitanObjectFactory {
     }
     
     public static Titan0Edge createEdge(Edge source) {
+        if(source == null) {
+            return null;
+        }
         return new Titan0Edge(source);
     }
     
@@ -52,6 +55,9 @@ public class TitanObjectFactory {
     }
 
     public static AtlasVertex<Titan0Vertex, Titan0Edge> createVertex(Vertex source) {
+        if(source == null) {
+            return null;
+        }
         return new Titan0Vertex(source);
     }
  

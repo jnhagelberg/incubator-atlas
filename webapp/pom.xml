@@ -82,7 +82,7 @@
         <profile>
             <id>titan1</id>
             <properties>
-                <plugin.class>org.apache.atlas.repository.graphdb.titan1.Titan1GraphPlugin</plugin.class>
+                <plugin.class>org.apache.atlas.repository.graphdb.titan1.Titan1Database</plugin.class>
             </properties>
             <dependencies>
                 <dependency>
