@@ -36,15 +36,10 @@
     <modules>
         <module>api</module>
         <module>graphdb-impls</module>
+	<module>titan0</module>
     </modules>
 
     <profiles>
-        <profile>
-            <id>titan0</id>                      
-            <modules>
-                <module>titan0</module>
-            </modules>
-        </profile>
         <profile>
             <id>titan1</id>
             <modules>

@@ -33,52 +33,20 @@
     <name>Apache Atlas Repository</name>
     <packaging>jar</packaging>
 
-    <!-- controls the graph database to be used when running the tests -->
-    <profiles>
-        <profile>
-            <id>titan0</id>
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.atlas</groupId>
-                    <artifactId>atlas-graphdb-titan0</artifactId>
-                    <version>${project.version}</version>
-                </dependency>
-            </dependencies>
-            <build>
-                <testResources>
-                    <testResource>
-                        <filtering>true</filtering>
-                        <directory>${basedir}/src/test/titan0-resources</directory>
-                    </testResource>
-                </testResources>
-            </build>
-        </profile>
-        <profile>
-            <id>titan1</id>
-            <dependencies>
-                <dependency>
-                    <groupId>org.apache.atlas</groupId>
-                    <artifactId>atlas-graphdb-titan1</artifactId>
-                    <version>${project.version}</version>
-                </dependency>
-            </dependencies>
-            <build>
-                <testResources>
-                    <testResource>
-                        <directory>${basedir}/src/test/titan1-resources</directory>
-                        <filtering>true</filtering>
-                    </testResource>
-                </testResources>
-            </build>
-        </profile>    
-    </profiles>
-    
     <dependencies>
 
         <dependency>
             <groupId>org.apache.atlas</groupId>
             <artifactId>atlas-graphdb-api</artifactId>
         </dependency>
+	
+	<dependency>
+            <groupId>org.apache.atlas</groupId>
+            <artifactId>atlas-graphdb-impls</artifactId>
+	    <type>pom</type>
+            <scope>test</scope>
+        </dependency>
+	
 
         <dependency>
             <groupId>org.apache.atlas</groupId>
@@ -198,6 +166,11 @@
                 <filtering>true</filtering>
                 <directory>${basedir}/src/test/resources</directory>
             </testResource>
+	    <!-- to do - clean this up.  No need for db-specific resource.  Impl set as system property. -->
+            <testResource>
+               <directory>${basedir}/src/test/titan0-resources</directory>
+               <filtering>true</filtering>
+           </testResource>
         </testResources>
         <plugins>
             <plugin>

@@ -546,18 +546,7 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- use titan 0 by default -->
-            <dependency>
-                <groupId>org.apache.atlas</groupId>
-                <artifactId>graphdb-impl-deps</artifactId>
-                <version>${project.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>org.apache.atlas</groupId>
-                        <artifactId>atlas-graphdb-titan1</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
+
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-jsp</artifactId>
@@ -1045,6 +1034,20 @@
                 <artifactId>atlas-webapp</artifactId>
                 <version>${project.version}</version>
                 <type>war</type>
+            </dependency>
+
+            <!-- use titan 0 by default -->
+            <dependency>
+                <groupId>org.apache.atlas</groupId>
+                <artifactId>atlas-graphdb-impls</artifactId>
+                <version>${project.version}</version>
+		<type>pom</type>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.apache.atlas</groupId>
+                        <artifactId>atlas-graphdb-titan1</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <dependency>

@@ -10,7 +10,9 @@ import java.util.Map;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.persistence.Id;
-import org.elasticsearch.common.collect.ImmutableList;
+
+import com.google.common.collect.ImmutableList;
+
 
 /**
  * Utility class used to by the JSON Imported.  Represents a node in a dependency
