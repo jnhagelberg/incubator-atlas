@@ -18,28 +18,19 @@
 
 package org.apache.atlas.typesystem.json
 
-import org.apache.atlas.typesystem.ITypedReferenceableInstance
-import org.apache.atlas.typesystem.ITypedStruct
-import org.apache.atlas.typesystem.Referenceable
-import org.apache.atlas.typesystem.Struct
-import org.apache.atlas.typesystem.persistence.Id
+import com.google.common.collect.ImmutableList
 import org.apache.atlas.typesystem.persistence.Id.EntityState
-import org.apache.atlas.typesystem.persistence.ReferenceableInstance
-import org.apache.atlas.typesystem.persistence.StructInstance
+import org.apache.atlas.typesystem.persistence.{Id, ReferenceableInstance, StructInstance}
 import org.apache.atlas.typesystem.types._
 import org.apache.atlas.typesystem.types.utils.TypesUtil
-import org.codehaus.jettison.json.JSONObject
-import org.json4s.{ NoTypeHints, _ }
+import org.apache.atlas.typesystem.{ITypedReferenceableInstance, ITypedStruct, Referenceable, Struct}
 import org.json4s.native.JsonMethods._
-import org.json4s.native.Serialization.{ write => swrite, _ }
+import org.json4s.native.Serialization.{write => swrite, _}
+import org.json4s.{NoTypeHints, _}
 import org.testng.Assert
-import org.testng.Assert.assertEquals
-import org.testng.annotations.BeforeMethod
-import org.testng.annotations.Test
-
-import com.google.common.collect.ImmutableList
+import org.testng.annotations.{BeforeMethod,Test}
 import com.google.common.collect.ImmutableSet
-import org.codehaus.jettison.json.JSONArray
+import org.testng.Assert.assertEquals
 
 class SerializationTest extends BaseTest {
 
@@ -250,63 +241,7 @@ class SerializationTest extends BaseTest {
 
     println(s"HR Dept Object Graph read from JSON:${read[ReferenceableInstance](ser)}\n")
 
-   }
-  
-   def removeStateKeys(value : Any) {
-       
-       if(value.isInstanceOf[JSONObject]) {
-           var obj = value.asInstanceOf[JSONObject];
-           var keyIterator = obj.keys();
-           while(keyIterator.hasNext()) {
-               var key : String = keyIterator.next().toString();
-               
-               if(key.equals("state")) {
-                    keyIterator.remove();
-               }
-               else {
-                   var value = obj.get(key);
-                   removeStateKeys(value);
-               }
-            }    
-       }
-       if(value.isInstanceOf[JSONArray]) {
-         var arr = value.asInstanceOf[JSONArray];
-         for(i <- 0 to (arr.length() - 1)) {
-             removeStateKeys(arr.get(i));
-         }                                      
-       }       
-   }
-  
-   @Test def testReference3 {
-
-    val ts: TypeSystem = getTypeSystem
-    defineHRTypes(ts)
-    val hrDept: Referenceable = defineHRDept()
-
-
-    val origJsonStr = InstanceSerialization.toJson(hrDept)
-    val j : JSONObject = new JSONObject(origJsonStr);
-    removeStateKeys(j);
-    val jsonStr = j.toString();
-        
-    
-    val hrDept2 = InstanceSerialization.fromJsonReferenceable(jsonStr)
-
-    val deptType: ClassType = ts.getDataType(classOf[ClassType], "Department")
-    val hrDept3: ITypedReferenceableInstance = deptType.convert(hrDept2, Multiplicity.REQUIRED)
-
-    println(s"HR Dept Object Graph:\n${hrDept3}\n")
-
-    implicit val formats = org.json4s.native.Serialization.formats(NoTypeHints) + new TypedStructSerializer +
-      new TypedReferenceableInstanceSerializer + new BigDecimalSerializer + new BigIntegerSerializer
-
-    val ser = swrite(hrDept3)
-    println(s"HR Dept JSON:\n${pretty(render(parse(ser)))}\n")
-
-    println(s"HR Dept Object Graph read from JSON:${read[ReferenceableInstance](ser)}\n")
   }
-  
-  
 
   @Test def testIdSerde: Unit = {
 

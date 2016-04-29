@@ -21,30 +21,7 @@ package org.apache.atlas.query
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
-
-import org.apache.atlas.query.Expressions.AliasExpression
-import org.apache.atlas.query.Expressions.ArithmeticExpression
-import org.apache.atlas.query.Expressions.BackReference
-import org.apache.atlas.query.Expressions.ClassExpression
-import org.apache.atlas.query.Expressions.ComparisonExpression
-import org.apache.atlas.query.Expressions.Expression
-import org.apache.atlas.query.Expressions.ExpressionException
-import org.apache.atlas.query.Expressions.FieldExpression
-import org.apache.atlas.query.Expressions.FilterExpression
-import org.apache.atlas.query.Expressions.InstanceExpression
-import org.apache.atlas.query.Expressions.ListLiteral
-import org.apache.atlas.query.Expressions.Literal
-import org.apache.atlas.query.Expressions.LogicalExpression
-import org.apache.atlas.query.Expressions.LoopExpression
-import org.apache.atlas.query.Expressions.PathExpression
-import org.apache.atlas.query.Expressions.SelectExpression
-import org.apache.atlas.query.Expressions.TraitExpression
-import org.apache.atlas.query.Expressions.TraitInstanceExpression
-import org.apache.atlas.query.Expressions.hasFieldLeafExpression
-import org.apache.atlas.query.Expressions.hasFieldUnaryExpression
-import org.apache.atlas.query.Expressions.id
-import org.apache.atlas.query.Expressions.isTraitLeafExpression
-import org.apache.atlas.query.Expressions.isTraitUnaryExpression
+import org.apache.atlas.query.Expressions._
 import org.apache.atlas.repository.graphdb.GremlinVersion
 import org.apache.atlas.typesystem.types.DataTypes
 import org.apache.atlas.typesystem.types.DataTypes.TypeCategory
@@ -55,15 +32,12 @@ trait IntSequence {
     def next: Int
 }
 
-case class SelectContext(selectChild: Expression) {
-    
-}
-
 case class GremlinQuery(expr: Expression, queryStr: String, resultMaping: Map[String, (String, Int)]) {
 
     def hasSelectList = resultMaping != null
 
     def isPathExpresion = expr.isInstanceOf[PathExpression]
+    
 }
 
 trait SelectExpressionHandling {
@@ -153,24 +127,7 @@ trait SelectExpressionHandling {
         }
         m.toMap
     }
-
 }
-
-object TraversableUtil {
-    class IndexMemorizingFunction[A, B](f: (Int, A) => B) extends Function1[A, B] {
-        private var index = 0
-        override def apply(a: A): B = {
-            val ret = f(index, a)
-            index += 1
-            ret
-        }
-    }
-
-    def doIndexed[A, B](f: (Int, A) => B): A => B = {
-        new IndexMemorizingFunction(f)
-    }
-}
-
 
 class GremlinTranslationException(expr: Expression, reason: String) extends
 ExpressionException(expr, s"Unsupported Gremlin translation: $reason")
@@ -233,7 +190,8 @@ class GremlinTranslator(expr: Expression,
     }
 
     def traitClauseWithInstanceForTop(topE : Expression) : PartialFunction[Expression, Expression] = {
-      case te : TraitExpression if (te fastEquals topE) =>  {
+//          This topE check prevented the comparison of trait expression when it is a child. Like trait as t limit 2
+        case te : TraitExpression =>  {
         val theTrait = te.as("theTrait")
         val theInstance = theTrait.traitInstance().as("theInstance")
         val outE =
@@ -248,6 +206,7 @@ class GremlinTranslator(expr: Expression,
         preStatements ++= stats.init
         stats.last
     }       
+
 
     private def genQuery(expr: Expression, inSelect: Boolean): String = expr match {
         case ClassExpression(clsName) =>
@@ -411,8 +370,8 @@ class GremlinTranslator(expr: Expression,
                     s"""has("$fieldName")"""
                 }
                 else {
-                    s"""has("${gPersistenceBehavior.fieldNameInVertex(fi.get.dataType, fi.get.attrInfo)}")"""    
-                }                                
+                    s"""has("${gPersistenceBehavior.fieldNameInVertex(fi.get.dataType, fi.get.attrInfo)}")"""
+                }
             }
         }
         case hasFieldUnaryExpression(fieldName, child) =>
@@ -432,7 +391,42 @@ class GremlinTranslator(expr: Expression,
                  s"${genQuery(child, inSelect)}.path"
             }
             else {
-                s"${genQuery(child, inSelect)}.simplePath().path()"
+                s"${genQuery(child, inSelect)}.path()"
+            }
+        }
+        case order@OrderExpression(child, odr, asc) => {
+          var orderby = ""
+          if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
+              asc  match {
+               //builds a closure comparison function based on provided order by clause in DSL. This will be used to sort the results by gremlin order pipe.
+              //Ordering is case insensitive.
+              case false=> orderby = s"order{it.b.getProperty('$odr').toLowerCase() <=> it.a.getProperty('$odr').toLowerCase()}"//descending
+              case _ => orderby = s"order{it.a.getProperty('$odr').toLowerCase() <=> it.b.getProperty('$odr').toLowerCase()}"
+              
+            }
+          }
+          else {
+              
+               asc  match {
+               //builds a closure comparison function based on provided order by clause in DSL. This will be used to sort the results by gremlin order pipe.
+              //Ordering is case insensitive.
+              case false=> orderby = s"order().by('$odr',{ a,b -> b.toString().toLowerCase() <=> a.toString().toLowerCase() })"
+              case _ => orderby = s"order().by('$odr',{ a,b -> a.toString().toLowerCase() <=> b.toString().toLowerCase() })"
+              
+            }
+
+          }
+          s"""${genQuery(child, inSelect)}.$orderby"""
+        }
+        case limitOffset@LimitExpression(child, limit, offset) => {
+            if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
+                val totalResultRows = limit.value + offset.value
+                s"""${genQuery(child, inSelect)} [$offset..<$totalResultRows]"""
+            }
+            else {
+                val totalResultRows = limit.value + offset.value
+                s"""${genQuery(child, inSelect)}.range($offset,$totalResultRows)"""
+                
             }
         }
         case x => throw new GremlinTranslationException(x, "expression not yet supported")
@@ -450,7 +444,6 @@ class GremlinTranslator(expr: Expression,
     
     def genFullQuery(expr: Expression): String = {
         var q = genQuery(expr, false)
-
         if(gPersistenceBehavior.addGraphVertexPrefix(preStatements)) {
             q = s"g.V.$q"
         }
@@ -474,22 +467,48 @@ class GremlinTranslator(expr: Expression,
         e1 = e1.transformUp(addAliasToLoopInput())
         e1 = e1.transformUp(instanceClauseToTop(e1))
         e1 = e1.transformUp(traitClauseWithInstanceForTop(e1))
-
-        e1 match {
-            case e1: SelectExpression => {
-                val rMap = buildResultMapping(e1)
+        
+       //Following code extracts the select expressions from expression tree.
+        
+             val  se = SelectExpressionHelper.extractSelectExpression(e1)
+             if (se.isDefined)
+             {
+                val  rMap = buildResultMapping(se.get)
                 GremlinQuery(e1, genFullQuery(e1), rMap)
-            }
-            case pe@PathExpression(se@SelectExpression(child, selectList)) => {
-                
-              val rMap = buildResultMapping(se)
-              GremlinQuery(e1, genFullQuery(e1), rMap)
-            }
-            case e1 => GremlinQuery(e1, genFullQuery(e1), null)
+             }
+             else
+             {
+                GremlinQuery(e1, genFullQuery(e1), null)
+             }
         }
 
     }
 
+    object SelectExpressionHelper {
+       /**
+     * This method extracts the child select expression from parent expression
+     */
+     def extractSelectExpression(child: Expression): Option[SelectExpression] = {
+      child match {
+            case se@SelectExpression(child, selectList) =>{
+              Some(se)
+            }
+            case limit@LimitExpression(child, lmt, offset) => {
+              extractSelectExpression(child)
+            }
+            case order@OrderExpression(child, odr, odrBy) => {
+              extractSelectExpression(child)
+            }
+           case path@PathExpression(child) => {
+              extractSelectExpression(child)
+           }
+           case _ => {
+             None
+           }
+           
+      }
+    }
+    }
     /*
      * TODO
      * Translation Issues:
@@ -500,4 +519,3 @@ class GremlinTranslator(expr: Expression,
      * The solution is to to do predicate pushdown and apply the filter immediately on top of the referred Expression.
      */
 
-}
