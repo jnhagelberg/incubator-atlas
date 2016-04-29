@@ -18,15 +18,20 @@
 
 package org.apache.atlas.query
 
-import org.apache.atlas.repository.graphdb.AtlasGraph
+import org.apache.atlas.RequestContext
 import org.apache.atlas.discovery.graph.DefaultGraphPersistenceStrategy
-import org.apache.atlas.query.Expressions._
-import org.apache.atlas.repository.graph.{AtlasGraphProvider,GraphBackedMetadataRepository}
-import org.apache.atlas.typesystem.types.TypeSystem
-import org.testng.annotations.{Test,BeforeClass,AfterClass}
-import org.apache.atlas.typesystem.types.TypeSystem
+import org.apache.atlas.query.Expressions._class
+import org.apache.atlas.query.Expressions._trait
+import org.apache.atlas.query.Expressions.id
+import org.apache.atlas.repository.graph.AtlasGraphProvider
 import org.apache.atlas.repository.graph.GraphBackedMetadataRepository
+import org.apache.atlas.repository.graphdb.AtlasGraph
 import org.apache.atlas.repository.graphdb.GremlinVersion
+import org.apache.atlas.typesystem.types.TypeSystem
+import org.testng.annotations.AfterClass
+import org.testng.annotations.BeforeClass
+import org.testng.annotations.BeforeMethod
+import org.testng.annotations.Test
 
 class GremlinTest2 extends BaseGremlinTest {
 
@@ -34,12 +39,18 @@ class GremlinTest2 extends BaseGremlinTest {
   var gProvider: AtlasGraphProvider = null;
   var gp:GraphPersistenceStrategies = null;
 
+  @BeforeMethod
+  def resetRequestContext() {
+    RequestContext.createContext();
+  }
+
+  
   @BeforeClass
   def beforeAll() {
     TypeSystem.getInstance().reset()
     QueryTestsUtils.setupTypes
     gProvider = new AtlasGraphProvider();
-    var repo = new GraphBackedMetadataRepository(gProvider);
+    var repo = new GraphBackedMetadataRepository(gProvider, null);
     gp = new DefaultGraphPersistenceStrategy(repo)
     g = QueryTestsUtils.setupTestGraph(repo, gProvider)
   }

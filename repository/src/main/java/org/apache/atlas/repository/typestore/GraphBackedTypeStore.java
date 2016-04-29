@@ -211,9 +211,11 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
     }
 
     private void addEdge(AtlasVertex<V,E> fromVertex, AtlasVertex<V,E> toVertex, String label) {
+        
         Iterable<AtlasEdge<V,E>> edges = GraphHelper.getOutGoingEdgesByLabel(fromVertex, label);
         // ATLAS-474: Check if this type system edge already exists, to avoid duplicates.
-        for (AtlasEdge<V,E> edge : edges) {
+        for(AtlasEdge<V,E> edge : edges) {
+
             if (edge.getInVertex().equals(toVertex)) {
                 LOG.debug("Edge from {} to {} with label {} already exists", 
                     toString(fromVertex), toString(toVertex), label);

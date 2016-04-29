@@ -27,27 +27,8 @@ import java.util.Collection;
  */
 public interface AtlasVertex<V,E> extends AtlasElement {
 
-    /**
-     * Removes a property from the vertex.
-     */
-    void removeProperty(String propertyName);
-
-    /**
-     * Sets a single-valued property to the given value.
-     * 
-     * @param propertyName
-     * @param value
-     */
-    <T> void setProperty(String propertyName, T value);		
-
-    /**
-     * Adds a value to a multiplicity many property.
-     * 
-     * @param propertyName
-     * @param value
-     */
-    <T> void addProperty(String propertyName, T value);
-
+   
+    
 
     /**
      * Gets the edges incident to this vertex going the
@@ -67,14 +48,21 @@ public interface AtlasVertex<V,E> extends AtlasElement {
      * @return
      */
     Iterable<AtlasEdge<V,E>> getEdges(AtlasEdgeDirection in);
-
+    
     /**
+     * Adds a value to a multiplicity many property.
+     * 
+     * @param propertyName
+     * @param value
+     */
+    <T> void addProperty(String propertyName, T value);
+
+   /**
      * Gets all of the values of the given property.
      * @param propertyName
      * @return
      */
-    <T> Collection<T> getPropertyValues(String propertyName);    
-
+    <T> Collection<T> getPropertyValues(String propertyName); 
 
     /**
      * Creates a vertex query.

@@ -17,6 +17,8 @@
  */
 package org.apache.atlas.repository.graphdb;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Set;
 
@@ -163,6 +165,14 @@ public interface AtlasGraph<V,E> {
      */
     void clear();
 
+    /**
+     * Converts the graph to gson and writes it to the specified stream
+     * 
+     * @param os
+     * @throws IOException
+     */
+    void exportToGson(OutputStream os) throws IOException;
+    
     //the following methods insulate Atlas from the details
     //of the interaction with Gremlin
     

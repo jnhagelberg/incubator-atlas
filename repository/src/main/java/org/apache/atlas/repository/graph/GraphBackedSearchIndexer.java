@@ -97,17 +97,24 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
             management.buildMixedEdgeIndex(Constants.EDGE_INDEX, Constants.BACKING_INDEX);
     
             // create a composite index for guid as its unique
-            createCompositeAndMixedIndex(management, Constants.GUID_PROPERTY_KEY, String.class, true, Multiplicity.OPTIONAL, true);
+            createCompositeAndMixedIndex(management, Constants.GUID_PROPERTY_KEY, String.class, true,
+                   Multiplicity.OPTIONAL, true);
+    
+            // create a composite index for entity state
+            createCompositeAndMixedIndex(management, Constants.STATE_PROPERTY_KEY, String.class, false, Multiplicity.OPTIONAL, true);
     
             // create a composite and mixed index for type since it can be combined with other keys
-            createCompositeAndMixedIndex(management, Constants.ENTITY_TYPE_PROPERTY_KEY, String.class, false,  Multiplicity.OPTIONAL, true);
+            createCompositeAndMixedIndex(management, Constants.ENTITY_TYPE_PROPERTY_KEY, String.class, false, Multiplicity.OPTIONAL,
+                    true);
     
             // create a composite and mixed index for type since it can be combined with other keys
-            createCompositeAndMixedIndex(management, Constants.SUPER_TYPES_PROPERTY_KEY, String.class, false, Multiplicity.SET, true);
+            createCompositeAndMixedIndex(management, Constants.SUPER_TYPES_PROPERTY_KEY, String.class, false, Multiplicity.SET,
+                    true);
     
             // create a composite and mixed index for traitNames since it can be combined with other
             // keys. Traits must be a set and not a list.
-            createCompositeAndMixedIndex(management, Constants.TRAIT_NAMES_PROPERTY_KEY, String.class, false, Multiplicity.SET, true);
+            createCompositeAndMixedIndex(management, Constants.TRAIT_NAMES_PROPERTY_KEY, String.class, false, Multiplicity.SET,
+                    true);
 
             // Index for full text search
             createFullTextIndex(management);
@@ -212,12 +219,12 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         final String propertyName = typeName + "." + field.name;
         switch (field.dataType().getTypeCategory()) {
         case PRIMITIVE:
-            createCompositeAndMixedIndex(management, propertyName, getPrimitiveClass(field.dataType()), field.isUnique,
+            createCompositeAndMixedIndex(management, propertyName, getPrimitiveClass(field.dataType()), false,
                     field.multiplicity, false);
             break;
 
         case ENUM:
-            createCompositeAndMixedIndex(management, propertyName, String.class, field.isUnique, field.multiplicity, false);
+            createCompositeAndMixedIndex(management, propertyName, String.class, false, field.multiplicity, false);
             break;
 
         case ARRAY:

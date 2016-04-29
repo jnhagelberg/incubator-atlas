@@ -43,6 +43,8 @@ import scala.collection.mutable.ListBuffer
 //import javax.crypto.e
 import org.apache.atlas.typesystem.Referenceable
 import org.apache.atlas.services.JSONImporter
+import org.testng.annotations.BeforeMethod
+import org.apache.atlas.RequestContext
 
 class GremlinTest extends BaseGremlinTest {
 
@@ -50,12 +52,18 @@ class GremlinTest extends BaseGremlinTest {
   var gp: GraphPersistenceStrategies = null;
   var gProvider: AtlasGraphProvider = null;
 
+  @BeforeMethod
+  def resetRequestContext() {
+    RequestContext.createContext();
+  }
+
+  
   @BeforeClass
   def beforeAll() {
     TypeSystem.getInstance().reset()
     QueryTestsUtils.setupTypes
     gProvider = new AtlasGraphProvider()
-    var repo = new GraphBackedMetadataRepository(gProvider);
+    var repo = new GraphBackedMetadataRepository(gProvider, null);
     gp = new DefaultGraphPersistenceStrategy(repo)
     g = QueryTestsUtils.setupTestGraph(repo, gProvider)
     g

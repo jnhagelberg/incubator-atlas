@@ -23,17 +23,20 @@ import static org.apache.atlas.typesystem.types.utils.TypesUtil.createOptionalAt
 import static org.apache.atlas.typesystem.types.utils.TypesUtil.createRequiredAttrDef;
 import static org.apache.atlas.typesystem.types.utils.TypesUtil.createStructTypeDef;
 import static org.apache.atlas.typesystem.types.utils.TypesUtil.createTraitTypeDef;
+import static org.apache.atlas.typesystem.types.utils.TypesUtil.createUniqueRequiredAttrDef;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Collection;
+import java.util.Date;
 
 import org.apache.atlas.repository.graph.GraphHelper;
-import org.apache.atlas.repository.graphdb.AtlasEdge;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
-import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.Referenceable;
 import org.apache.atlas.typesystem.TypesDef;
+import org.apache.atlas.typesystem.persistence.Id;
 import org.apache.atlas.typesystem.types.AttributeDefinition;
 import org.apache.atlas.typesystem.types.ClassType;
 import org.apache.atlas.typesystem.types.DataTypes;
@@ -72,18 +75,23 @@ public final class TestUtils {
     public static String dumpGraph(AtlasGraph<?,?> graph) throws Exception {
         File tempFile = File.createTempFile("graph", ".gson");
         System.out.println("tempFile.getPath() = " + tempFile.getPath());
-        //GraphSONWriter.outputGraph(graph, tempFile.getPath());
-
-        System.out.println("Vertices:");
-        for (AtlasVertex<?,?> vertex : graph.getVertices()) {
-            System.out.println(GraphHelper.vertexString(vertex));
+        GraphHelper.dumpToLog(graph);
+        FileOutputStream os = null;
+        try {
+            os = new FileOutputStream(tempFile);
+            graph.exportToGson(os);
         }
-
-        System.out.println("Edges:");
-        for (AtlasEdge<?,?> edge: graph.getEdges()) {
-            System.out.println(GraphHelper.edgeString(edge));
+        finally {
+            if(os != null) {
+                try {
+                    os.close();
+                }
+                catch(IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
-
+	    
         return tempFile.getPath();
     }
 
@@ -105,9 +113,9 @@ public final class TestUtils {
                 createStructTypeDef("Address", "Address"+_description, createRequiredAttrDef("street", DataTypes.STRING_TYPE),
                         createRequiredAttrDef("city", DataTypes.STRING_TYPE));
 
-        HierarchicalTypeDefinition<ClassType> deptTypeDef = createClassTypeDef("Department", "Department"+_description, ImmutableSet.<String>of(),
+        HierarchicalTypeDefinition<ClassType> deptTypeDef = createClassTypeDef(DEPARTMENT_TYPE, "Department"+_description, ImmutableSet.<String>of(),
                 createRequiredAttrDef("name", DataTypes.STRING_TYPE),
-                new AttributeDefinition("employees", String.format("array<%s>", "Person"), Multiplicity.COLLECTION,
+                new AttributeDefinition("employees", String.format("array<%s>", "Person"), Multiplicity.OPTIONAL,
                         true, "department"));
 
         HierarchicalTypeDefinition<ClassType> personTypeDef = createClassTypeDef("Person", "Person"+_description, ImmutableSet.<String>of(),
@@ -131,9 +139,13 @@ public final class TestUtils {
                 ImmutableList.of(deptTypeDef, personTypeDef, managerTypeDef));
     }
 
-    public static Referenceable createDeptEg1(TypeSystem ts) throws AtlasException {
-        Referenceable hrDept = new Referenceable(ENTITY_TYPE);
-        Referenceable john = new Referenceable("Person");
+    public static final String DEPARTMENT_TYPE = "Department";
+    public static final String PERSON_TYPE = "Person";
+
+    public static ITypedReferenceableInstance createDeptEg1(TypeSystem ts) throws AtlasException {
+        Referenceable hrDept = new Referenceable(DEPARTMENT_TYPE);
+        Referenceable john = new Referenceable(PERSON_TYPE);
+
         Referenceable jane = new Referenceable("Manager", "SecurityClearance");
         Referenceable johnAddr = new Referenceable("Address");
         Referenceable janeAddr = new Referenceable("Address");
@@ -182,13 +194,13 @@ public final class TestUtils {
         ITypedReferenceableInstance hrDept2 = deptType.convert(hrDept, Multiplicity.REQUIRED);
         Assert.assertNotNull(hrDept2);
 
-        return hrDept;
+        return hrDept2;
     }
 
-    public static final String ENTITY_TYPE = "Department";
     public static final String DATABASE_TYPE = "hive_database";
     public static final String DATABASE_NAME = "foo";
     public static final String TABLE_TYPE = "hive_table";
+    public static final String PROCESS_TYPE = "hive_process";
     public static final String COLUMN_TYPE = "column_type";
     public static final String TABLE_NAME = "bar";
     public static final String CLASSIFICATION = "classification";
@@ -199,6 +211,9 @@ public final class TestUtils {
     public static final String PARTITION_CLASS_TYPE = "partition_class_type";
     public static final String SERDE_TYPE = "serdeType";
     public static final String COLUMNS_MAP = "columnsMap";
+    public static final String COLUMNS_ATTR_NAME = "columns";
+
+    public static final String NAME = "name";
 
     public static TypesDef defineHiveTypes() {
         String _description = "_description";
@@ -210,7 +225,7 @@ public final class TestUtils {
 
         HierarchicalTypeDefinition<ClassType> databaseTypeDefinition =
                 createClassTypeDef(DATABASE_TYPE, DATABASE_TYPE + _description,ImmutableSet.of(SUPER_TYPE_NAME),
-                        TypesUtil.createUniqueRequiredAttrDef("name", DataTypes.STRING_TYPE),
+                        TypesUtil.createUniqueRequiredAttrDef(NAME, DataTypes.STRING_TYPE),
                         createOptionalAttrDef("created", DataTypes.DATE_TYPE),
                         createRequiredAttrDef("description", DataTypes.STRING_TYPE));
 
@@ -226,7 +241,7 @@ public final class TestUtils {
 
         HierarchicalTypeDefinition<ClassType> columnsDefinition =
                 createClassTypeDef(COLUMN_TYPE, ImmutableSet.<String>of(),
-                        createRequiredAttrDef("name", DataTypes.STRING_TYPE),
+                        createUniqueRequiredAttrDef("name", DataTypes.STRING_TYPE),
                         createRequiredAttrDef("type", DataTypes.STRING_TYPE));
 
         StructTypeDefinition partitionDefinition = new StructTypeDefinition("partition_struct_type", "partition_struct_type" + _description,
@@ -266,6 +281,12 @@ public final class TestUtils {
         HierarchicalTypeDefinition<ClassType> partClsDef =
             new HierarchicalTypeDefinition<>(ClassType.class, "partition_class_type", "partition_class_type" + _description,
                 ImmutableSet.of(SUPER_TYPE_NAME), partClsAttributes);
+
+        HierarchicalTypeDefinition<ClassType> processClsType =
+                new HierarchicalTypeDefinition<>(ClassType.class, PROCESS_TYPE, PROCESS_TYPE + _description,
+                        ImmutableSet.<String>of(), new AttributeDefinition[]{
+                        new AttributeDefinition("outputs", "array<" + TABLE_TYPE + ">", Multiplicity.OPTIONAL, false, null)
+                });
 
         HierarchicalTypeDefinition<ClassType> tableTypeDefinition =
                 createClassTypeDef(TABLE_TYPE, TABLE_TYPE + _description, ImmutableSet.of(SUPER_TYPE_NAME),
@@ -321,7 +342,8 @@ public final class TestUtils {
         return TypesUtil.getTypesDef(ImmutableList.of(enumTypeDefinition),
                 ImmutableList.of(structTypeDefinition, partitionDefinition),
                 ImmutableList.of(classificationTypeDefinition, fetlClassificationTypeDefinition, piiTypeDefinition),
-                ImmutableList.of(superTypeDefinition, databaseTypeDefinition, columnsDefinition, tableTypeDefinition, storageDescClsDef, partClsDef));
+                ImmutableList.of(superTypeDefinition, databaseTypeDefinition, columnsDefinition, tableTypeDefinition,
+                        storageDescClsDef, partClsDef, processClsType));
     }
 
     public static Collection<IDataType> createHiveTypes(TypeSystem typeSystem) throws Exception {
@@ -334,5 +356,32 @@ public final class TestUtils {
 
     public static final String randomString() {
         return RandomStringUtils.randomAlphanumeric(10);
+    }
+
+    public static Referenceable createDBEntity() {
+        Referenceable entity = new Referenceable(DATABASE_TYPE);
+        String dbName = RandomStringUtils.randomAlphanumeric(10);
+        entity.set(NAME, dbName);
+        entity.set("description", "us db");
+        return entity;
+    }
+
+    public static Referenceable createTableEntity(String dbId) {
+        Referenceable entity = new Referenceable(TABLE_TYPE);
+        String tableName = RandomStringUtils.randomAlphanumeric(10);
+        entity.set(NAME, tableName);
+        entity.set("description", "random table");
+        entity.set("type", "type");
+        entity.set("tableType", "MANAGED");
+        entity.set("database", new Id(dbId, 0, DATABASE_TYPE));
+        entity.set("created", new Date());
+        return entity;
+    }
+
+    public static Referenceable createColumnEntity() {
+        Referenceable entity = new Referenceable(COLUMN_TYPE);
+        entity.set(NAME, RandomStringUtils.randomAlphanumeric(10));
+        entity.set("type", "VARCHAR(32)");
+        return entity;
     }
 }

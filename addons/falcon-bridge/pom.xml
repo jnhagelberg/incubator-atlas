@@ -85,6 +85,14 @@
             <artifactId>jetty-server</artifactId>
             <scope>test</scope>
         </dependency>
+        
+        <dependency>
+            <groupId>org.apache.atlas</groupId>
+            <artifactId>atlas-graphdb-impls</artifactId>
+            <type>pom</type>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -205,8 +213,7 @@
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-maven-plugin</artifactId>
                 <configuration>
-                    <!--<skip>${skipTests}</skip>-->
-                    <!--only skip int tests -->
+                    <skip>${skipTests}</skip>
                     <httpConnector>
                         <port>31000</port>
                         <idleTimeout>60000</idleTimeout>
@@ -235,6 +242,10 @@
                         <systemProperty>
                             <name>atlas.data</name>
                             <value>${project.build.directory}/data</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <name>atlas.graphdb.backend</name>
+                            <value>${plugin.class}</value>
                         </systemProperty>
                     </systemProperties>
                     <stopKey>atlas-stop</stopKey>

@@ -1,5 +1,7 @@
 
 package org.apache.atlas.repository.graphdb.titan1;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -13,6 +15,7 @@ import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.AtlasGraphManagement;
 import org.apache.atlas.repository.graphdb.AtlasGraphQuery;
 import org.apache.atlas.repository.graphdb.AtlasIndexQuery;
+import org.apache.atlas.repository.graphdb.AtlasSchemaViolationException;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.repository.graphdb.GremlinVersion;
 import org.apache.atlas.utils.adapters.IteratorAdapter;
@@ -20,7 +23,11 @@ import org.apache.tinkerpop.gremlin.process.traversal.step.util.ImmutablePath;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.structure.io.IoCore;
+import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONMapper;
+import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONWriter;
 
+import com.thinkaurelius.titan.core.SchemaViolationException;
 import com.thinkaurelius.titan.core.TitanGraph;
 import com.thinkaurelius.titan.core.TitanGraphQuery;
 import com.thinkaurelius.titan.core.TitanIndexQuery;
@@ -38,10 +45,15 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
     @Override
     public AtlasEdge<Titan1Vertex, Titan1Edge> addEdge(AtlasVertex<Titan1Vertex, Titan1Edge> outVertex, AtlasVertex<Titan1Vertex, Titan1Edge> inVertex, String edgeLabel) {
         
-        Vertex oV = outVertex.getV().getWrappedElement();
-        Vertex iV = inVertex.getV().getWrappedElement();
-        Edge edge = oV.addEdge(edgeLabel, iV);
-        return TitanObjectFactory.createEdge(edge);
+        try {
+            Vertex oV = outVertex.getV().getWrappedElement();
+            Vertex iV = inVertex.getV().getWrappedElement();
+            Edge edge = oV.addEdge(edgeLabel, iV);
+            return TitanObjectFactory.createEdge(edge);
+        }
+        catch(SchemaViolationException e) {
+            throw new AtlasSchemaViolationException(e);
+        }
     }
 
     @Override
@@ -245,5 +257,15 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
     
     private TitanGraph getGraph() {
         return Titan1Database.getGraphInstance();
+    }
+    
+    @Override
+    public void exportToGson(OutputStream os) throws IOException {
+
+       GraphSONMapper mapper = getGraph().io(IoCore.graphson()).mapper().create();
+       GraphSONWriter.Builder builder = GraphSONWriter.build();
+       builder.mapper(mapper);
+       GraphSONWriter writer = builder.create();
+       writer.writeGraph(os, getGraph());        
     }
 }

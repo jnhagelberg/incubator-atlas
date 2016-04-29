@@ -71,6 +71,13 @@
             <artifactId>testng</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.atlas</groupId>
+            <artifactId>atlas-graphdb-impls</artifactId>
+            <type>pom</type>
+            <scope>test</scope>
+        </dependency>
+
         <!-- to bring up atlas server for integration tests -->
         <dependency>
             <groupId>org.apache.atlas</groupId>
@@ -87,8 +94,7 @@
     </dependencies>
 
     <build>
-        <plugins>
-
+        <plugins>           
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-site-plugin</artifactId>

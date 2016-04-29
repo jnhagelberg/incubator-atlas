@@ -1,15 +1,19 @@
 
 package org.apache.atlas.repository.graphdb.titan1;
 
+import java.util.Iterator;
 import java.util.Set;
 
 import org.apache.atlas.repository.graphdb.AtlasElement;
+import org.apache.atlas.repository.graphdb.AtlasSchemaViolationException;
 import org.apache.atlas.repository.graphdb.titan1.graphson.AtlasGraphSONMode;
 import org.apache.atlas.repository.graphdb.titan1.graphson.AtlasGraphSONUtility;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Property;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+
+import com.thinkaurelius.titan.core.SchemaViolationException;
 
 
 public class Titan1Element<T extends Element> implements AtlasElement {
@@ -39,7 +43,26 @@ public class Titan1Element<T extends Element> implements AtlasElement {
     public Set<String> getPropertyKeys() {
         return element_.keys();
     }
+    
+    @Override
+    public void removeProperty(String propertyName) {  
+        Iterator<? extends Property<String>> it = element_.properties(propertyName);
+        while(it.hasNext()) {
+            Property<String> property = it.next();
+            property.remove();
+        }        
+    }
 
+    @Override
+    public void setProperty(String propertyName, Object value) {
+        try {
+            element_.property(propertyName, value);
+        }
+        catch(SchemaViolationException e) {
+            throw new AtlasSchemaViolationException(e);
+        }
+    }
+    
     @Override
     public Object getId() {
         return element_.id();

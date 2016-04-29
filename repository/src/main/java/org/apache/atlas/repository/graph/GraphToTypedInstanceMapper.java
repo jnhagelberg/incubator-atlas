@@ -17,6 +17,7 @@
  */
 package org.apache.atlas.repository.graph;
 
+import com.google.inject.Singleton;
 
 
 import org.apache.atlas.repository.graphdb.AtlasGraph;
@@ -45,15 +46,20 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import static org.apache.atlas.repository.graph.GraphHelper.string;
+
+@Singleton
 public final class GraphToTypedInstanceMapper {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphToTypedInstanceMapper.class);
     private static TypeSystem typeSystem = TypeSystem.getInstance();
+    private static final GraphHelper graphHelper = GraphHelper.getInstance();
+    
     private final AtlasGraph<?,?> graph;
+    
 
     public GraphToTypedInstanceMapper(AtlasGraph<?,?> graph) {
         this.graph = graph;
@@ -66,7 +72,8 @@ public final class GraphToTypedInstanceMapper {
         String typeName = instanceVertex.getProperty(Constants.ENTITY_TYPE_PROPERTY_KEY);
         List<String> traits = GraphHelper.getTraitNames(instanceVertex);
 
-        Id id = new Id(guid, instanceVertex.<Integer>getProperty(Constants.VERSION_PROPERTY_KEY), typeName);
+        Id id = new Id(guid, instanceVertex.<Integer>getProperty(Constants.VERSION_PROPERTY_KEY), typeName,
+                instanceVertex.<String>getProperty(Constants.STATE_PROPERTY_KEY));
         LOG.debug("Created id {} for instance type {}", id, typeName);
 
         ClassType classType = typeSystem.getDataType(ClassType.class, typeName);
@@ -98,12 +105,12 @@ public final class GraphToTypedInstanceMapper {
         }
     }
 
-
     private void mapVertexToAttribute(AtlasVertex instanceVertex, ITypedInstance typedInstance,
         AttributeInfo attributeInfo) throws AtlasException {
         LOG.debug("Mapping attributeInfo {}", attributeInfo.name);
         final IDataType dataType = attributeInfo.dataType();
         final String vertexPropertyName = GraphHelper.getQualifiedFieldName(typedInstance, attributeInfo);
+        String relationshipLabel = GraphHelper.getEdgeLabel(typedInstance, attributeInfo);
 
         switch (dataType.getTypeCategory()) {
         case PRIMITIVE:
@@ -129,7 +136,9 @@ public final class GraphToTypedInstanceMapper {
             break;
 
         case STRUCT:
-            mapVertexToStructInstance(instanceVertex, typedInstance, attributeInfo);
+            ITypedStruct structInstance = mapVertexToStructInstance(instanceVertex,
+                    (StructType) attributeInfo.dataType(), relationshipLabel, null);
+            typedInstance.set(attributeInfo.name, structInstance);
             break;
 
         case TRAIT:
@@ -137,9 +146,8 @@ public final class GraphToTypedInstanceMapper {
             break;
 
         case CLASS:
-            String relationshipLabel = GraphHelper.getEdgeLabel(typedInstance, attributeInfo);
             Object idOrInstance = mapVertexToClassReference(instanceVertex, attributeInfo, relationshipLabel,
-                attributeInfo.dataType());
+                attributeInfo.dataType(), null);
             if (idOrInstance != null) {
                 typedInstance.set(attributeInfo.name, idOrInstance);
             }
@@ -151,25 +159,30 @@ public final class GraphToTypedInstanceMapper {
     }
 
     private <V,E> Object mapVertexToClassReference(AtlasVertex<V,E> instanceVertex, AttributeInfo attributeInfo,
-        String relationshipLabel, IDataType dataType) throws AtlasException {
+        String relationshipLabel, IDataType dataType, String edgeId) throws AtlasException {
         LOG.debug("Finding edge for {} -> label {} ", instanceVertex, relationshipLabel);
-        Iterator<AtlasEdge<V,E>> results = instanceVertex.getEdges(AtlasEdgeDirection.OUT, relationshipLabel).iterator();
-        if (results.hasNext()) {
-            final AtlasVertex<?,?> referenceVertex = results.next().getInVertex();
-            if (referenceVertex != null) {
-                final String guid = referenceVertex.getProperty(Constants.GUID_PROPERTY_KEY);
-                LOG.debug("Found vertex {} for label {} with guid {}", referenceVertex, relationshipLabel, guid);
-                if (attributeInfo.isComposite) {
-                    //Also, when you retrieve a type's instance, you get the complete object graph of the composites
-                    LOG.debug("Found composite, mapping vertex to instance");
-                    return mapGraphToTypedInstance(guid, referenceVertex);
-                } else {
-                    Id referenceId =
+ 
+ 		AtlasEdge<V,E> edge;
+        if (edgeId == null) {
+            edge = GraphHelper.getEdgeForLabel(instanceVertex, relationshipLabel);;
+        } else {
+            edge = graphHelper.getEdgeById(edgeId);
+        }
+
+        if (edge != null) {
+            final AtlasVertex<V,E> referenceVertex = edge.getInVertex();
+            final String guid = referenceVertex.getProperty(Constants.GUID_PROPERTY_KEY);
+            LOG.debug("Found vertex {} for label {} with guid {}", referenceVertex, relationshipLabel, guid);
+            if (attributeInfo.isComposite) {
+                //Also, when you retrieve a type's instance, you get the complete object graph of the composites
+                LOG.debug("Found composite, mapping vertex to instance");
+                return mapGraphToTypedInstance(guid, referenceVertex);
+            } else {
+                Id referenceId =
                         new Id(guid, referenceVertex.<Integer>getProperty(Constants.VERSION_PROPERTY_KEY),
-                            dataType.getName());
-                    LOG.debug("Found non-composite, adding id {} ", referenceId);
-                    return referenceId;
-                }
+                                dataType.getName());
+                LOG.debug("Found non-composite, adding id {} ", referenceId);
+                return referenceId;
             }
         }
 
@@ -213,8 +226,7 @@ public final class GraphToTypedInstanceMapper {
             break;
 
         case STRUCT:
-            return getStructInstanceFromVertex(instanceVertex, elementType, attributeInfo.name, edgeLabel,
-                (String) value);
+            return mapVertexToStructInstance(instanceVertex, (StructType) elementType, edgeLabel, (String) value);
 
         case CLASS:
             return mapVertexToClassReference(instanceVertex, attributeInfo, edgeLabel, elementType, (String) value);
@@ -253,83 +265,28 @@ public final class GraphToTypedInstanceMapper {
         }
     }
 
-    private ITypedStruct getStructInstanceFromVertex(AtlasVertex<?,?> instanceVertex, IDataType elemType,
-        String attributeName, String relationshipLabel, String edgeId) throws AtlasException {
-        LOG.debug("Finding edge for {} -> label {} ", instanceVertex, relationshipLabel);
-        for (AtlasEdge<?,?> edge : instanceVertex.getEdges(AtlasEdgeDirection.OUT, relationshipLabel)) {
-            if (edgeId.equals(String.valueOf(edge.getId()))) {
-                AtlasVertex structInstanceVertex = edge.getInVertex();
-                LOG.debug("mapping vertex {} to struct {}", structInstanceVertex, attributeName);
 
-                if (structInstanceVertex != null) {
-                    LOG.debug("Found struct instance vertex {}, mapping to instance {} ", structInstanceVertex,
-                        elemType.getName());
-                    StructType structType = typeSystem.getDataType(StructType.class, elemType.getName());
-                    ITypedStruct structInstance = structType.createInstance();
-                    mapVertexToInstance(structInstanceVertex, structInstance, structType.fieldMapping().fields);
-                    return structInstance;
-                }
-
-                break;
-            }
-        }
-
-        return null;
-    }
-
-    private Object mapVertexToClassReference(AtlasVertex<?,?> instanceVertex, AttributeInfo attributeInfo,
-        String relationshipLabel, IDataType dataType, String edgeId) throws AtlasException {
-        LOG.debug("Finding edge for {} -> label {} ", instanceVertex, relationshipLabel);
-        for (AtlasEdge<?,?> edge : instanceVertex.getEdges(AtlasEdgeDirection.OUT, relationshipLabel)) {
-            if (edgeId.equals(String.valueOf(edge.getId()))) {
-                final AtlasVertex<?,?> referenceVertex = edge.getInVertex();
-                if (referenceVertex != null) {
-                    final String guid = referenceVertex.getProperty(Constants.GUID_PROPERTY_KEY);
-                    LOG.debug("Found vertex {} for label {} with guid {}", referenceVertex, relationshipLabel,
-                        guid);
-                    if (attributeInfo.isComposite) {
-                        //Also, when you retrieve a type's instance, you get the complete object graph of the composites
-                        LOG.debug("Found composite, mapping vertex to instance");
-                        return mapGraphToTypedInstance(guid, referenceVertex);
-                    } else {
-                        Id referenceId =
-                            new Id(guid, referenceVertex.<Integer>getProperty(Constants.VERSION_PROPERTY_KEY),
-                                dataType.getName());
-                        LOG.debug("Found non-composite, adding id {} ", referenceId);
-                        return referenceId;
-                    }
-                }
-
-                break;
-            }
-        }
-
-        return null;
-    }
-
-    private <V,E> void mapVertexToStructInstance(AtlasVertex<V,E> instanceVertex, ITypedInstance typedInstance,
-        AttributeInfo attributeInfo) throws AtlasException {
-        LOG.debug("mapping vertex {} to struct {}", instanceVertex, attributeInfo.name);
-        StructType structType = typeSystem.getDataType(StructType.class, attributeInfo.dataType().getName());
+    private <V,E> ITypedStruct mapVertexToStructInstance(AtlasVertex<V,E> instanceVertex, StructType structType,
+                                                   String relationshipLabel, String edgeId) throws AtlasException {
+        LOG.debug("mapping {} to struct {}", string(instanceVertex), relationshipLabel);
         ITypedStruct structInstance = null;
 
-        String relationshipLabel = GraphHelper.getEdgeLabel(typedInstance, attributeInfo);
-        LOG.debug("Finding edge for {} -> label {} ", instanceVertex, relationshipLabel);
-        final Iterable<AtlasEdge<V,E>> edges = instanceVertex.getEdges(AtlasEdgeDirection.OUT, relationshipLabel);
-        if (edges.iterator().hasNext()) {
-            structInstance = structType.createInstance();
-            typedInstance.set(attributeInfo.name, structInstance);
+        AtlasEdge<V,E> edge;
+        if (edgeId == null) {
+            edge = GraphHelper.getEdgeForLabel(instanceVertex, relationshipLabel);
+        } else {
+            edge = graphHelper.getEdgeById(edgeId);
         }
 
-        for (AtlasEdge<V,E> edge : edges) {
-            final AtlasVertex<V,E> structInstanceVertex = edge.getInVertex();
-            if (structInstanceVertex != null) {
-                LOG.debug("Found struct instance vertex {}, mapping to instance {} ", structInstanceVertex,
+        if (edge != null) {
+            structInstance = structType.createInstance();
+            AtlasVertex<V,E> structInstanceVertex = edge.getInVertex();
+            LOG.debug("Found struct instance {}, mapping to instance {} ", string(structInstanceVertex),
                     structInstance.getTypeName());
-                mapVertexToInstance(structInstanceVertex, structInstance, structType.fieldMapping().fields);
-                break;
-            }
+            mapVertexToInstance(structInstanceVertex, structInstance, structType.fieldMapping().fields);
+
         }
+        return structInstance;
     }
 
     private void mapVertexToTraitInstance(AtlasVertex<?,?> instanceVertex, ITypedReferenceableInstance typedInstance,

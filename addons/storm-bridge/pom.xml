@@ -123,6 +123,14 @@
             <type>war</type>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.atlas</groupId>
+            <artifactId>atlas-graphdb-impls</artifactId>
+            <type>pom</type>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -353,6 +361,10 @@
                         <systemProperty>
                             <name>atlas.data</name>
                             <value>${project.build.directory}/data</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <name>atlas.graphdb.backend</name>
+                            <value>${plugin.class}</value>
                         </systemProperty>
                     </systemProperties>
                     <stopKey>atlas-stop</stopKey>

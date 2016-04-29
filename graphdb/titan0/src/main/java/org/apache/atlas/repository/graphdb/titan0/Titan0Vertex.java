@@ -1,16 +1,34 @@
-
+/**
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.apache.atlas.repository.graphdb.titan0;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
 import org.apache.atlas.repository.graphdb.AtlasEdge;
+import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
+import org.apache.atlas.repository.graphdb.AtlasSchemaViolationException;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.repository.graphdb.AtlasVertexQuery;
 import org.apache.atlas.utils.adapters.IterableAdapter;
 import org.apache.atlas.utils.adapters.impl.EdgeMapper;
 
+import com.thinkaurelius.titan.core.SchemaViolationException;
 import com.thinkaurelius.titan.core.TitanProperty;
 import com.thinkaurelius.titan.core.TitanVertex;
 import com.tinkerpop.blueprints.Edge;
@@ -20,18 +38,6 @@ public class Titan0Vertex extends Titan0Element<Vertex> implements AtlasVertex<T
 
     public Titan0Vertex(Vertex source) {
         super(source);
-    }
-
-    @Override
-    public void removeProperty(String propertyName) {
-        element_.removeProperty(propertyName);
-        
-    }
-    
-    @Override
-    public <T> void setProperty(String propertyName, T value) {
-        element_.setProperty(propertyName, value);
-        
     }
 
     @Override
@@ -53,7 +59,12 @@ public class Titan0Vertex extends Titan0Element<Vertex> implements AtlasVertex<T
 
     @Override
     public <T> void addProperty(String propertyName, T value) {
-       getAsTitanVertex().addProperty(propertyName, value);        
+        try {
+            getAsTitanVertex().addProperty(propertyName, value);
+        }
+        catch(SchemaViolationException e) {
+            throw new AtlasSchemaViolationException(e);
+        }
     }
 
     @Override

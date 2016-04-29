@@ -82,7 +82,8 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
             modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
 
             Map<String, String> customMap = new HashMap<>(StandardIndexProvider.getAllProviderClasses());
-            customMap.put("solr", Solr5Index.class.getName());
+            customMap.put("solr", Solr5Index.class.getName()); //for consistency with Titan 1.0.0
+            customMap.put("solr5", Solr5Index.class.getName()); //for backward compatibility
             ImmutableMap<String, String> immap = ImmutableMap.copyOf(customMap);
             field.set(null, immap);
 

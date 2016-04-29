@@ -28,11 +28,10 @@ import javax.inject.Singleton;
 
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.GraphTransaction;
+import org.apache.atlas.RequestContext;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.RepositoryException;
-import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
-import org.apache.atlas.repository.graphdb.AtlasEdge;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.AtlasGraphQuery;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
@@ -44,6 +43,7 @@ import org.apache.atlas.typesystem.exception.EntityNotFoundException;
 import org.apache.atlas.typesystem.exception.TraitNotFoundException;
 import org.apache.atlas.typesystem.types.AttributeInfo;
 import org.apache.atlas.typesystem.types.ClassType;
+import org.apache.atlas.typesystem.types.DataTypes;
 import org.apache.atlas.typesystem.types.IDataType;
 import org.apache.atlas.typesystem.types.TypeSystem;
 import org.apache.atlas.typesystem.types.TypeUtils;
@@ -61,18 +61,21 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphBackedMetadataRepository.class);
     
-    private final GraphToTypedInstanceMapper graphToInstanceMapper;
-
     private static TypeSystem typeSystem = TypeSystem.getInstance();
 
     private static final GraphHelper graphHelper = GraphHelper.getInstance();
 
     private final AtlasGraph<?,?> graph;
 
+    private DeleteHandler deleteHandler;
+
+    private GraphToTypedInstanceMapper graphToInstanceMapper;
+
     @Inject
-    public GraphBackedMetadataRepository(AtlasGraphProvider graphProvider) {
+    public GraphBackedMetadataRepository(AtlasGraphProvider graphProvider, DeleteHandler deleteHandler) {
         this.graph = graphProvider.get();
         this.graphToInstanceMapper = new GraphToTypedInstanceMapper(graph);
+        this.deleteHandler = deleteHandler;
     }
 
     public GraphToTypedInstanceMapper getGraphToInstanceMapper() {
@@ -123,10 +126,9 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         EntityExistsException {
         LOG.info("adding entities={}", (Object[])entities);
         try {
-            TypedInstanceToGraphMapper instanceToGraphMapper = new TypedInstanceToGraphMapper(graphToInstanceMapper);
-            TypeUtils.Pair<List<String>, List<String>> idPair =
-                    instanceToGraphMapper.mapTypedInstanceToGraph(TypedInstanceToGraphMapper.Operation.CREATE, entities);
-            return idPair.left;
+            TypedInstanceToGraphMapper instanceToGraphMapper = new TypedInstanceToGraphMapper(graphToInstanceMapper, deleteHandler);
+            instanceToGraphMapper.mapTypedInstanceToGraph(TypedInstanceToGraphMapper.Operation.CREATE, entities);
+            return RequestContext.get().getCreatedEntityIds();
         } catch (EntityExistsException e) {
             throw e;
         } catch (AtlasException e) {
@@ -217,14 +219,15 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
             // add the trait instance as a new vertex
             final String typeName = GraphHelper.getTypeName(instanceVertex);
 
-            TypedInstanceToGraphMapper instanceToGraphMapper = new TypedInstanceToGraphMapper(graphToInstanceMapper);
+            TypedInstanceToGraphMapper instanceToGraphMapper = new TypedInstanceToGraphMapper(graphToInstanceMapper, deleteHandler);
             instanceToGraphMapper.mapTraitInstanceToVertex(traitInstance,
                     typeSystem.getDataType(ClassType.class, typeName), instanceVertex);
 
 
             // update the traits in entity once adding trait instance is successful
             GraphHelper.addProperty(instanceVertex, Constants.TRAIT_NAMES_PROPERTY_KEY, traitName);
-            GraphHelper.setProperty(instanceVertex, Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY, Long.valueOf(System.currentTimeMillis()));
+            GraphHelper.setProperty(instanceVertex, Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY,
+                    RequestContext.get().getRequestTime());
             
         } catch (RepositoryException e) {
             throw e;
@@ -256,23 +259,12 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         try {
             final String entityTypeName = GraphHelper.getTypeName(instanceVertex);
             String relationshipLabel = GraphHelper.getTraitLabel(entityTypeName, traitNameToBeDeleted);
-            Iterator<AtlasEdge> results = instanceVertex.getEdges(AtlasEdgeDirection.OUT, relationshipLabel).iterator();
-            if (results.hasNext()) { // there should only be one edge for this label
-                final AtlasEdge traitEdge = results.next();
-                final AtlasVertex traitVertex = traitEdge.getInVertex();
 
-                // remove the edge to the trait instance from the repository
-                graph.removeEdge(traitEdge);
+            deleteHandler.deleteReference(instanceVertex, relationshipLabel, DataTypes.TypeCategory.TRAIT);
 
-                if (traitVertex != null) { // remove the trait instance from the repository
-                    TypedInstanceToGraphMapper instanceToGraphMapper = new TypedInstanceToGraphMapper(graphToInstanceMapper);
-                    instanceToGraphMapper.deleteTraitVertex(traitNameToBeDeleted, traitVertex);
-
-                    // update the traits in entity once trait removal is successful
-                    traitNames.remove(traitNameToBeDeleted);
-                    updateTraits(instanceVertex, traitNames);
-                }
-            }
+            // update the traits in entity once trait removal is successful
+            traitNames.remove(traitNameToBeDeleted);
+            updateTraits(instanceVertex, traitNames);
         } catch (Exception e) {
             throw new RepositoryException(e);
         }
@@ -287,7 +279,8 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         for (String traitName : traitNames) {
             GraphHelper.addProperty(instanceVertex, Constants.TRAIT_NAMES_PROPERTY_KEY, traitName);
         }
-        GraphHelper.setProperty(instanceVertex, Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY, Long.valueOf(System.currentTimeMillis()));
+        GraphHelper.setProperty(instanceVertex, Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY,
+                RequestContext.get().getRequestTime());
     }
 
     @Override
@@ -295,9 +288,11 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
     public TypeUtils.Pair<List<String>, List<String>> updateEntities(ITypedReferenceableInstance... entitiesUpdated) throws RepositoryException {
         LOG.info("updating entity {}", (Object[])entitiesUpdated);
         try {
-            TypedInstanceToGraphMapper instanceToGraphMapper = new TypedInstanceToGraphMapper(graphToInstanceMapper);
-            return instanceToGraphMapper.mapTypedInstanceToGraph(TypedInstanceToGraphMapper.Operation.UPDATE_FULL,
+            TypedInstanceToGraphMapper instanceToGraphMapper = new TypedInstanceToGraphMapper(graphToInstanceMapper, deleteHandler);
+            instanceToGraphMapper.mapTypedInstanceToGraph(TypedInstanceToGraphMapper.Operation.UPDATE_FULL,
                     entitiesUpdated);
+            RequestContext requestContext = RequestContext.get();
+            return TypeUtils.Pair.of(requestContext.getCreatedEntityIds(), requestContext.getUpdatedEntityIds());
         } catch (AtlasException e) {
             throw new RepositoryException(e);
         }
@@ -308,8 +303,10 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
     public TypeUtils.Pair<List<String>, List<String>> updatePartial(ITypedReferenceableInstance entity) throws RepositoryException {
         LOG.info("updating entity {}", entity);
         try {
-            TypedInstanceToGraphMapper instanceToGraphMapper = new TypedInstanceToGraphMapper(graphToInstanceMapper);
-            return instanceToGraphMapper.mapTypedInstanceToGraph(TypedInstanceToGraphMapper.Operation.UPDATE_PARTIAL, entity);
+            TypedInstanceToGraphMapper instanceToGraphMapper = new TypedInstanceToGraphMapper(graphToInstanceMapper, deleteHandler);
+            instanceToGraphMapper.mapTypedInstanceToGraph(TypedInstanceToGraphMapper.Operation.UPDATE_PARTIAL, entity);
+            RequestContext requestContext = RequestContext.get();
+            return TypeUtils.Pair.of(requestContext.getCreatedEntityIds(), requestContext.getUpdatedEntityIds());
         } catch (AtlasException e) {
             throw new RepositoryException(e);
         }
@@ -317,13 +314,12 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
 
     @Override
     @GraphTransaction
-    public TypeUtils.Pair<List<String>, List<ITypedReferenceableInstance>>  deleteEntities(List<String> guids) throws RepositoryException {
+    public TypeUtils.Pair<List<String>, List<ITypedReferenceableInstance>> deleteEntities(List<String> guids) throws RepositoryException {
 
         if (guids == null || guids.size() == 0) {
             throw new IllegalArgumentException("guids must be non-null and non-empty");
         }
         
-        TypedInstanceToGraphMapper instanceToGraphMapper = new TypedInstanceToGraphMapper(graphToInstanceMapper);
         for (String guid : guids) {
             if (guid == null) {
                 LOG.warn("deleteEntities: Ignoring null guid");
@@ -331,8 +327,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
             }
             try {
                 AtlasVertex<?,?> instanceVertex = graphHelper.getVertexForGUID(guid);
-                String typeName = GraphHelper.getTypeName(instanceVertex);
-                instanceToGraphMapper.deleteEntity(typeName, instanceVertex);
+                deleteHandler.deleteEntity(instanceVertex);
             } catch (EntityNotFoundException e) {
                 // Entity does not exist - treat as non-error, since the caller
                 // wanted to delete the entity and it's already gone.
@@ -342,8 +337,8 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
                 throw new RepositoryException(e);
             }
         }
-        return new TypeUtils.Pair<>(
-                instanceToGraphMapper.getDeletedEntityGuids(), instanceToGraphMapper.getDeletedEntities());
+        RequestContext requestContext = RequestContext.get();
+        return new TypeUtils.Pair<>(requestContext.getDeletedEntityIds(), requestContext.getDeletedEntities());
     }
     
     public GremlinVersion getSupportedGremlinVersion() {

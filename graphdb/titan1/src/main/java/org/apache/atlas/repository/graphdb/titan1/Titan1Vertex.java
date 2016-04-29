@@ -7,6 +7,7 @@ import java.util.Iterator;
 
 import org.apache.atlas.repository.graphdb.AtlasEdge;
 import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
+import org.apache.atlas.repository.graphdb.AtlasSchemaViolationException;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.repository.graphdb.AtlasVertexQuery;
 import org.apache.atlas.utils.adapters.IterableAdapter;
@@ -15,6 +16,7 @@ import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.VertexProperty;
 
+import com.thinkaurelius.titan.core.SchemaViolationException;
 import com.thinkaurelius.titan.core.TitanVertex;
 
 public class Titan1Vertex extends Titan1Element<Vertex> implements AtlasVertex<Titan1Vertex, Titan1Edge> {
@@ -36,21 +38,17 @@ public class Titan1Vertex extends Titan1Element<Vertex> implements AtlasVertex<T
         super(source);
     }
 
+    @Override
+    public<T> void addProperty(String propertyName, T value) {
+       try {
+           element_.property(VertexProperty.Cardinality.set, propertyName, value);
+       }
+       catch(SchemaViolationException e) {
+           throw new AtlasSchemaViolationException(e);
+       }
+    }
   
-    @Override
-    public void removeProperty(String propertyName) {  
-        Iterator<VertexProperty<String>> it = element_.properties(propertyName);
-        while(it.hasNext()) {
-            VertexProperty<String> property = it.next();
-            property.remove();
-        }        
-    }
 
-
-    @Override
-    public void setProperty(String propertyName, Object value) {
-        element_.property(VertexProperty.Cardinality.single, propertyName, value);        
-    }
 
     @Override
     public Iterable<AtlasEdge<Titan1Vertex, Titan1Edge>> getEdges(AtlasEdgeDirection dir, String edgeLabel) {
@@ -72,12 +70,6 @@ public class Titan1Vertex extends Titan1Element<Vertex> implements AtlasVertex<T
         Iterator<Edge> edges = element_.edges(d);        
         Iterable<Edge> result = new EdgesIterable(edges);
         return new IterableAdapter<Edge, AtlasEdge<Titan1Vertex, Titan1Edge>>(result, EdgeMapper.INSTANCE);
-    }
-
-    @Override
-    public<T> void addProperty(String propertyName, T value) {
-       
-       element_.property(VertexProperty.Cardinality.set, propertyName, value);
     }
 
     @Override

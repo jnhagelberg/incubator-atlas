@@ -25,33 +25,36 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-import javax.inject.Inject;
-
 import org.apache.atlas.AtlasException;
-import org.apache.atlas.RepositoryMetadataModule;
+import org.apache.atlas.RequestContext;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.graphdb.AtlasEdge;
 import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
+import org.apache.atlas.repository.graphdb.AtlasElement;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.AtlasGraphQuery;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.typesystem.IReferenceableInstance;
 import org.apache.atlas.typesystem.ITypedInstance;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
+import org.apache.atlas.typesystem.Referenceable;
 import org.apache.atlas.typesystem.exception.EntityNotFoundException;
+import org.apache.atlas.typesystem.exception.TypeNotFoundException;
+import org.apache.atlas.typesystem.json.InstanceSerialization;
 import org.apache.atlas.typesystem.persistence.Id;
+import org.apache.atlas.typesystem.persistence.ReferenceableInstance;
 import org.apache.atlas.typesystem.types.AttributeInfo;
 import org.apache.atlas.typesystem.types.ClassType;
 import org.apache.atlas.typesystem.types.DataTypes;
 import org.apache.atlas.typesystem.types.HierarchicalType;
 import org.apache.atlas.typesystem.types.IDataType;
+import org.apache.atlas.typesystem.types.Multiplicity;
 import org.apache.atlas.typesystem.types.TypeSystem;
-import org.apache.atlas.typesystem.types.TypeUtils.Pair;
+import org.apache.atlas.typesystem.types.ValueConversionException;
+import org.apache.atlas.utils.ParamChecker;
+import org.codehaus.jettison.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 
 /**
  * Utility class for graph operations.
@@ -79,7 +82,7 @@ public final class GraphHelper {
         final String guid = UUID.randomUUID().toString();
 
         final AtlasVertex<?,?> vertexWithIdentity = createVertexWithoutIdentity(typedInstance.getTypeName(),
-                new Id(guid, 0 , typedInstance.getTypeName()), superTypeNames);
+                new Id(guid, 0, typedInstance.getTypeName()), superTypeNames);
 
         // add identity
         setProperty(vertexWithIdentity, Constants.GUID_PROPERTY_KEY, guid);
@@ -99,43 +102,124 @@ public final class GraphHelper {
         // add type information
         setProperty(vertexWithoutIdentity, Constants.ENTITY_TYPE_PROPERTY_KEY, typeName);
 
+
         // add super types
         for (String superTypeName : superTypeNames) {
             addProperty(vertexWithoutIdentity, Constants.SUPER_TYPES_PROPERTY_KEY, superTypeName);
         }
 
+        // add state information
+        setProperty(vertexWithoutIdentity, Constants.STATE_PROPERTY_KEY, Id.EntityState.ACTIVE.name());
+
         // add timestamp information
-        setProperty(vertexWithoutIdentity, Constants.TIMESTAMP_PROPERTY_KEY, System.currentTimeMillis());
+        setProperty(vertexWithoutIdentity, Constants.TIMESTAMP_PROPERTY_KEY, RequestContext.get().getRequestTime());
 
         return vertexWithoutIdentity;
     }
 
     public <V,E> AtlasEdge<V,E> addEdge(AtlasVertex<V,E> fromVertex, AtlasVertex<V,E> toVertex, String edgeLabel) {
-        LOG.debug("Adding edge for {} -> label {} -> {}", fromVertex, edgeLabel, toVertex);
+        LOG.debug("Adding edge for {} -> label {} -> {}", string(fromVertex), edgeLabel, string(toVertex));
         AtlasGraph<V,E> graph = getGraph();
         AtlasEdge<V,E> edge = graph.addEdge(fromVertex, toVertex, edgeLabel);
-        LOG.debug("Added edge for {} -> label {}, id {} -> {}", fromVertex, edgeLabel, edge.getId(), toVertex);
+
+        setProperty(edge, Constants.STATE_PROPERTY_KEY, Id.EntityState.ACTIVE.name());
+        setProperty(edge, Constants.TIMESTAMP_PROPERTY_KEY, RequestContext.get().getRequestTime());
+        setProperty(edge, Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY, RequestContext.get().getRequestTime());
+
+        LOG.debug("Added {}", string(edge));
         return edge;
     }
 
-    public <V,E> AtlasVertex<V,E> findVertex(String propertyKey, Object value) {
-        LOG.debug("Finding vertex for {}={}", propertyKey, value);
+    public <V,E> AtlasEdge<V,E> getOrCreateEdge(AtlasVertex<V,E> outVertex, AtlasVertex<V,E> inVertex, String edgeLabel) {
+        Iterable<AtlasEdge<V,E>> edges = inVertex.getEdges(AtlasEdgeDirection.IN, edgeLabel);
+        for (AtlasEdge<V,E> edge : edges) {
+            if (edge.getOutVertex().getId().toString().equals(outVertex.getId().toString())) {
+                return edge;
+            }
+        }
+        return addEdge(outVertex, inVertex, edgeLabel);
+    }
+
+     /**
+     * Args of the format prop1, key1, prop2, key2...
+     * Searches for a vertex with prop1=key1 && prop2=key2
+     * @param args
+     * @return vertex with the given property keys
+     * @throws EntityNotFoundException
+     */
+    private <V,E> AtlasVertex<V,E> findVertex(Object... args) throws EntityNotFoundException {
+        StringBuilder condition = new StringBuilder();
         AtlasGraph<V,E> graph = getGraph();
-        AtlasGraphQuery<V,E> query = graph.query().has(propertyKey, value);
-      
+        AtlasGraphQuery<V,E> query = graph.query();
+        for (int i = 0 ; i < args.length; i+=2) {
+            query = query.has((String) args[i], args[i+1]);
+            condition.append(args[i]).append(" = ").append(args[i+1]).append(", ");
+        }
+        String conditionStr = condition.toString();
+        LOG.debug("Finding vertex with {}", conditionStr);
+
         Iterator<AtlasVertex<V,E>> results = query.vertices().iterator();
         // returning one since entityType, qualifiedName should be unique
-        return results.hasNext() ? results.next() : null;
+        AtlasVertex<V,E> vertex = results.hasNext() ? results.next() : null;
+
+        if (vertex == null) {
+            LOG.debug("Could not find a vertex with {}", condition.toString());
+            throw new EntityNotFoundException("Could not find an entity in the repository with " + conditionStr);
+        } else {
+            LOG.debug("Found a vertex {} with {}", string(vertex), conditionStr);
+        }
+
+        return vertex;
     }
 
     public static <V,E> Iterable<AtlasEdge<V,E>> getOutGoingEdgesByLabel(AtlasVertex<V,E> instanceVertex, String edgeLabel) {
         if(instanceVertex != null && edgeLabel != null) {
             return instanceVertex.getEdges(AtlasEdgeDirection.OUT, edgeLabel);
         }
+
+        return null;
+    }
+    
+        /**
+     * Returns the active edge for the given edge label.
+     * If the vertex is deleted and there is no active edge, it returns the latest deleted edge
+     * @param vertex
+     * @param edgeLabel
+     * @return
+     */
+    public static <V,E> AtlasEdge<V,E> getEdgeForLabel(AtlasVertex<V,E> vertex, String edgeLabel) {
+        String vertexState = vertex.getProperty(Constants.STATE_PROPERTY_KEY);
+
+        Iterable<AtlasEdge<V,E>> edges = GraphHelper.getOutGoingEdgesByLabel(vertex, edgeLabel);
+        AtlasEdge<V,E> latestDeletedEdge = null;
+        if(edges != null) {
+            
+            long latestDeletedEdgeTime = Long.MIN_VALUE;
+            for(AtlasEdge<V,E> edge : edges) {
+                String edgeState = edge.getProperty(Constants.STATE_PROPERTY_KEY);
+                if (edgeState == null || Id.EntityState.ACTIVE.name().equals(edgeState)) {
+                    LOG.debug("Found {}", string(edge));
+                    return edge;
+                } else {
+                    Long modificationTime = edge.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY);
+                    if (modificationTime != null && modificationTime >= latestDeletedEdgeTime) {
+                        latestDeletedEdgeTime = modificationTime;
+                        latestDeletedEdge = edge;
+                    }
+                }
+            }
+        }
+
+        //If the vertex is deleted, return latest deleted edge
+        if (Id.EntityState.DELETED.equals(vertexState)) {
+            LOG.debug("Found {}", string(latestDeletedEdge));
+            return latestDeletedEdge;
+        }
+
         return null;
     }
 
-    public <V,E> AtlasEdge<V,E> getOutGoingEdgeById(String edgeId) {
+    public <V,E> AtlasEdge<V,E> getEdgeById(String edgeId) {
         if(edgeId != null) {
             AtlasGraph<V,E> graph = getGraph();
             return graph.getEdge(edgeId);
@@ -158,38 +242,35 @@ public final class GraphHelper {
                 + edge.getInVertex() + "]";
     }
 
-    public static void setProperty(AtlasVertex<?,?> vertex, String propertyName, Object value) {
-        LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, vertex);
-        Object existValue = vertex.getProperty(propertyName);
+    public static <T extends AtlasElement> void setProperty(T element, String propertyName, Object value) {
+        String elementStr = string(element);
+        LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, elementStr);
+        Object existValue = element.getProperty(propertyName);
         if(value == null || (value instanceof Collection && ((Collection) value).isEmpty())) {
             if(existValue != null) {
-                LOG.info("Removing property - {} value from vertex {}", propertyName, vertex);
-                vertex.removeProperty(propertyName);
+                LOG.info("Removing property - {} value from {}", propertyName, elementStr);
+                element.removeProperty(propertyName);
             }
         } else {
             if (!value.equals(existValue)) {
-                vertex.setProperty(propertyName, value);
-                LOG.debug("Set property {} = \"{}\" to vertex {}", propertyName, value, vertex);
+                element.setProperty(propertyName, value);
+                LOG.debug("Set property {} = \"{}\" to {}", propertyName, value, elementStr);
             }
         }
     }
 
-    public static void addProperty(AtlasVertex<?,?> vertex, String propertyName, Object value) {
-        LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, vertex);
-        vertex.addProperty(propertyName, value);
+    private static <T extends AtlasElement> String string(T element) {
+        if (element instanceof AtlasVertex) {
+            return string((AtlasVertex) element);
+        } else if (element instanceof AtlasEdge) {
+            return string((AtlasEdge)element);
+        }
+        return element.toString();
     }
 
-    public <V,E> AtlasEdge<V,E> removeRelation(String edgeId, boolean cascade) {
-        LOG.debug("Removing edge with id {}", edgeId);
-        AtlasGraph<V,E> graph = getGraph();
-        final AtlasEdge<V,E> edge = graph.getEdge(edgeId);
-        graph.removeEdge(edge);
-        LOG.info("Removed edge {}", edge);
-        if (cascade) {
-           AtlasVertex<?,?> referredVertex = edge.getInVertex();
-           removeVertex(referredVertex);
-        }
-        return edge;
+    public static void addProperty(AtlasVertex<?,?> vertex, String propertyName, Object value) {
+        LOG.debug("Adding property {} = \"{}\" to vertex {}", propertyName, value, string(vertex));
+        vertex.addProperty(propertyName, value);
     }
     
     /**
@@ -198,24 +279,13 @@ public final class GraphHelper {
      * @param edge
      */
     public <V,E> void removeEdge(AtlasEdge<V,E> edge) {
-        LOG.debug("Removing edge {}", edge);
+        String edgeString = string(edge);
+        LOG.debug("Removing {}", edgeString);
         AtlasGraph<V,E> graph = getGraph();
         graph.removeEdge(edge);
         LOG.info("Removed edge {}", edge);
     }
     
-    /**
-     * Return the edge and target vertex for the specified edge ID.
-     * 
-     * @param edgeId
-     * @return edge and target vertex
-     */
-    public <V,E> Pair<AtlasEdge<V,E>, AtlasVertex<V,E>> getEdgeAndTargetVertex(String edgeId) {
-        AtlasGraph<V,E> graph = getGraph();        
-        final AtlasEdge<V,E> edge = graph.getEdge(edgeId);
-        AtlasVertex<V,E> referredVertex = edge.getInVertex();
-        return Pair.of(edge, referredVertex);
-    }
     
     /**
      * Remove the specified vertex from the graph.
@@ -223,28 +293,23 @@ public final class GraphHelper {
      * @param vertex
      */
     public <V,E> void removeVertex(AtlasVertex<V,E> vertex) {
-        LOG.debug("Removing vertex {}", vertex);
+        String vertexString = string(vertex);
+        LOG.debug("Removing {}", vertexString);
         AtlasGraph<V,E> graph = getGraph();
         graph.removeVertex(vertex);
-        LOG.info("Removed vertex {}", vertex);
+        LOG.info("Removed {}", vertexString);
     }
 
     public <V,E> AtlasVertex<V,E> getVertexForGUID(String guid) throws EntityNotFoundException {
-        return getVertexForProperty(Constants.GUID_PROPERTY_KEY, guid);
+        return findVertex(Constants.GUID_PROPERTY_KEY, guid);
     }
 
-
     public <V,E> AtlasVertex<V,E> getVertexForProperty(String propertyKey, Object value) throws EntityNotFoundException {
-        AtlasVertex<V,E> instanceVertex = findVertex(propertyKey, value);
-        if (instanceVertex == null) {
-            LOG.debug("Could not find a vertex with {}={}", propertyKey, value);
-            throw new EntityNotFoundException("Could not find an entity in the repository with " + propertyKey + "="
-                + value);
-        } else {
-            LOG.debug("Found a vertex {} with {}={}", instanceVertex, propertyKey, value);
-        }
+        return findVertex(propertyKey, value, Constants.STATE_PROPERTY_KEY, Id.EntityState.ACTIVE.name());
+    }
 
-        return instanceVertex;
+    public static String getQualifiedNameForMapKey(String prefix, String key) {
+        return prefix + "." + key;
     }
 
     public static String getQualifiedFieldName(ITypedInstance typedInstance, AttributeInfo attributeInfo) throws AtlasException {
@@ -299,6 +364,10 @@ public final class GraphHelper {
             vertex.<Integer>getProperty(Constants.VERSION_PROPERTY_KEY), dataTypeName);
     }
 
+    public static String getIdFromVertex(AtlasVertex<?,?> vertex) {
+        return vertex.<String>getProperty(Constants.GUID_PROPERTY_KEY);
+    }
+
     public static String getTypeName(AtlasVertex<?,?> instanceVertex) {
         return instanceVertex.getProperty(Constants.ENTITY_TYPE_PROPERTY_KEY);
     }
@@ -314,7 +383,7 @@ public final class GraphHelper {
      */
     public AtlasVertex getVertexForInstanceByUniqueAttribute(ClassType classType, IReferenceableInstance instance)
         throws AtlasException {
-        LOG.debug("Checking if there is an instance with the same unique attributes for instance {}", instance);
+        LOG.debug("Checking if there is an instance with the same unique attributes for instance {}", instance.toShortString());
         AtlasVertex result = null;
         for (AttributeInfo attributeInfo : classType.fieldMapping().fields.values()) {
             if (attributeInfo.isUnique) {
@@ -347,5 +416,50 @@ public final class GraphHelper {
             LOG.debug(edgeString(edge));
         }
         LOG.debug("*******************Graph Dump****************************");
+    }
+
+    public static String string(ITypedReferenceableInstance instance) {
+        return String.format("entity[type=%s guid=%]", instance.getTypeName(), instance.getId()._getId());
+    }
+
+    public static String string(AtlasVertex<?,?> vertex) {
+        return String.format("vertex[id=%s type=%s guid=%s]", vertex.getId().toString(), getTypeName(vertex),
+                getIdFromVertex(vertex));
+    }
+
+    public static String string(AtlasEdge<?,?> edge) {
+        return String.format("edge[id=%s label=%s from %s -> to %s]", edge.getId().toString(), edge.getLabel(),
+                string(edge.getOutVertex()), string(edge.getInVertex()));
+    }
+    
+    public static ITypedReferenceableInstance[] deserializeClassInstances(TypeSystem typeSystem, String entityInstanceDefinition)
+    throws AtlasException {
+        try {
+            JSONArray referableInstances = new JSONArray(entityInstanceDefinition);
+            ITypedReferenceableInstance[] instances = new ITypedReferenceableInstance[referableInstances.length()];
+            for (int index = 0; index < referableInstances.length(); index++) {
+                Referenceable entityInstance =
+                        InstanceSerialization.fromJsonReferenceable(referableInstances.getString(index), true);
+                final String entityTypeName = entityInstance.getTypeName();
+                ParamChecker.notEmpty(entityTypeName, "Entity type cannot be null");
+
+                ClassType entityType = typeSystem.getDataType(ClassType.class, entityTypeName);
+
+                //Both assigned id and values are required for full update
+                //classtype.convert() will remove values if id is assigned. So, set temp id, convert and
+                // then replace with original id
+                Id origId = entityInstance.getId();
+                entityInstance.replaceWithNewId(new Id(entityInstance.getTypeName()));
+                ITypedReferenceableInstance typedInstrance = entityType.convert(entityInstance, Multiplicity.REQUIRED);
+                ((ReferenceableInstance)typedInstrance).replaceWithNewId(origId);
+                instances[index] = typedInstrance;
+            }
+            return instances;
+        } catch(ValueConversionException | TypeNotFoundException  e) {
+            throw e;
+        } catch (Exception e) {  // exception from deserializer
+            LOG.error("Unable to deserialize json={}", entityInstanceDefinition, e);
+            throw new IllegalArgumentException("Unable to deserialize json", e);
+        }
     }
 }

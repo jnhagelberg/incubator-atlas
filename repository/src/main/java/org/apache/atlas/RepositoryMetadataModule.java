@@ -28,15 +28,19 @@ import org.apache.atlas.listener.TypesChangeListener;
 import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.audit.EntityAuditListener;
 import org.apache.atlas.repository.audit.EntityAuditRepository;
+import org.apache.atlas.repository.audit.HBaseBasedAuditRepository;
 import org.apache.atlas.repository.audit.InMemoryEntityAuditRepository;
+import org.apache.atlas.repository.graph.DeleteHandler;
 import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.repository.graph.GraphBackedMetadataRepository;
 import org.apache.atlas.repository.graph.GraphBackedSearchIndexer;
 import org.apache.atlas.repository.graph.GraphProvider;
+import org.apache.atlas.repository.graph.SoftDeleteHandler;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.GraphDatabase;
 import org.apache.atlas.repository.typestore.GraphBackedTypeStore;
 import org.apache.atlas.repository.typestore.ITypeStore;
+import org.apache.atlas.service.Service;
 import org.apache.atlas.services.DefaultMetadataService;
 import org.apache.atlas.services.IBootstrapTypesRegistrar;
 import org.apache.atlas.services.MetadataService;
@@ -59,8 +63,6 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
     @Override
     protected void configure() {
         // special wiring for Titan Graph
-        
-        
         ThrowingProviderBinder.create(binder()).bind(GraphProvider.class, AtlasGraph.class).to(AtlasGraphProvider.class)
                 .asEagerSingleton();
 
@@ -88,8 +90,8 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
         bind(LineageService.class).to(HiveLineageService.class).asEagerSingleton();
 
         bindAuditRepository(binder());
-        
-        
+
+        bind(DeleteHandler.class).to(getDeleteHandler()).asEagerSingleton();
 
         //Add EntityAuditListener as EntityChangeListener
         Multibinder<EntityChangeListener> entityChangeListenerBinder =
@@ -102,15 +104,19 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
     }
 
     protected void bindAuditRepository(Binder binder) {
-        /** Enable this after ATLAS-498 is committed
         //Map EntityAuditRepository interface to hbase based implementation
-        binder.bind(EntityAuditRepository.class).to(HBaseBasedAuditRepository.class).asEagerSingleton();
+        //binder.bind(EntityAuditRepository.class).to(HBaseBasedAuditRepository.class).asEagerSingleton();
 
         //Add HBaseBasedAuditRepository to service so that connection is closed at shutdown
-        Multibinder<Service> serviceBinder = Multibinder.newSetBinder(binder(), Service.class);
-        serviceBinder.addBinding().to(HBaseBasedAuditRepository.class);
-         **/
-        //Map EntityAuditRepository interface to hbase based implementation
+        //Multibinder<Service> serviceBinder = Multibinder.newSetBinder(binder, Service.class);
+        //serviceBinder.addBinding().to(HBaseBasedAuditRepository.class);
         binder.bind(EntityAuditRepository.class).to(InMemoryEntityAuditRepository.class).asEagerSingleton();
+    }
+
+    private static final String DELETE_HANDLER_IMPLEMENTATION_PROPERTY = "atlas.DeleteHandler.impl";
+
+    private Class<? extends DeleteHandler> getDeleteHandler() {
+        return ApplicationProperties.getClass(DELETE_HANDLER_IMPLEMENTATION_PROPERTY,
+                SoftDeleteHandler.class.getName());
     }
 }

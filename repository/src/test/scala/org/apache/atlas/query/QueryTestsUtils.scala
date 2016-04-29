@@ -84,6 +84,7 @@ import org.apache.atlas.repository.graphdb.GremlinVersion
 import org.apache.atlas.services.JSONImporter
 import java.net.URL
 import org.apache.atlas.repository.MetadataRepository
+import org.apache.atlas.RequestContext
 
 
 trait GraphUtils {
@@ -203,7 +204,7 @@ object QueryTestsUtils extends GraphUtils {
         ()
     }
 
-    def setupTestGraph(repo : MetadataRepository, gp: AtlasGraphProvider): AtlasGraph[_,_] = {
+    def setupTestGraph(repo : MetadataRepository, gp: AtlasGraphProvider): AtlasGraph[_,_] = {        
         
         //start with a clean graph
         AtlasGraphProvider.unloadGraph();    
@@ -216,8 +217,7 @@ object QueryTestsUtils extends GraphUtils {
         val json = try source.mkString finally source.close()
         var importer = new JSONImporter(TypeSystem.getInstance(), json);
         importer.doImport(repo);
-        g.commit();
-        
+        g.commit();        
         g
     }
     

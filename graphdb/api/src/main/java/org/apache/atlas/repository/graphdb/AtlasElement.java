@@ -51,6 +51,20 @@ public interface AtlasElement {
     <T> T getProperty(String propertyName);
     
     /**
+     * Removes a property from the vertex.
+     */
+    void removeProperty(String propertyName);
+
+    /**
+     * Sets a single-valued property to the given value.
+     * 
+     * @param propertyName
+     * @param value
+     */
+    <T> void setProperty(String propertyName, T value);     
+    
+    
+    /**
      * Creates a Jettison JSONObject from this Element
      *
      * @param propertyKeys The property keys at the root of the element to serialize.  If null, then all keys are serialized.

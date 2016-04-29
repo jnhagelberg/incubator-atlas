@@ -25,6 +25,8 @@ import org.apache.atlas.query.Expressions._
 import org.apache.atlas.repository.graph.{GraphBackedMetadataRepository, AtlasGraphProvider}
 import org.apache.atlas.typesystem.types.TypeSystem
 import org.testng.annotations.{Test,BeforeClass,AfterClass}
+import org.testng.annotations.BeforeMethod
+import org.apache.atlas.RequestContext
 
 class LineageQueryTest extends BaseGremlinTest {
 
@@ -32,12 +34,18 @@ class LineageQueryTest extends BaseGremlinTest {
     var gProvider:AtlasGraphProvider = null;
     var gp:GraphPersistenceStrategies = null;
 
+    @BeforeMethod
+    def resetRequestContext() {
+        RequestContext.createContext();
+    }
+
+    
     @BeforeClass
     def beforeAll() {
       TypeSystem.getInstance().reset()
       QueryTestsUtils.setupTypes
       gProvider = new AtlasGraphProvider();
-      var repo = new GraphBackedMetadataRepository(gProvider);
+      var repo = new GraphBackedMetadataRepository(gProvider, null);
       gp = new DefaultGraphPersistenceStrategy(repo);
       g = QueryTestsUtils.setupTestGraph(repo, gProvider)
     }

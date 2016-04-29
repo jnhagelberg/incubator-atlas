@@ -11,19 +11,13 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.atlas.AtlasException;
-import org.apache.atlas.discovery.graph.DefaultGraphPersistenceStrategy;
-import org.apache.atlas.query.QueryTestsUtils;
+import org.apache.atlas.RequestContext;
 import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.RepositoryException;
-import org.apache.atlas.repository.graph.AtlasGraphProvider;
-import org.apache.atlas.repository.graph.GraphBackedMetadataRepository;
-import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.repository.graph.GraphHelper;
 import org.apache.atlas.typesystem.IReferenceableInstance;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
-import org.apache.atlas.typesystem.Referenceable;
 import org.apache.atlas.typesystem.exception.EntityExistsException;
-import org.apache.atlas.typesystem.exception.TypeNotFoundException;
-import org.apache.atlas.typesystem.json.InstanceSerialization;
 import org.apache.atlas.typesystem.persistence.Id;
 import org.apache.atlas.typesystem.persistence.ReferenceableInstance;
 import org.apache.atlas.typesystem.types.AttributeInfo;
@@ -32,11 +26,7 @@ import org.apache.atlas.typesystem.types.DataTypes.ArrayType;
 import org.apache.atlas.typesystem.types.DataTypes.MapType;
 import org.apache.atlas.typesystem.types.DataTypes.TypeCategory;
 import org.apache.atlas.typesystem.types.IDataType;
-import org.apache.atlas.typesystem.types.Multiplicity;
 import org.apache.atlas.typesystem.types.TypeSystem;
-import org.apache.atlas.typesystem.types.ValueConversionException;
-import org.apache.atlas.utils.ParamChecker;
-import org.codehaus.jettison.json.JSONArray;
 
 //imports all instances in a JSON file into graph.  Reassigns guid.  Assumes that there
 //are no circular dependencies.
@@ -49,7 +39,8 @@ public class JSONImporter {
     //unimported nodes with no unresolved dependencies.  Updated in
     //waves
     private List<DependencyTreeNode> leafNodes_ = new ArrayList<DependencyTreeNode>();
-   
+    
+
 
     public JSONImporter(TypeSystem typeSystem, String json) throws AtlasException {
         typeSystem_ = typeSystem; 
@@ -169,13 +160,13 @@ public class JSONImporter {
             
             importLeafNodes(repo);
             
-            leafNodes_ = determinNewLeafNodes();
+            leafNodes_ = determineNewLeafNodes();
         }
         
     }
 
 
-    private  List<DependencyTreeNode> determinNewLeafNodes() {
+    private  List<DependencyTreeNode> determineNewLeafNodes() {
         
         Set<DependencyTreeNode> newLeafNodes = new HashSet<DependencyTreeNode>();
         for(DependencyTreeNode node : leafNodes_) {
@@ -198,7 +189,17 @@ public class JSONImporter {
             node.updateReferencedGuids();
             toImport[idx++] = node.getInstance();                
         }
+        
+        //each call to createEntities adds stuff to the context, and as a result calling
+        //it multiple times without resetting the context causes it to produce incorrect
+        //results.  To avoid this, all calls need to take place within a fresh context.
+        //unfortunatly there is currently not a way to save and restore the current
+        //context.  Since this is just test code, we'll just destroy the one
+        //that's there.  In production we should save/restore the context
+        //or call a different api that does not modify the context
+        RequestContext.createContext();
         List<String> guids = repo.createEntities(toImport);
+   
         
         //set the new guids in the DependencyTreeNodes
         //using the values we got back from Atlas.
@@ -207,47 +208,10 @@ public class JSONImporter {
         }
     }
     
-    //"borrowed" from ClassType.  TODO: move method there to a utiltiy class, delete this
     private ITypedReferenceableInstance[] deserializeClassInstances(String entityInstanceDefinition)
             throws AtlasException {
-        try {
-            JSONArray referableInstances = new JSONArray(entityInstanceDefinition);
-            ITypedReferenceableInstance[] instances = new ITypedReferenceableInstance[referableInstances.length()];
-            for (int index = 0; index < referableInstances.length(); index++) {
-                Referenceable entityInstance =
-                        InstanceSerialization.fromJsonReferenceable(referableInstances.getString(index), true);
-                final String entityTypeName = entityInstance.getTypeName();
-                ParamChecker.notEmpty(entityTypeName, "Entity type cannot be null");
-
-                ClassType entityType = typeSystem_.getDataType(ClassType.class, entityTypeName);
-
-                //Both assigned id and values are required for full update
-                //classtype.convert() will remove values if id is assigned. So, set temp id, convert and
-                // then replace with original id
-                Id origId = entityInstance.getId();
-                entityInstance.replaceWithNewId(new Id(entityInstance.getTypeName()));
-                ITypedReferenceableInstance typedInstrance = entityType.convert(entityInstance, Multiplicity.REQUIRED);
-                ((ReferenceableInstance)typedInstrance).replaceWithNewId(origId);
-                instances[index] = typedInstrance;
-            }
-            return instances;
-        } catch(ValueConversionException | TypeNotFoundException  e) {
-            throw e;
-        } catch (Exception e) {  // exception from deserializer
-            System.err.println("Unable to deserialize json=" + entityInstanceDefinition);
-            e.printStackTrace();
-            throw new IllegalArgumentException("Unable to deserialize json", e);
-        }
-    }
-    
-
-    public static void main(String[] args) {
+        return GraphHelper.deserializeClassInstances(typeSystem_, entityInstanceDefinition);
         
-        QueryTestsUtils.setupTypes();
-        AtlasGraphProvider gProvider = new AtlasGraphProvider();
-        MetadataRepository repo = new GraphBackedMetadataRepository(gProvider);
-        DefaultGraphPersistenceStrategy gp = new DefaultGraphPersistenceStrategy(repo);
-        AtlasGraph<?,?> g = QueryTestsUtils.setupTestGraph(repo, gProvider);
-    }
+    }    
 
 }
