@@ -97,15 +97,17 @@ class GremlinEvaluator[V, E](qry: GremlinQuery, persistenceStrategy: GraphPersis
             val sType = oType.asInstanceOf[StructType]            
             val rows = rawRes.asInstanceOf[java.util.List[AnyRef]].map { r =>
                 val rV = instanceObject(r)
-                val sInstance = sType.createInstance()
-                val selExpr =
-                    (if (qry.isPathExpresion) qry.expr.children(0) else qry.expr).
-                        asInstanceOf[Expressions.SelectExpression]
-                selExpr.selectListWithAlias.foreach { aE =>
-                    val cName = aE.alias
-                    val (src, idx) = qry.resultMaping(cName)
-                    val v = g.getGremlinColumnValue(rV, src, idx)
-                    sInstance.set(cName, persistenceStrategy.constructInstance(aE.dataType, v))
+                               val sInstance = sType.createInstance()
+                val selObj = SelectExpressionHelper.extractSelectExpression(qry.expr)
+                if (selObj.isDefined)
+                {
+                    val selExpr = selObj.get.asInstanceOf[Expressions.SelectExpression]
+                    selExpr.selectListWithAlias.foreach { aE =>
+                    	val cName = aE.alias
+                    	val (src, idx) = qry.resultMaping(cName)
+                    	val v = g.getGremlinColumnValue(rV, src, idx)
+                    	sInstance.set(cName, persistenceStrategy.constructInstance(aE.dataType, v))
+                    }
                 }
                 addPathStruct(r, sInstance)
             }
