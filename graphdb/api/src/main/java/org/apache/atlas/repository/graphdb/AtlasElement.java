@@ -19,8 +19,11 @@
 package org.apache.atlas.repository.graphdb;
 
 import java.util.Collection;
+import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
+import org.apache.atlas.AtlasException;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
@@ -49,6 +52,11 @@ public interface AtlasElement {
      * @return
      */
     <T> T getProperty(String propertyName);
+    
+    
+    List<String> getListProperty(String propertyName) throws AtlasException;
+    
+    void setListProperty(String propertyName, List<String> values) throws AtlasException;
     
     /**
      * Removes a property from the vertex.

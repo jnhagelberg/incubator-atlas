@@ -9,6 +9,9 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.script.Bindings;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
 import org.apache.atlas.repository.graphdb.AtlasEdge;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
@@ -195,13 +198,6 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
         return query.vertices();
     }
     
-
-    @Override
-    public void injectBinding(Bindings bindings, String key) {
-        bindings.put(key, getGraph().traversal());
-    }
-
-    
     @Override
     public Object getGremlinColumnValue(Object rowValue, String colName, int idx) {
                 
@@ -267,5 +263,19 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
        builder.mapper(mapper);
        GraphSONWriter writer = builder.create();
        writer.writeGraph(os, getGraph());        
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.atlas.repository.graphdb.AtlasGraph#executeGremlinScript(java.lang.String)
+     */
+    @Override
+    public Object executeGremlinScript(String gremlinQuery) throws ScriptException {
+        
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine engine = manager.getEngineByName("gremlin-groovy");
+        Bindings bindings = engine.createBindings();
+        bindings.put("g", getGraph().traversal());
+        Object result = engine.eval(gremlinQuery, bindings);
+        return result;
     }
 }

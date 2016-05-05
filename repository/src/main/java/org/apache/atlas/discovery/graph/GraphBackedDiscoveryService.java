@@ -163,14 +163,8 @@ public class GraphBackedDiscoveryService implements DiscoveryService {
     @GraphTransaction
     public List<Map<String, String>> searchByGremlin(String gremlinQuery) throws DiscoveryException {
         LOG.info("Executing gremlin query={}", gremlinQuery);
-        ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("gremlin-groovy");
-        Bindings bindings = engine.createBindings();
-        graph.injectBinding(bindings, "g");
-     
-
         try {
-            Object o = engine.eval(gremlinQuery, bindings);
+            Object o = graph.executeGremlinScript(gremlinQuery);
             return extractResult(o);
         } catch (ScriptException se) {
             throw new DiscoveryException(se);

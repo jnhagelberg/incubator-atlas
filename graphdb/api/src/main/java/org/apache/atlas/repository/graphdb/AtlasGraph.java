@@ -22,7 +22,7 @@ import java.io.OutputStream;
 import java.util.List;
 import java.util.Set;
 
-import javax.script.Bindings;
+import javax.script.ScriptException;
 
 /**
  * Represents a graph
@@ -175,18 +175,7 @@ public interface AtlasGraph<V,E> {
     
     //the following methods insulate Atlas from the details
     //of the interaction with Gremlin
-    
-    
-    /**
-     * Injects the graph into the binding used by the gremlin-groovy interpreter
-     * so that is is available for use by the Gremlin queries.  The injection
-     * needs to be done slightly differently for different versions of Gremlin. 
-     * 
-     * @param bindings
-     * @param string
-     */
-    void injectBinding(Bindings bindings, String string);   
-
+       
     
     /**
      *    
@@ -246,5 +235,15 @@ public interface AtlasGraph<V,E> {
      * @return
      */
     GremlinVersion getSupportedGremlinVersion();
+    
+    /**
+     * Executes a gremlin query, returns an object with the raw
+     * result.
+     * 
+     * @param gremlinQuery
+     * @return
+     */
+    Object executeGremlinScript(String gremlinQuery) throws ScriptException;
+     
 
 }

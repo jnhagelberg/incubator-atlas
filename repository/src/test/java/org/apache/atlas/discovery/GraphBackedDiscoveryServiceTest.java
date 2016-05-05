@@ -288,7 +288,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseHiveRepositoryTest {
                 {"from hive_db limit 2 offset 0", 2},
                 {"from hive_db limit 2 offset 1", 2},
                 {"from hive_db limit 3 offset 1", 2},
-                {"hive_db", 3},
+                {"hive_db", 3}, //10
                 {"hive_db where hive_db.name=\"Reporting\"", 1},
                 {"hive_db where hive_db.name=\"Reporting\" limit 10 ", 1},
                 {"hive_db hive_db.name = \"Reporting\"", 1},
@@ -298,7 +298,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseHiveRepositoryTest {
                 {"hive_db has name limit 2 offset 1", 2},
                 {"hive_db has name limit 10 offset 1", 2},
                 {"hive_db has name limit 10 offset 0", 3},
-                {"hive_db, hive_table", 8},
+                {"hive_db, hive_table", 8}, //20
                 {"hive_db, hive_table limit 5", 5},
                 {"hive_db, hive_table limit 5 offset 0", 5},
                 {"hive_db, hive_table limit 5 offset 5", 3},
@@ -311,7 +311,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseHiveRepositoryTest {
                 
                 {"from hive_table", 8},
                 {"from hive_table limit 5", 5},
-                {"from hive_table limit 5 offset 5", 3},
+                {"from hive_table limit 5 offset 5", 3}, //30
                 
                 {"hive_table", 8},
                 {"hive_table limit 5", 5},
@@ -324,7 +324,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseHiveRepositoryTest {
                 {"hive_table isa Dimension limit 3 offset 1", 2},
                 
                 {"hive_column where hive_column isa PII", 6},
-                {"hive_column where hive_column isa PII limit 5", 5},
+                {"hive_column where hive_column isa PII limit 5", 5}, //40
                 {"hive_column where hive_column isa PII limit 5 offset 1", 5},
                 {"hive_column where hive_column isa PII limit 5 offset 5", 1},
                 
@@ -338,7 +338,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseHiveRepositoryTest {
                 {"hive_column select hive_column.name limit 5", 5},
                 {"hive_column select hive_column.name limit 5 offset 28", 1},
                 
-                {"hive_column select name", 29},
+                {"hive_column select name", 29}, //50
                 {"hive_column select name limit 5", 5},
                 {"hive_column select name limit 5 offset 28 ", 1},
                 
@@ -351,7 +351,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseHiveRepositoryTest {
                 {"from hive_table select hive_table.name limit 5", 5},
                 {"from hive_table select hive_table.name limit 5 offset 5", 3},
                 
-                {"hive_db where (name = \"Reporting\")", 1},
+                {"hive_db where (name = \"Reporting\")", 1}, //60
                 {"hive_db where (name = \"Reporting\") limit 10", 1},
                 {"hive_db where (name = \"Reporting\") select name as _col_0, owner as _col_1", 1},
                 {"hive_db where (name = \"Reporting\") select name as _col_0, owner as _col_1 limit 10", 1},
@@ -361,7 +361,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseHiveRepositoryTest {
                 {"hive_db hive_table limit 5 offset 5", 3},
                 {"hive_db where hive_db has name", 3},
                 {"hive_db where hive_db has name limit 5", 3},
-                {"hive_db where hive_db has name limit 2 offset 0", 2},
+                {"hive_db where hive_db has name limit 2 offset 0", 2}, //70
                 {"hive_db where hive_db has name limit 2 offset 1", 2},
                 
                 {"hive_db as db1 hive_table where (db1.name = \"Reporting\")", 0}, //Not working -> ATLAS-145

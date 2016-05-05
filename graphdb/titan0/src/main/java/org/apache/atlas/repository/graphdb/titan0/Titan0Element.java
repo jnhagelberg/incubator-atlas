@@ -17,6 +17,7 @@
  */
 package org.apache.atlas.repository.graphdb.titan0;
 
+import java.util.List;
 import java.util.Set;
 
 import org.apache.atlas.repository.graphdb.AtlasElement;
@@ -74,6 +75,23 @@ public class Titan0Element<T extends Element> implements AtlasElement {
         return GraphSONUtility.jsonFromElement(element_, propertyKeys, GraphSONMode.NORMAL);
     }
 
+    /* (non-Javadoc)
+     * @see org.apache.atlas.repository.graphdb.AtlasElement#getListProperty(java.lang.String)
+     */
+    @Override
+    public List<String> getListProperty(String propertyName) {
+        return getProperty(propertyName);
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.atlas.repository.graphdb.AtlasElement#setListProperty(java.lang.String, java.util.List)
+     */
+    @Override
+    public void setListProperty(String propertyName, List<String> values) {
+        setProperty(propertyName, values);
+        
+    }
+    
     //not in interface
     public T getWrappedElement() {
         return element_;

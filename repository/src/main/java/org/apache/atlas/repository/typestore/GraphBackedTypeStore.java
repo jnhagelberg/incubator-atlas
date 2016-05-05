@@ -29,8 +29,8 @@ import org.apache.atlas.GraphTransaction;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.repository.graph.GraphHelper;
-import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
 import org.apache.atlas.repository.graphdb.AtlasEdge;
+import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.typesystem.TypesDef;
@@ -104,17 +104,17 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
         }
     }
 
-    private void addProperty(AtlasVertex<V,E> vertex, String propertyName, Object value) {
+    private void addProperty(AtlasVertex<V,E> vertex, String propertyName, Object value) throws AtlasException {
         LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, vertex);
         vertex.setProperty(propertyName, value);
     }
     
-    private void addListProperty(AtlasVertex<V,E> vertex, String propertyName, List<String> value) {
+    private void addListProperty(AtlasVertex<V,E> vertex, String propertyName, List<String> value) throws AtlasException {
         LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, vertex);
-        vertex.setProperty(propertyName, value);
+        vertex.setListProperty(propertyName, value);
     }
 
-    private void storeInGraph(EnumType dataType) {
+    private void storeInGraph(EnumType dataType) throws AtlasException {
         AtlasVertex<V,E> vertex = createVertex(dataType.getTypeCategory(), dataType.getName(), dataType.getDescription());
         List<String> values = new ArrayList<>(dataType.values().size());
         for (EnumValue enumValue : dataType.values()) {
@@ -273,11 +273,11 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
         return TypesUtil.getTypesDef(enums.build(), structs.build(), traits.build(), classTypes.build());
     }
 
-    private EnumTypeDefinition getEnumType(AtlasVertex<V,E> vertex) {
+    private EnumTypeDefinition getEnumType(AtlasVertex<V,E> vertex) throws AtlasException {
         String typeName = vertex.getProperty(Constants.TYPENAME_PROPERTY_KEY);
         String typeDescription = vertex.getProperty(Constants.TYPEDESCRIPTION_PROPERTY_KEY);
         List<EnumValue> enumValues = new ArrayList<>();
-        List<String> values = vertex.getProperty(getPropertyKey(typeName));
+        List<String> values = vertex.getListProperty(getPropertyKey(typeName));
         for (String value : values) {
             String valueProperty = getPropertyKey(typeName, value);
             enumValues.add(new EnumValue(value, vertex.<Integer>getProperty(valueProperty)));
@@ -297,7 +297,7 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
 
     private AttributeDefinition[] getAttributes(AtlasVertex<V,E> vertex, String typeName) throws AtlasException {
         List<AttributeDefinition> attributes = new ArrayList<>();
-        List<String> attrNames = vertex.getProperty(getPropertyKey(typeName));
+        List<String> attrNames = vertex.getListProperty(getPropertyKey(typeName));
         if (attrNames != null) {
             for (String attrName : attrNames) {
                 try {
@@ -333,7 +333,7 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
         return vertex;
     }
 
-    private AtlasVertex<V,E> createVertex(DataTypes.TypeCategory category, String typeName, String typeDescription) {
+    private AtlasVertex<V,E> createVertex(DataTypes.TypeCategory category, String typeName, String typeDescription) throws AtlasException {
         AtlasVertex<V,E> vertex = findVertex(category, typeName);
         if (vertex == null) {
             LOG.debug("Adding vertex {}{}", PROPERTY_PREFIX, typeName);

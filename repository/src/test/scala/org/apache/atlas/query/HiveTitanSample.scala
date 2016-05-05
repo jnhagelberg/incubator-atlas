@@ -373,24 +373,18 @@ object HiveTitanSample {
 object TestApp extends App with GraphUtils {
     AtlasGraphProvider.unloadGraph()
     val g = AtlasGraphProvider.getGraphInstance
-    val manager: ScriptEngineManager = new ScriptEngineManager
-    val engine: ScriptEngine = manager.getEngineByName("gremlin-groovy")
-    val bindings: Bindings = engine.createBindings
-    g.injectBinding(bindings , "g")
-    
 
     val hiveGraphFile = FileUtils.getTempDirectory().getPath + File.separator + System.nanoTime() + ".gson"
     HiveTitanSample.writeGson(hiveGraphFile)
-    bindings.put("hiveGraphFile", hiveGraphFile)
 
     try {
-        engine.eval("g.loadGraphSON(hiveGraphFile)", bindings)
+        g.executeGremlinScript("def hiveGraphFile = " + hiveGraphFile + "; g.loadGraphSON(hiveGraphFile)");
 
-        println(engine.eval("g.V.typeName.toList()", bindings))
+        println(g.executeGremlinScript("g.V.typeName.toList()"));
 
         HiveTitanSample.GremlinQueries.foreach { q =>
             println(q)
-            println("Result: " + engine.eval(q + ".toList()", bindings))
+            println("Result: " + g.executeGremlinScript(q + ".toList()"));
         }
     } finally {
         g.shutdown()

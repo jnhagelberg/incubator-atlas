@@ -22,6 +22,9 @@ import java.util.List;
 import java.util.Set;
 
 import javax.script.Bindings;
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 
 import org.apache.atlas.repository.graphdb.AtlasEdge;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
@@ -159,14 +162,9 @@ public class Titan0Graph implements AtlasGraph<Titan0Vertex, Titan0Edge> {
         
         Iterable<Vertex> result = getGraph().getVertices(key, value);
         return new IterableAdapter<>(result, VertexMapper.INSTANCE);
-
     }
 
-    @Override
-    public void injectBinding(Bindings bindings, String key) {
-        bindings.put(key, getGraph());
-    }
-    
+   
     @Override
     public Object getGremlinColumnValue(Object rowValue, String colName, int idx) {
         Row<List> rV = (Row<List>)rowValue;
@@ -214,5 +212,19 @@ public class Titan0Graph implements AtlasGraph<Titan0Vertex, Titan0Edge> {
     @Override
     public void exportToGson(OutputStream os) throws IOException {
         GraphSONWriter.outputGraph(getGraph(), os);        
+    }
+    
+        /* (non-Javadoc)
+     * @see org.apache.atlas.repository.graphdb.AtlasGraph#executeGremlinScript(java.lang.String)
+     */
+    @Override
+    public Object executeGremlinScript(String gremlinQuery) throws ScriptException {
+        
+        ScriptEngineManager manager = new ScriptEngineManager();
+        ScriptEngine engine = manager.getEngineByName("gremlin-groovy");
+        Bindings bindings = engine.createBindings();
+        bindings.put("g", getGraph());
+        Object result = engine.eval(gremlinQuery, bindings);
+        return result;
     }
 }

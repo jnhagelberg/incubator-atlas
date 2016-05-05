@@ -25,6 +25,8 @@ public class TitanObjectFactory {
             return Direction.IN;      
         case OUT:
             return Direction.OUT;
+        case BOTH:
+            return Direction.BOTH;
         default:
             throw new RuntimeException("Unrecognized direction: " + dir);
         }
