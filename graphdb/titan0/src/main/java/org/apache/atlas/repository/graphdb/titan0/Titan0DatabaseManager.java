@@ -31,6 +31,9 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
 
+/**
+ * Titan 0.5.4 implementation of AtlasGraphManagement
+ */
 public class Titan0DatabaseManager implements AtlasGraphManagement {
 
     private TitanManagement management_;

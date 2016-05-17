@@ -105,20 +105,20 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
                     }
 
                     graphInstance = TitanFactory.open(config);
-                    validateIndexBackend(config);
+                    validateIndexBackend(config);                    
                 }
             }
         }
         return graphInstance;
     }
-
+    
     public static void unload() {
-    	
+
         synchronized (Titan0Database.class) {
-        	if(graphInstance == null) {
-        		return;
-        	}
-        	
+            if(graphInstance == null) {
+                return;
+            }
+
             graphInstance.shutdown();
             graphInstance = null;
         }
@@ -126,12 +126,12 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
 
     static void validateIndexBackend(Configuration config) {
         String configuredIndexBackend = config.getString(INDEX_BACKEND_CONF);
-
+        
         TitanManagement managementSystem = getGraphInstance().getManagementSystem();
         String currentIndexBackend = managementSystem.get(INDEX_BACKEND_CONF);
         managementSystem.commit();
         
-        if(!equals(configuredIndexBackend, currentIndexBackend)) {
+        if(! equals(configuredIndexBackend, currentIndexBackend)) {
             throw new RuntimeException("Configured Index Backend " + configuredIndexBackend + " differs from earlier configured Index Backend " + currentIndexBackend + ". Aborting!");
         }
 
@@ -147,7 +147,8 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
 
     @Override
     public AtlasGraph<Titan0Vertex, Titan0Edge> getGraph() {
-       //force graph loading now to try to debug issue
+       //force graph loading up front to avoid bootstrapping
+       //issues
        getGraphInstance();
        return new Titan0Graph();
     }

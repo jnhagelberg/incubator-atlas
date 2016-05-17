@@ -34,10 +34,10 @@ import org.apache.atlas.repository.graphdb.AtlasIndexQuery;
 import org.apache.atlas.repository.graphdb.AtlasSchemaViolationException;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.repository.graphdb.GremlinVersion;
-import org.apache.atlas.utils.adapters.IterableAdapter;
-import org.apache.atlas.utils.adapters.impl.EdgeMapper;
-import org.apache.atlas.utils.adapters.impl.VertexMapper;
+import org.apache.atlas.utils.EdgeToAtlasEdgeFunction;
+import org.apache.atlas.utils.VertexToAtlasVertexFuncion;
 
+import com.google.common.collect.Iterables;
 import com.thinkaurelius.titan.core.SchemaViolationException;
 import com.thinkaurelius.titan.core.TitanGraph;
 import com.thinkaurelius.titan.core.TitanIndexQuery;
@@ -97,13 +97,13 @@ public class Titan0Graph implements AtlasGraph<Titan0Vertex, Titan0Edge> {
     @Override
     public Iterable<AtlasEdge<Titan0Vertex, Titan0Edge>> getEdges() {
         Iterable<Edge> edges = getGraph().getEdges();
-        return new IterableAdapter<Edge, AtlasEdge<Titan0Vertex, Titan0Edge>>(edges, EdgeMapper.INSTANCE);
+        return Iterables.transform(edges, EdgeToAtlasEdgeFunction.INSTANCE);
     }
 
     @Override
     public Iterable<AtlasVertex<Titan0Vertex, Titan0Edge>> getVertices() {
         Iterable<Vertex> vertices = getGraph().getVertices();
-        return new IterableAdapter<Vertex, AtlasVertex<Titan0Vertex, Titan0Edge>>(vertices, VertexMapper.INSTANCE);
+        return Iterables.transform(vertices, VertexToAtlasVertexFuncion.INSTANCE);
     }
 
     @Override
@@ -161,7 +161,7 @@ public class Titan0Graph implements AtlasGraph<Titan0Vertex, Titan0Edge> {
     public Iterable<AtlasVertex<Titan0Vertex, Titan0Edge>> getVertices(String key, Object value) {
         
         Iterable<Vertex> result = getGraph().getVertices(key, value);
-        return new IterableAdapter<>(result, VertexMapper.INSTANCE);
+        return Iterables.transform(result, VertexToAtlasVertexFuncion.INSTANCE);
     }
 
    

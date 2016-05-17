@@ -27,9 +27,6 @@ import java.util.Collection;
  */
 public interface AtlasVertex<V,E> extends AtlasElement {
 
-   
-    
-
     /**
      * Gets the edges incident to this vertex going the
      * specified direction that have the specified edgeLabel.  If
@@ -50,7 +47,10 @@ public interface AtlasVertex<V,E> extends AtlasElement {
     Iterable<AtlasEdge<V,E>> getEdges(AtlasEdgeDirection in);
     
     /**
-     * Adds a value to a multiplicity many property.
+     * Adds a value to a multiplicity many property.  Follows Java set
+     * semantics.  If the property is already present, it is not added again,
+     * and no exception is thrown.
+     * 
      * 
      * @param propertyName
      * @param value

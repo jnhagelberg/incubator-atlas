@@ -48,7 +48,6 @@ public class Titan0Element<T extends Element> implements AtlasElement {
         return element_.getPropertyKeys();
     }
 
-     
     @Override
     public <T> void setProperty(String propertyName, T value) {
         try {

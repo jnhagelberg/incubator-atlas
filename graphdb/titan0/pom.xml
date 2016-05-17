@@ -125,15 +125,24 @@
             <artifactId>mockito-all</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+            <version>3.2.1</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>
         <plugins>
             <!-- 
                  Create 'uber' jar that contains all of the dependencies (except those whose scope is provided)
-                 Only titan 1 and its dependencies are included.  The other dependencies are bundled in the war file.
+                 Only titan 0 and its dependencies are included.  The other dependencies are bundled in the war file.
 
-We also relocate the Google guava packages to avoid conflicts with Atlas code which depends on Guava 14 
+                We also relocate the Google guava packages because Titan 0.5.4 and Titan 1 use different (and incompatible)
+                versions of Guava.  This decouples the version of Guava used directly by Atlas from the version
+                required by graph database implementations.
             -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -153,6 +162,16 @@ We also relocate the Google guava packages to avoid conflicts with Atlas code wh
                                     <exclude>org.slf4j:*</exclude>
                                 </excludes>                                
                             </artifactSet>
+                            <filters>
+                                <filter>
+                                    <artifact>com.thinkaurelius.titan:titan-core</artifact>
+                                    <!-- force use of our custom LocalLockMediator implementation -->
+                                    <excludes>
+                                        <exclude>com/thinkaurelius/titan/diskstorage/locking/LocalLockMediator*</exclude>
+                                    </excludes>
+                                </filter>
+                                
+                            </filters>
                             <relocations>
                                 <relocation>
                                     <pattern>com.google.common</pattern>

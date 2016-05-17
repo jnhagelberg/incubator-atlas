@@ -22,18 +22,22 @@ import java.util.Collection;
 
 import org.apache.atlas.repository.graphdb.AtlasEdge;
 import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
+import org.apache.atlas.repository.graphdb.AtlasGraphManagement;
 import org.apache.atlas.repository.graphdb.AtlasSchemaViolationException;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.repository.graphdb.AtlasVertexQuery;
-import org.apache.atlas.utils.adapters.IterableAdapter;
-import org.apache.atlas.utils.adapters.impl.EdgeMapper;
+import org.apache.atlas.utils.EdgeToAtlasEdgeFunction;
 
+import com.google.common.collect.Iterables;
 import com.thinkaurelius.titan.core.SchemaViolationException;
 import com.thinkaurelius.titan.core.TitanProperty;
 import com.thinkaurelius.titan.core.TitanVertex;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 
+/**
+ * Titan 0.5.4 implementation of AtlasVertex
+ */
 public class Titan0Vertex extends Titan0Element<Vertex> implements AtlasVertex<Titan0Vertex, Titan0Edge> {
 
     public Titan0Vertex(Vertex source) {
@@ -44,7 +48,7 @@ public class Titan0Vertex extends Titan0Element<Vertex> implements AtlasVertex<T
     public Iterable<AtlasEdge<Titan0Vertex, Titan0Edge>> getEdges(AtlasEdgeDirection dir, String edgeLabel) {
         Iterable<Edge> titanEdges = element_.getEdges(
                 TitanObjectFactory.createDirection(dir), edgeLabel);
-        return new IterableAdapter<>(titanEdges, EdgeMapper.INSTANCE);
+        return Iterables.transform(titanEdges, EdgeToAtlasEdgeFunction.INSTANCE);
     } 
     
     private TitanVertex getAsTitanVertex() {
@@ -54,15 +58,49 @@ public class Titan0Vertex extends Titan0Element<Vertex> implements AtlasVertex<T
     @Override
     public Iterable<AtlasEdge<Titan0Vertex, Titan0Edge>> getEdges(AtlasEdgeDirection in) {
         Iterable<Edge> titanResult = element_.getEdges(TitanObjectFactory.createDirection(in));
-        return new IterableAdapter<Edge, AtlasEdge<Titan0Vertex, Titan0Edge>>(titanResult, EdgeMapper.INSTANCE);
+        return Iterables.transform(titanResult, EdgeToAtlasEdgeFunction.INSTANCE);
     }
+    
+    @Override
+    public <T> T getProperty(String propertyName) {
+        
+        if(AtlasGraphManagement.MULTIPLICITY_MANY_PROPERTY_KEYS.contains(propertyName)) {
+            //throw exception in this case to be consistent with Titan 1.0.0 behavior.
+            throw new IllegalStateException();
+        }
+        return super.getProperty(propertyName);
+    }
+    
+    public <T> void setProperty(String propertyName, T value) {
 
+        try {
+            super.setProperty(propertyName, value);
+        }
+        catch(UnsupportedOperationException e) {
+            //For consistency with Titan 1.0.0, treat sets of multiplicity many
+            //properties as adds.  Handle this here since this is an uncommon
+            //occurrence.
+            if(AtlasGraphManagement.MULTIPLICITY_MANY_PROPERTY_KEYS.contains(propertyName)) {
+                addProperty(propertyName, value);
+            }
+            else {
+                throw e;
+            }
+        }
+    }
+    
+    
     @Override
     public <T> void addProperty(String propertyName, T value) {
         try {
             getAsTitanVertex().addProperty(propertyName, value);
         }
         catch(SchemaViolationException e) {
+            if(getPropertyValues(propertyName).contains(value)) {
+                //follow java set semantics, don't throw an exception if
+                //value is already there.
+                return;
+            }
             throw new AtlasSchemaViolationException(e);
         }
     }

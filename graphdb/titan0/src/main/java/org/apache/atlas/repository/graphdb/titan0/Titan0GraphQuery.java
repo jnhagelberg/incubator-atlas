@@ -20,10 +20,10 @@ package org.apache.atlas.repository.graphdb.titan0;
 import org.apache.atlas.repository.graphdb.AtlasEdge;
 import org.apache.atlas.repository.graphdb.AtlasGraphQuery;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
-import org.apache.atlas.utils.adapters.IterableAdapter;
-import org.apache.atlas.utils.adapters.impl.EdgeMapper;
-import org.apache.atlas.utils.adapters.impl.VertexMapper;
+import org.apache.atlas.utils.EdgeToAtlasEdgeFunction;
+import org.apache.atlas.utils.VertexToAtlasVertexFuncion;
 
+import com.google.common.collect.Iterables;
 import com.tinkerpop.blueprints.Compare;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.GraphQuery;
@@ -54,13 +54,13 @@ public class Titan0GraphQuery implements AtlasGraphQuery<Titan0Vertex, Titan0Edg
     @Override
     public Iterable<AtlasVertex<Titan0Vertex, Titan0Edge>> vertices() {
         Iterable<Vertex> result = wrapped_.vertices();
-        return new IterableAdapter<Vertex,AtlasVertex<Titan0Vertex, Titan0Edge>>(result, VertexMapper.INSTANCE);
+        return Iterables.transform(result, VertexToAtlasVertexFuncion.INSTANCE);
     }
 
     @Override
     public Iterable<AtlasEdge<Titan0Vertex, Titan0Edge>> edges() {
         Iterable<Edge> result = wrapped_.edges();
-        return new IterableAdapter<Edge,AtlasEdge<Titan0Vertex, Titan0Edge>>(result, EdgeMapper.INSTANCE);
+        return Iterables.transform(result, EdgeToAtlasEdgeFunction.INSTANCE);
     }
 
     @Override

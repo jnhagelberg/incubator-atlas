@@ -18,6 +18,12 @@
 
 package org.apache.atlas.repository.graphdb;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.apache.atlas.repository.Constants;
 import org.apache.atlas.typesystem.types.Multiplicity;
 
 /**
@@ -25,7 +31,13 @@ import org.apache.atlas.typesystem.types.Multiplicity;
  * 
  */
 public interface AtlasGraphManagement {
+    
+    public static final Set<String> MULTIPLICITY_MANY_PROPERTY_KEYS = 
+            Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
+                    Constants.SUPER_TYPES_PROPERTY_KEY,
+                    Constants.TRAIT_NAMES_PROPERTY_KEY )));
 
+    
     /**
      * Checks whether a property with the given key has been defined in the graph schema.
      * 

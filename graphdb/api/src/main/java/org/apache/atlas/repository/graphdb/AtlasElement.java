@@ -19,7 +19,6 @@
 package org.apache.atlas.repository.graphdb;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -46,16 +45,30 @@ public interface AtlasElement {
     Collection<? extends String> getPropertyKeys();
 
     /**
-     * Gets the value of the element property with the given name
+     * Gets the value of the element property with the given name.
      * 
      * @param propertyName
      * @return
+     * @throws IllegalStateException if the property is multi-valued in the graph schema.
      */
     <T> T getProperty(String propertyName);
     
     
+    /**
+     * Gets the value of a multiplicity one property whose value is a String list.  
+     * The lists of super types and traits are stored this way.  A separate method
+     * is needed for this because special logic is required to handle this situation
+     * in some implementations.
+     */
     List<String> getListProperty(String propertyName) throws AtlasException;
     
+    
+    /**
+     * Sets a multiplicity one property whose value is a String list.  
+     * The lists of super types and traits are stored this way.  A separate method
+     * is needed for this because special logic is required to handle this situation
+     * in some implementations.
+     */
     void setListProperty(String propertyName, List<String> values) throws AtlasException;
     
     /**
@@ -64,8 +77,10 @@ public interface AtlasElement {
     void removeProperty(String propertyName);
 
     /**
-     * Sets a single-valued property to the given value.
-     * 
+     * Sets a single-valued property to the given value.  For 
+     * properties defined as multiplicty many in the graph schema, the value is added instead
+     * (following set semantics)
+     *     
      * @param propertyName
      * @param value
      */

@@ -27,7 +27,7 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Vertex;
 /**
- * Factory to convert between Atlas and titan objects
+ * Factory to convert between Atlas and Titan objects
  */
 public class TitanObjectFactory {
     
@@ -35,6 +35,13 @@ public class TitanObjectFactory {
         
     }
     
+    /**
+     * Creates a Titan0Edge that corresponds to the given
+     * Titan Edge.
+     * 
+     * @param source
+     * @return
+     */
     public static Titan0Edge createEdge(Edge source) {
         if(source == null) {
             return null;
@@ -42,18 +49,33 @@ public class TitanObjectFactory {
         return new Titan0Edge(source);
     }
     
+    /**
+     * Retrieves the titan direction corresponding to the given
+     * AtlasEdgeDirection
+     * 
+     * @param dir
+     * @return
+     */
     public static Direction createDirection(AtlasEdgeDirection dir) {
         switch(dir) {
         case IN:
             return Direction.IN;      
         case OUT:
             return Direction.OUT;
+        case BOTH:
+            return Direction.BOTH;
         default:
             throw new RuntimeException("Unrecognized direction: " + dir);
         }
      }
     
     
+    /**
+     * Converts a Multiplicity to a Cardinality.
+     * 
+     * @param multiplicity
+     * @return
+     */
     public static Cardinality createCardinality(Multiplicity multiplicity) {
         if (multiplicity == Multiplicity.OPTIONAL || multiplicity == Multiplicity.REQUIRED) {
             return Cardinality.SINGLE;
@@ -67,11 +89,24 @@ public class TitanObjectFactory {
     }
 
         
-
+    /**
+     * Creates a Titan0GraphQuery that corresponds to the given
+     * GraphQuery.
+     * 
+     * @param source
+     * @return
+     */
     public static Titan0GraphQuery createQuery(GraphQuery query) {
        return new Titan0GraphQuery(query);
     }
 
+     /**
+     * Creates a AtlasVertex that corresponds to the given
+     * Titan Vertex.
+     * 
+     * @param source
+     * @return
+     */
     public static AtlasVertex<Titan0Vertex, Titan0Edge> createVertex(Vertex source) {
         if(source == null) {
             return null;

@@ -15,28 +15,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.atlas.utils.adapters.impl;
 
-import org.apache.atlas.repository.graphdb.AtlasVertex;
+package org.apache.atlas.utils;
+
+import org.apache.atlas.repository.graphdb.AtlasEdge;
 import org.apache.atlas.repository.graphdb.titan0.Titan0Edge;
 import org.apache.atlas.repository.graphdb.titan0.Titan0Vertex;
 import org.apache.atlas.repository.graphdb.titan0.TitanObjectFactory;
-import org.apache.atlas.utils.adapters.Mapper;
 
-import com.tinkerpop.blueprints.Vertex;
+import com.google.common.base.Function;
+import com.tinkerpop.blueprints.Edge;
 
-/** 
- * Mapper that converts Titan vertices to Atlas vertices. 
- */
-public class VertexMapper implements Mapper<Vertex, AtlasVertex<Titan0Vertex, Titan0Edge>> {
+/**
+ * Google Guava function that converts an Edge to an AtlasEdge
+ *  */
+public class EdgeToAtlasEdgeFunction implements Function<Edge, AtlasEdge<Titan0Vertex, Titan0Edge>> {
+
+    public static final EdgeToAtlasEdgeFunction INSTANCE = new EdgeToAtlasEdgeFunction();
     
-    public static VertexMapper INSTANCE = new VertexMapper();
-    
-    private VertexMapper() {
-        
+    private EdgeToAtlasEdgeFunction() {
+     
     }
+
+    /* (non-Javadoc)
+     * @see com.google.common.base.Function#apply(java.lang.Object)
+     */
     @Override
-    public AtlasVertex<Titan0Vertex, Titan0Edge> map(Vertex source) {
-       return TitanObjectFactory.createVertex(source);
+    public AtlasEdge<Titan0Vertex, Titan0Edge> apply(Edge edge) {
+      
+        return TitanObjectFactory.createEdge(edge);
     }
+  
+
 }
