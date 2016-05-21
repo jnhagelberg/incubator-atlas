@@ -2,6 +2,8 @@
 package org.apache.atlas.repository.graphdb.titan1;
 
 
+import java.util.Collection;
+
 import org.apache.atlas.repository.graphdb.AtlasGraphManagement;
 import org.apache.atlas.typesystem.types.Multiplicity;
 import org.apache.commons.lang.StringUtils;
@@ -118,5 +120,13 @@ public class Titan1GraphManagement implements AtlasGraphManagement {
         for (char c : RESERVED_CHARS)
             Preconditions.checkArgument(name.indexOf(c) < 0, "Name can not contains reserved character %s: %s", c, name);
        
+    }
+    
+        /* (non-Javadoc)
+     * @see org.apache.atlas.repository.graphdb.AtlasGraphManagement#waitForIndexAvailibility(java.util.Collection)
+     */
+    @Override
+    public void waitForIndexAvailibility(Collection<String> indexNames) {
+        //nothing to do
     }
 }

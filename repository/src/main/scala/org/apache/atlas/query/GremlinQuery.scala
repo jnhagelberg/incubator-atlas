@@ -20,13 +20,27 @@ package org.apache.atlas.query
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
-import scala.collection.mutable.ListBuffer
+
+import org.apache.atlas.query.TypeUtils.FieldInfo;
 import org.apache.atlas.query.Expressions._
 import org.apache.atlas.repository.graphdb.GremlinVersion
 import org.apache.atlas.typesystem.types.DataTypes
 import org.apache.atlas.typesystem.types.DataTypes.TypeCategory
+import org.apache.atlas.typesystem.types.IDataType
 import org.apache.atlas.typesystem.types.TypeSystem
+import org.apache.atlas.typesystem.types.AttributeInfo
 import org.joda.time.format.ISODateTimeFormat
+import org.apache.atlas.typesystem.types.DataTypes.BigDecimalType
+import org.apache.atlas.typesystem.types.DataTypes.ByteType
+import org.apache.atlas.typesystem.types.DataTypes.BooleanType
+import org.apache.atlas.typesystem.types.DataTypes.DateType
+import org.apache.atlas.typesystem.types.DataTypes.BigIntegerType
+import org.apache.atlas.typesystem.types.DataTypes.IntType
+import org.apache.atlas.typesystem.types.DataTypes.StringType
+import org.apache.atlas.typesystem.types.DataTypes.LongType
+import org.apache.atlas.typesystem.types.DataTypes.DoubleType
+import org.apache.atlas.typesystem.types.DataTypes.FloatType
+import org.apache.atlas.typesystem.types.DataTypes.ShortType
 
 trait IntSequence {
     def next: Int
@@ -217,7 +231,7 @@ class GremlinTranslator(expr: Expression,
             if fe.dataType.getTypeCategory == TypeCategory.PRIMITIVE || fe.dataType.getTypeCategory == TypeCategory.ARRAY => {
             val fN = "\"" + gPersistenceBehavior.fieldNameInVertex(fInfo.dataType, fInfo.attrInfo) + "\""
             child match {
-                case Some(e) => s"${genQuery(e, inSelect)}.$fN"
+                case Some(e) => genPropertyAccessExpr(e, fInfo, fN, inSelect)
                 case None => s"$fN"
             }
         }
@@ -316,7 +330,7 @@ class GremlinTranslator(expr: Expression,
                else {
                     //gremlin 3
                     val srcNamesString = srcNamesList.mkString("", ",", "")
-                    val srcExprsString = srcExprsStringList.foldLeft("")(_ + ".by{" + _ + "}")
+                    val srcExprsString = srcExprsStringList.foldLeft("")(_ + ".by({" + _ + "} as Function)")
                     System.out.println("srcNamesList: " + srcNamesList);
                     System.out.println("srcExprsList: " + srcExprsList);
 
@@ -431,6 +445,18 @@ class GremlinTranslator(expr: Expression,
         }
         case x => throw new GremlinTranslationException(x, "expression not yet supported")
     }    
+
+    def genPropertyAccessExpr(e: Expression, fInfo : FieldInfo, propertyName: String, inSelect: Boolean) : String = {
+
+        if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {                 
+            s"${genQuery(e, inSelect)}.$propertyName"
+        }
+        else {
+            val attrInfo : AttributeInfo = fInfo.attrInfo; 
+            val attrType : IDataType[_] = attrInfo.dataType;
+            s"${genQuery(e, inSelect)}.${getPrimitiveTypeQualifier(attrType)}value($propertyName)"
+        }
+    }
     
     def genHasPredicate(fieldGremlinExpr: String, c: ComparisonExpression, expr2: Any) : String = {
             
@@ -440,6 +466,20 @@ class GremlinTranslator(expr: Expression,
             else {
                 return s"""has("${fieldGremlinExpr}", ${gPersistenceBehavior.gremlinCompOp(c)}($expr2))""";
             }
+    }
+   
+    def getPrimitiveTypeQualifier : PartialFunction[IDataType[_],String]  = {
+
+        case t:BooleanType => "<Boolean>";
+        case t:ByteType => "<Byte>";        
+        case t:DateType => "<Long>"; //dates are stored numerically
+        case t:DoubleType => "<Double>";
+        case t:FloatType => "<Float>";
+        case t:IntType => "<Integer>";
+        case t:LongType => "<Long>";
+        case t:ShortType => "<Short>";
+        case t:StringType => "<String>";
+        case default => "";
     }
     
     def genFullQuery(expr: Expression): String = {

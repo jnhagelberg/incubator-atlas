@@ -111,7 +111,7 @@ trait GraphPersistenceStrategies {
             //traversed in the loop to be selected.  The logic here handles that
             //case by converting the result to a list and just selecting the
             //last item from it.
-            "(((it as Object[]) as List).last())"
+            "(((it as Vertex[]) as List<Vertex>).last())"
         }
         else {
             "it"
@@ -240,7 +240,7 @@ trait GraphPersistenceStrategies {
         )
     }
 
-    private def newSetVar(varName : String) = s"$varName = [] as Set"
+    private def newSetVar(varName : String) = s"def $varName = [] as Set"
 
     private def fillVarWithTypeInstances(typeName : String, fillVar : String) = {
         s"""g.V().has("${typeAttributeName}", "${typeName}").fill($fillVar)"""

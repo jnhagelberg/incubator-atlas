@@ -18,6 +18,8 @@
 package org.apache.atlas.repository.graphdb.titan0;
 
 
+import java.util.Collection;
+
 import org.apache.atlas.repository.graphdb.AtlasGraphManagement;
 import org.apache.atlas.typesystem.types.Multiplicity;
 
@@ -119,6 +121,15 @@ public class Titan0DatabaseManager implements AtlasGraphManagement {
     @Override
     public void commit() { 
         management_.commit();        
+    }
+
+
+    /* (non-Javadoc)
+     * @see org.apache.atlas.repository.graphdb.AtlasGraphManagement#waitForIndexAvailibility(java.util.Collection)
+     */
+    @Override
+    public void waitForIndexAvailibility(Collection<String> indexNames) {
+        //nothing to do
     }
 
 }

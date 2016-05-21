@@ -92,7 +92,7 @@ class GremlinEvaluator[V, E](qry: GremlinQuery, persistenceStrategy: GraphPersis
             val sType = oType.asInstanceOf[StructType]            
             val rows = rawRes.asInstanceOf[java.util.List[AnyRef]].map { r =>
                 val rV = instanceObject(r)
-                               val sInstance = sType.createInstance()
+                val sInstance = sType.createInstance()
                 val selObj = SelectExpressionHelper.extractSelectExpression(qry.expr)
                 if (selObj.isDefined)
                 {

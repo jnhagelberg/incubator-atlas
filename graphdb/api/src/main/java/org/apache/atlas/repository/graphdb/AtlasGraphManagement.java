@@ -19,6 +19,7 @@
 package org.apache.atlas.repository.graphdb;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -106,5 +107,11 @@ public interface AtlasGraphManagement {
     void createBackingIndex(String propertyName, String vertexIndexName, Class propertyClass,
             Multiplicity multiplicity);
 
+    /**
+     * Blocks until the indices with the given names are available for use.
+     * 
+     * @param indexNames
+     */
+    void waitForIndexAvailibility(Collection<String> indexNames);
 
 }
