@@ -35,26 +35,26 @@ public interface AtlasEdge<V,E> extends AtlasElement {
 
     /**
      * Gets the outgoing vertex for this edge
-     * 
+     *
      * @param in
      * @return
      */
     AtlasVertex<V,E> getOutVertex();
-    
+
     /**
      * Gets the label associated with this edge.
-     * 
+     *
      * @return
      */
     String getLabel();
-    
+
     /**
      * Converts the edge to an instance of the underlying implementation class.  This
      * is syntactic sugar that allows the graph database implementation code to be strongly typed.  This
-     * should not be called in other places. 
-     * 
+     * should not be called in other places.
+     *
      * @return
      */
-    public E getE();    
+    public E getE();
 
 }

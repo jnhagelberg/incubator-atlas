@@ -21,7 +21,7 @@ import org.apache.atlas.repository.graphdb.AtlasEdge;
 import org.apache.atlas.repository.graphdb.AtlasGraphQuery;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.utils.EdgeToAtlasEdgeFunction;
-import org.apache.atlas.utils.VertexToAtlasVertexFuncion;
+import org.apache.atlas.utils.VertexToAtlasVertexFunction;
 
 import com.google.common.collect.Iterables;
 import com.tinkerpop.blueprints.Compare;
@@ -29,10 +29,13 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Vertex;
 
+/**
+ * Titan 0.5.4 implementation of AtlasGraphQuery
+ */
 public class Titan0GraphQuery implements AtlasGraphQuery<Titan0Vertex, Titan0Edge> {
 
     private GraphQuery wrapped_;
-    
+
     public Titan0GraphQuery(GraphQuery query) {
         wrapped_ = query;
     }
@@ -41,20 +44,20 @@ public class Titan0GraphQuery implements AtlasGraphQuery<Titan0Vertex, Titan0Edg
     public AtlasGraphQuery<Titan0Vertex, Titan0Edge> has(String propertyKey, Object value) {
         GraphQuery result = wrapped_.has(propertyKey, value);
         return wrapResult(result);
-        
+
     }
 
     private AtlasGraphQuery<Titan0Vertex, Titan0Edge> wrapResult(GraphQuery result) {
         if(result == wrapped_) {
             return this;
         }
-        return TitanObjectFactory.createQuery(result);
+        return GraphDbObjectFactory.createQuery(result);
     }
 
     @Override
     public Iterable<AtlasVertex<Titan0Vertex, Titan0Edge>> vertices() {
         Iterable<Vertex> result = wrapped_.vertices();
-        return Iterables.transform(result, VertexToAtlasVertexFuncion.INSTANCE);
+        return Iterables.transform(result, VertexToAtlasVertexFunction.INSTANCE);
     }
 
     @Override
@@ -69,7 +72,7 @@ public class Titan0GraphQuery implements AtlasGraphQuery<Titan0Vertex, Titan0Edg
         GraphQuery result = wrapped_.has(propertyKey, c, value);
         return wrapResult(result);
     }
-    
+
     private Compare getGremlinPredicate(ComparisionOperator op) {
         switch(op) {
             case EQUAL:
@@ -80,7 +83,7 @@ public class Titan0GraphQuery implements AtlasGraphQuery<Titan0Vertex, Titan0Edg
                 return Compare.LESS_THAN_EQUAL;
             default:
             throw new RuntimeException("Unsupported comparison operator:" + op);
-        }               
+        }
     }
 
 }

@@ -24,50 +24,51 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.atlas.AtlasException;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.typesystem.types.Multiplicity;
 
 /**
  * Management interface for a graph
- * 
+ *
  */
 public interface AtlasGraphManagement {
-    
-    public static final Set<String> MULTIPLICITY_MANY_PROPERTY_KEYS = 
+
+    public static final Set<String> MULTIPLICITY_MANY_PROPERTY_KEYS =
             Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
                     Constants.SUPER_TYPES_PROPERTY_KEY,
                     Constants.TRAIT_NAMES_PROPERTY_KEY )));
 
-    
+
     /**
      * Checks whether a property with the given key has been defined in the graph schema.
-     * 
+     *
      * @param key
      * @return
      */
     boolean containsPropertyKey(String key);
 
     /**
-     * Creates a mixed Vertex index for the graph 
-     * 
+     * Creates a mixed Vertex index for the graph
+     *
      * @param index the name of the index to create
      * @param backingIndex the name of the backing index to use
      */
     void buildMixedVertexIndex(String index, String backingIndex);
-    
-    
+
+
     /**
-     * Creates a mixed Edge index for the graph 
-     * 
+     * Creates a mixed Edge index for the graph
+     *
      * @param index the name of the index to create
      * @param backingIndex the name of the backing index to use
      */
     void buildMixedEdgeIndex(String index, String backingIndex);
 
-    
+
     /**
-     * Creates a full text index for the given property 
-     * 
+     * Creates a full text index for the given property
+     *
      * @param  indexName the name of the index to create
      * @param propertyKey the name of the property
      * @param backingIndex the name of the backing index to use
@@ -87,7 +88,7 @@ public interface AtlasGraphManagement {
 
     /**
      * Creates a composite index for the given property.
-     * 
+     *
      * @param propertyName name of the property being indexed
      * @param propertyClass the java class of the property value(s)
      * @param multiplicity the multiplicity of the property
@@ -95,10 +96,10 @@ public interface AtlasGraphManagement {
      */
     void createCompositeIndex(String propertyName, Class propertyClass, Multiplicity multiplicity,
             boolean isUnique);
-    
+
     /**
      * Creates an index for a property.
-     * 
+     *
      * @param propertyName name of the property being indexed
      * @param vertexIndexName name of the index to create
      * @param propertyClass the java class of the property value(s)
@@ -108,10 +109,32 @@ public interface AtlasGraphManagement {
             Multiplicity multiplicity);
 
     /**
-     * Blocks until the indices with the given names are available for use.
-     * 
-     * @param indexNames
+     * Blocks until the indices with the given names are fully enabled.
+     *
+     * @param indexNames the names of the indices to wait for.
+     *
+     * @throws AtlasException if the timeout is exceeded while waiting for the indices to
+     *  be enabled.  The timeout is currently hard-coded to 10 minutes.
      */
-    void waitForIndexAvailibility(Collection<String> indexNames);
+    void waitForIndexAvailibility(Collection<String> indexNames) throws AtlasException;
+
+    /**
+     * Checks whether the given vertex index exists and contains a property
+     * key with the given name.
+     *
+     * @param vertexIndex
+     * @param propertyName
+     * @return
+     */
+    boolean vertexIndexContainsPropertyKey(String vertexIndex, String propertyName);
+
+    /**
+     * Checks whether the a vertex index with the specified name has been created.
+     *
+     * @param vertexIndex
+     * @return
+     */
+    boolean containsVertexIndex(String vertexIndex);
+
 
 }

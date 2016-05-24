@@ -9,9 +9,11 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.script.Bindings;
+import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
+import javax.script.SimpleScriptContext;
 
 import org.apache.atlas.repository.graphdb.AtlasEdge;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
@@ -22,6 +24,9 @@ import org.apache.atlas.repository.graphdb.AtlasSchemaViolationException;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.repository.graphdb.GremlinVersion;
 import org.apache.atlas.utils.adapters.IteratorAdapter;
+import org.apache.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine;
+import org.apache.tinkerpop.gremlin.groovy.jsr223.customizer.CompileStaticCustomizerProvider;
+import org.apache.tinkerpop.gremlin.groovy.jsr223.customizer.TypeCheckedCustomizerProvider;
 import org.apache.tinkerpop.gremlin.process.traversal.step.util.ImmutablePath;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Element;
@@ -271,11 +276,26 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
     @Override
     public Object executeGremlinScript(String gremlinQuery) throws ScriptException {
         
-        ScriptEngineManager manager = new ScriptEngineManager();
-        ScriptEngine engine = manager.getEngineByName("gremlin-groovy");
+        //temporarily enable type checking
+        //TypeCheckedCustomizerProvider provider = new TypeCheckedCustomizerProvider();
+        CompileStaticCustomizerProvider provider2 = new CompileStaticCustomizerProvider();
+
+        //ScriptEngineManager manager = new ScriptEngineManager();
+        GremlinGroovyScriptEngine engine = new GremlinGroovyScriptEngine( provider2);
+        ScriptContext ctx = new SimpleScriptContext();
+        StringBuilder builder = new StringBuilder();
+        
+        builder.append("import static org.apache.tinkerpop.gremlin.process.traversal.P.*;");
+        builder.append("import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*;");
+        builder.append("import java.util.function.Function;");
+        builder.append("import org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.*;");
+        builder.append("import org.apache.tinkerpop.gremlin.structure.*;");
+        builder.append("def g = binding.getVariable('g') as GraphTraversalSource;"); //make static compiler happy, add g to scope
+        builder.append(gremlinQuery);
         Bindings bindings = engine.createBindings();
         bindings.put("g", getGraph().traversal());
-        Object result = engine.eval(gremlinQuery, bindings);
+        ctx.setBindings(bindings, ScriptContext.GLOBAL_SCOPE);
+        Object result = engine.eval(builder.toString(), bindings);
         return result;
     }
 }

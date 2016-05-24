@@ -27,10 +27,10 @@ package org.apache.atlas.repository.graphdb;
 public interface AtlasGraphQuery<V,E> {
 
     /**
-     * Adds a predicate that the returned elements must have the specified 
+     * Adds a predicate that the returned elements must have the specified
      * property and that one of the values of the property must be the
      * given value.
-     * 
+     *
      * @param propertyKey
      * @param value
      * @return
@@ -43,19 +43,19 @@ public interface AtlasGraphQuery<V,E> {
      */
     Iterable<AtlasVertex<V, E>> vertices();
 
-    
+
     /**
      * Executes the query and returns the matching edges.
      * @return
      */
     Iterable<AtlasEdge<V, E>> edges();
 
-    
+
 
     /**
-     * Adds a predicate that the returned elements must have the specified 
+     * Adds a predicate that the returned elements must have the specified
      * property and that its value matches the criterion specified.
-     * 
+     *
      * @param propertyKey
      * @param value
      * @return

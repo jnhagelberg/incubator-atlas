@@ -30,27 +30,27 @@ public interface AtlasIndexQuery<V,E> {
 
     /**
      * Gets the query results.
-     * 
+     *
      * @return
      */
     Iterator<Result<V,E>> vertices();
 
-    /** 
+    /**
      * Query result from an index query.
-     * 
+     *
      * @param <V>
      * @param <E>
      */
     public interface Result<V,E> {
-        
+
         /**
          * Gets the vertex for this result
          */
         AtlasVertex<V,E> getVertex();
-        
+
         /**
          * Gets the score for this result.
-         * 
+         *
          */
         double getScore();
 

@@ -20,7 +20,7 @@ package org.apache.atlas.repository.graphdb;
 import java.util.Collection;
 
 /**
- * Represents a Vertex 
+ * Represents a Vertex
  *
  * @param <V> vertex class used by the graph
  * @param <E> edge class used by the graph
@@ -31,27 +31,27 @@ public interface AtlasVertex<V,E> extends AtlasElement {
      * Gets the edges incident to this vertex going the
      * specified direction that have the specified edgeLabel.  If
      * the edgeLabel is null, it is ignored.
-     * 
+     *
      * @param in
      * @return
      */
-    Iterable<AtlasEdge<V,E>> getEdges(AtlasEdgeDirection out, String edgeLabel);	
+    Iterable<AtlasEdge<V,E>> getEdges(AtlasEdgeDirection out, String edgeLabel);
 
     /**
      * Gets the edges associated with this vertex going the
      * specified direction.
-     * 
+     *
      * @param in
      * @return
      */
     Iterable<AtlasEdge<V,E>> getEdges(AtlasEdgeDirection in);
-    
+
     /**
      * Adds a value to a multiplicity many property.  Follows Java set
      * semantics.  If the property is already present, it is not added again,
      * and no exception is thrown.
-     * 
-     * 
+     *
+     *
      * @param propertyName
      * @param value
      */
@@ -62,7 +62,7 @@ public interface AtlasVertex<V,E> extends AtlasElement {
      * @param propertyName
      * @return
      */
-    <T> Collection<T> getPropertyValues(String propertyName); 
+    <T> Collection<T> getPropertyValues(String propertyName);
 
     /**
      * Creates a vertex query.
@@ -74,7 +74,7 @@ public interface AtlasVertex<V,E> extends AtlasElement {
      * Syntactic sugar to get the vertex as an instance of its
      * implementation type.  This allows the graph database implementation
      * code to be strongly typed.
-     * 
+     *
      * @return
      */
     V getV();

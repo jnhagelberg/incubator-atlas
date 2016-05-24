@@ -38,6 +38,7 @@ import org.apache.atlas.typesystem.types.AttributeDefinition;
 import org.apache.atlas.typesystem.types.AttributeInfo;
 import org.apache.atlas.typesystem.types.ClassType;
 import org.apache.atlas.typesystem.types.DataTypes;
+import org.apache.atlas.typesystem.types.DataTypes.TypeCategory;
 import org.apache.atlas.typesystem.types.EnumType;
 import org.apache.atlas.typesystem.types.EnumTypeDefinition;
 import org.apache.atlas.typesystem.types.EnumValue;
@@ -240,7 +241,9 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
 
         while (vertices.hasNext()) {
             AtlasVertex<V,E> vertex = vertices.next();
-            DataTypes.TypeCategory typeCategory = vertex.getProperty(Constants.TYPE_CATEGORY_PROPERTY_KEY);
+            //temporary workaround
+            
+            DataTypes.TypeCategory typeCategory = getTypeCategory(vertex);
             String typeName = vertex.getProperty(Constants.TYPENAME_PROPERTY_KEY);
             String typeDescription = vertex.getProperty(Constants.TYPEDESCRIPTION_PROPERTY_KEY);
             LOG.info("Restoring type {}.{}.{}", typeCategory, typeName, typeDescription);
@@ -271,6 +274,14 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
             }
         }
         return TypesUtil.getTypesDef(enums.build(), structs.build(), traits.build(), classTypes.build());
+    }
+
+    private TypeCategory getTypeCategory(AtlasVertex<V, E> vertex) {
+        Object result =  vertex.getProperty(Constants.TYPE_CATEGORY_PROPERTY_KEY);
+        if(result instanceof TypeCategory) {
+            return (TypeCategory)result;
+        }
+        return TypeCategory.valueOf(String.valueOf(result));
     }
 
     private EnumTypeDefinition getEnumType(AtlasVertex<V,E> vertex) throws AtlasException {

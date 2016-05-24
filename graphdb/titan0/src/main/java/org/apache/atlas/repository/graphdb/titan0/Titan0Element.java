@@ -30,14 +30,17 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONMode;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONUtility;
 
+/**
+ * Titan 0.5.4 implementation of AtlasElement
+ */
 public class Titan0Element<T extends Element> implements AtlasElement {
 
     protected T element_;
-    
+
     public Titan0Element(T element) {
         element_ = element;
     }
-    
+
     @Override
     public Object getId() {
         return element_.getId();
@@ -55,18 +58,18 @@ public class Titan0Element<T extends Element> implements AtlasElement {
         }
         catch(SchemaViolationException e) {
             throw new AtlasSchemaViolationException(e);
-        }        
+        }
     }
-    
+
     @Override
     public <T> T getProperty(String propertyName) {
         return element_.getProperty(propertyName);
-    }     
-    
+    }
+
     @Override
     public void removeProperty(String propertyName) {
         element_.removeProperty(propertyName);
-        
+
     }
 
     @Override
@@ -88,22 +91,22 @@ public class Titan0Element<T extends Element> implements AtlasElement {
     @Override
     public void setListProperty(String propertyName, List<String> values) {
         setProperty(propertyName, values);
-        
+
     }
-    
+
     //not in interface
     public T getWrappedElement() {
         return element_;
     }
-    
+
     @Override
     public int hashCode() {
         int result = 37;
         result = 17*result + getClass().hashCode();
         result = 17*result + getWrappedElement().hashCode();
         return result;
-    }    
-    
+    }
+
     @Override
     public boolean equals(Object other) {
         if(other.getClass() != getClass()) {

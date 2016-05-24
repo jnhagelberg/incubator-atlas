@@ -49,8 +49,8 @@ public class Titan0Vertex extends Titan0Element<Vertex> implements AtlasVertex<T
         Iterable<Edge> titanEdges = element_.getEdges(
                 TitanObjectFactory.createDirection(dir), edgeLabel);
         return Iterables.transform(titanEdges, EdgeToAtlasEdgeFunction.INSTANCE);
-    } 
-    
+    }
+
     private TitanVertex getAsTitanVertex() {
         return (TitanVertex)element_;
     }
@@ -60,17 +60,17 @@ public class Titan0Vertex extends Titan0Element<Vertex> implements AtlasVertex<T
         Iterable<Edge> titanResult = element_.getEdges(TitanObjectFactory.createDirection(in));
         return Iterables.transform(titanResult, EdgeToAtlasEdgeFunction.INSTANCE);
     }
-    
+
     @Override
     public <T> T getProperty(String propertyName) {
-        
+
         if(AtlasGraphManagement.MULTIPLICITY_MANY_PROPERTY_KEYS.contains(propertyName)) {
             //throw exception in this case to be consistent with Titan 1.0.0 behavior.
             throw new IllegalStateException();
         }
         return super.getProperty(propertyName);
     }
-    
+
     public <T> void setProperty(String propertyName, T value) {
 
         try {
@@ -88,8 +88,8 @@ public class Titan0Vertex extends Titan0Element<Vertex> implements AtlasVertex<T
             }
         }
     }
-    
-    
+
+
     @Override
     public <T> void addProperty(String propertyName, T value) {
         try {
@@ -107,14 +107,14 @@ public class Titan0Vertex extends Titan0Element<Vertex> implements AtlasVertex<T
 
     @Override
     public <T> Collection<T> getPropertyValues(String key) {
-        
+
         TitanVertex tv = getAsTitanVertex();
         Collection<T> result = new ArrayList<T>();
         for (TitanProperty property : tv.getProperties(key)) {
             result.add((T) property.getValue());
         }
-        return result;        
-    }   
+        return result;
+    }
 
     @Override
     public AtlasVertexQuery<Titan0Vertex, Titan0Edge> query() {
@@ -123,8 +123,8 @@ public class Titan0Vertex extends Titan0Element<Vertex> implements AtlasVertex<T
 
     @Override
     public Titan0Vertex getV() {
-        
+
         return this;
-    }  
+    }
 
 }

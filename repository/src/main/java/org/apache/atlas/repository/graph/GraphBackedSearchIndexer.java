@@ -88,7 +88,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         
         try {
             
-            if (management.containsPropertyKey(Constants.VERTEX_TYPE_PROPERTY_KEY)) {
+            if (management.containsVertexIndex(Constants.VERTEX_TYPE_PROPERTY_KEY)) {
                 LOG.info("Global indexes already exist for graph");
                 return;
             }
@@ -299,29 +299,31 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
     private void createCompositeAndMixedIndex(AtlasGraphManagement management, Collection<String> createdIndexNames, String propertyName, Class propertyClass,
             boolean isUnique, Multiplicity cardinality, boolean force) {
 
-        if(management.containsPropertyKey(propertyName)) {
-            //index was already created
-            return;            
-        }
+      
         
         if (checkIfMixedIndexApplicable(propertyClass, cardinality)) {
             //Use backing index
-            LOG.debug("Creating backing index for property {} of type {} ", propertyName, propertyClass.getName());
-            management.createBackingIndex(propertyName, Constants.VERTEX_INDEX, propertyClass, cardinality);
-            LOG.debug("Created backing index for property {} of type {} ", propertyName, propertyClass.getName());
+            if( ! management.vertexIndexContainsPropertyKey(Constants.VERTEX_INDEX, propertyName)) {
+                LOG.debug("Creating backing index for property {} of type {} ", propertyName, propertyClass.getName());
+                management.createBackingIndex(propertyName, Constants.VERTEX_INDEX, propertyClass, cardinality);
+                LOG.debug("Created backing index for property {} of type {} ", propertyName, propertyClass.getName());
+            }
         }
 
         //Create mixed index only for meta properties and unique constraints:
         //Unique can't be achieved with backing/mixed index
         //Creating composite index for every attribute will bloat up the index
         if (force || isUnique) {
+            if( ! management.vertexIndexContainsPropertyKey(propertyName, propertyName)) {
             LOG.debug("Creating composite index for property {} of type {} ", propertyName,
                     propertyClass.getName());
             
-            management.createCompositeIndex(propertyName, propertyClass, cardinality, isUnique);
             
-            createdIndexNames.add(propertyName);
-            LOG.debug("Created composite index for property {} of type {} ", propertyName, propertyClass.getName());
+                management.createCompositeIndex(propertyName, propertyClass, cardinality, isUnique);
+            
+                createdIndexNames.add(propertyName);
+                LOG.debug("Created composite index for property {} of type {} ", propertyName, propertyClass.getName());
+            }
         }
 
     }

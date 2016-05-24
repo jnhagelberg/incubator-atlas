@@ -22,7 +22,7 @@ import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.repository.graphdb.AtlasVertexQuery;
 import org.apache.atlas.utils.EdgeToAtlasEdgeFunction;
-import org.apache.atlas.utils.VertexToAtlasVertexFuncion;
+import org.apache.atlas.utils.VertexToAtlasVertexFunction;
 
 import com.google.common.collect.Iterables;
 import com.tinkerpop.blueprints.Edge;
@@ -44,26 +44,26 @@ public class Titan0VertexQuery implements AtlasVertexQuery<Titan0Vertex, Titan0E
     public AtlasVertexQuery<Titan0Vertex, Titan0Edge> direction(AtlasEdgeDirection queryDirection) {
         query_.direction(TitanObjectFactory.createDirection(queryDirection));
         return this;
-        
+
     }
 
     @Override
     public Iterable<AtlasVertex<Titan0Vertex, Titan0Edge>> vertices() {
         Iterable<Vertex> vertices = query_.vertices();
-        return Iterables.transform(vertices, VertexToAtlasVertexFuncion.INSTANCE);
+        return Iterables.transform(vertices, VertexToAtlasVertexFunction.INSTANCE);
     }
 
     @Override
     public Iterable<AtlasEdge<Titan0Vertex, Titan0Edge>> edges() {
         Iterable<Edge> vertices = query_.edges();
         return Iterables.transform(vertices, EdgeToAtlasEdgeFunction.INSTANCE);
-   
+
     }
 
     @Override
     public long count() {
         return query_.count();
     }
-    
-    
+
+
 }

@@ -70,7 +70,7 @@ public class Titan1Database implements GraphDatabase<Titan1Vertex, Titan1Edge> {
     public Titan1Database() {
         
         //load the Gremlin 3 sugar plugin
-         SugarLoader.load();
+         //SugarLoader.load();
          
          //update registry
          GraphSONMapper.build().addRegistry(TitanIoRegistry.INSTANCE).create();           

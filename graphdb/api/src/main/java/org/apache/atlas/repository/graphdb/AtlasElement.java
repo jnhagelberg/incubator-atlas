@@ -27,7 +27,7 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 /**
- * Represents a graph element. 
+ * Represents a graph element.
  *
  */
 public interface AtlasElement {
@@ -46,52 +46,52 @@ public interface AtlasElement {
 
     /**
      * Gets the value of the element property with the given name.
-     * 
+     *
      * @param propertyName
      * @return
      * @throws IllegalStateException if the property is multi-valued in the graph schema.
      */
     <T> T getProperty(String propertyName);
-    
-    
+
+
     /**
-     * Gets the value of a multiplicity one property whose value is a String list.  
+     * Gets the value of a multiplicity one property whose value is a String list.
      * The lists of super types and traits are stored this way.  A separate method
      * is needed for this because special logic is required to handle this situation
      * in some implementations.
      */
     List<String> getListProperty(String propertyName) throws AtlasException;
-    
-    
+
+
     /**
-     * Sets a multiplicity one property whose value is a String list.  
+     * Sets a multiplicity one property whose value is a String list.
      * The lists of super types and traits are stored this way.  A separate method
      * is needed for this because special logic is required to handle this situation
      * in some implementations.
      */
     void setListProperty(String propertyName, List<String> values) throws AtlasException;
-    
+
     /**
      * Removes a property from the vertex.
      */
     void removeProperty(String propertyName);
 
     /**
-     * Sets a single-valued property to the given value.  For 
+     * Sets a single-valued property to the given value.  For
      * properties defined as multiplicty many in the graph schema, the value is added instead
      * (following set semantics)
-     *     
+     *
      * @param propertyName
      * @param value
      */
-    <T> void setProperty(String propertyName, T value);     
-    
-    
+    <T> void setProperty(String propertyName, T value);
+
+
     /**
      * Creates a Jettison JSONObject from this Element
      *
      * @param propertyKeys The property keys at the root of the element to serialize.  If null, then all keys are serialized.
      */
-    JSONObject toJson(Set<String> propertyKeys) throws JSONException;   
-    
+    JSONObject toJson(Set<String> propertyKeys) throws JSONException;
+
 }

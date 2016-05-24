@@ -26,7 +26,9 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.thinkaurelius.titan.core.TitanIndexQuery;
 import com.tinkerpop.blueprints.Vertex;
-
+/**
+ * Titan 0.5.4 implementation of AtlasIndexQuery
+ */
 public class Titan0IndexQuery implements AtlasIndexQuery<Titan0Vertex, Titan0Edge> {
 
     private TitanIndexQuery query_;
@@ -50,7 +52,7 @@ public class Titan0IndexQuery implements AtlasIndexQuery<Titan0Vertex, Titan0Edg
             return new ResultImpl(source);
         }
     }
-    
+
     private static class ResultImpl implements AtlasIndexQuery.Result<Titan0Vertex, Titan0Edge> {
         TitanIndexQuery.Result<Vertex> source_;
 
@@ -60,7 +62,7 @@ public class Titan0IndexQuery implements AtlasIndexQuery<Titan0Vertex, Titan0Edg
 
         @Override
         public AtlasVertex<Titan0Vertex, Titan0Edge> getVertex() {
-            return TitanObjectFactory.createVertex(source_.getElement());
+            return GraphDbObjectFactory.createVertex(source_.getElement());
         }
 
         @Override

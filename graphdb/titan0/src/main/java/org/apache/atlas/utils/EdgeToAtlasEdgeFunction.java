@@ -19,22 +19,24 @@
 package org.apache.atlas.utils;
 
 import org.apache.atlas.repository.graphdb.AtlasEdge;
+import org.apache.atlas.repository.graphdb.titan0.GraphDbObjectFactory;
 import org.apache.atlas.repository.graphdb.titan0.Titan0Edge;
 import org.apache.atlas.repository.graphdb.titan0.Titan0Vertex;
-import org.apache.atlas.repository.graphdb.titan0.TitanObjectFactory;
 
 import com.google.common.base.Function;
 import com.tinkerpop.blueprints.Edge;
 
 /**
  * Google Guava function that converts an Edge to an AtlasEdge
- *  */
+ *
+ * @see org.apache.atlas.repository.graphdb.titan0.Titan0Graph#getEdges() org.apache.atlas.repository.graphdb.titan0.Titan0Graph#getEdges() for an example of how this is used.
+ */
 public class EdgeToAtlasEdgeFunction implements Function<Edge, AtlasEdge<Titan0Vertex, Titan0Edge>> {
 
     public static final EdgeToAtlasEdgeFunction INSTANCE = new EdgeToAtlasEdgeFunction();
-    
+
     private EdgeToAtlasEdgeFunction() {
-     
+
     }
 
     /* (non-Javadoc)
@@ -42,9 +44,9 @@ public class EdgeToAtlasEdgeFunction implements Function<Edge, AtlasEdge<Titan0V
      */
     @Override
     public AtlasEdge<Titan0Vertex, Titan0Edge> apply(Edge edge) {
-      
-        return TitanObjectFactory.createEdge(edge);
+
+        return GraphDbObjectFactory.createEdge(edge);
     }
-  
+
 
 }

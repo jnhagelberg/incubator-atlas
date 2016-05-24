@@ -19,9 +19,9 @@
 package org.apache.atlas.utils;
 
 import org.apache.atlas.repository.graphdb.AtlasVertex;
+import org.apache.atlas.repository.graphdb.titan0.GraphDbObjectFactory;
 import org.apache.atlas.repository.graphdb.titan0.Titan0Edge;
 import org.apache.atlas.repository.graphdb.titan0.Titan0Vertex;
-import org.apache.atlas.repository.graphdb.titan0.TitanObjectFactory;
 
 import com.google.common.base.Function;
 import com.tinkerpop.blueprints.Vertex;
@@ -29,19 +29,19 @@ import com.tinkerpop.blueprints.Vertex;
 /**
  * Google Guava function that converts a Vertex to an AtlasVertex
  */
-public class VertexToAtlasVertexFuncion implements Function<Vertex, AtlasVertex<Titan0Vertex, Titan0Edge>> {
+public class VertexToAtlasVertexFunction implements Function<Vertex, AtlasVertex<Titan0Vertex, Titan0Edge>> {
 
-    public static final VertexToAtlasVertexFuncion INSTANCE = new VertexToAtlasVertexFuncion();
-    
-    private VertexToAtlasVertexFuncion() {
-     
+    public static final VertexToAtlasVertexFunction INSTANCE = new VertexToAtlasVertexFunction();
+
+    private VertexToAtlasVertexFunction() {
+
     }
     /* (non-Javadoc)
      * @see com.google.common.base.Function#apply(java.lang.Object)
      */
     @Override
     public AtlasVertex<Titan0Vertex, Titan0Edge> apply(Vertex vertex) {
-        return TitanObjectFactory.createVertex(vertex);
+        return GraphDbObjectFactory.createVertex(vertex);
     }
 
 }

@@ -39,7 +39,7 @@ import com.thinkaurelius.titan.diskstorage.StandardIndexProvider;
 import com.thinkaurelius.titan.diskstorage.solr.Solr5Index;
 
 /**
- * Default implementation for Graph Provider that doles out Titan Graph.
+ * Titan 0.5.4 implementation of GraphDatabase
  */
 public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
 
@@ -105,13 +105,13 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
                     }
 
                     graphInstance = TitanFactory.open(config);
-                    validateIndexBackend(config);                    
+                    validateIndexBackend(config);
                 }
             }
         }
         return graphInstance;
     }
-    
+
     public static void unload() {
 
         synchronized (Titan0Database.class) {
@@ -126,11 +126,11 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
 
     static void validateIndexBackend(Configuration config) {
         String configuredIndexBackend = config.getString(INDEX_BACKEND_CONF);
-        
+
         TitanManagement managementSystem = getGraphInstance().getManagementSystem();
         String currentIndexBackend = managementSystem.get(INDEX_BACKEND_CONF);
         managementSystem.commit();
-        
+
         if(! equals(configuredIndexBackend, currentIndexBackend)) {
             throw new RuntimeException("Configured Index Backend " + configuredIndexBackend + " differs from earlier configured Index Backend " + currentIndexBackend + ". Aborting!");
         }
@@ -143,7 +143,7 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
             return o2 == null;
         }
         return o1.equals(o2);
-    }    
+    }
 
     @Override
     public AtlasGraph<Titan0Vertex, Titan0Edge> getGraph() {
@@ -154,7 +154,7 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
     }
 
     @Override
-    public void unloadGraph() { 
+    public void unloadGraph() {
         unload();
     }
 
@@ -162,6 +162,6 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
     public boolean isGraphLoaded() {
         return graphInstance != null;
     }
-    
+
 
 }
