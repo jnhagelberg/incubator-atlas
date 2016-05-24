@@ -127,4 +127,12 @@ public class Titan0Vertex extends Titan0Element<Vertex> implements AtlasVertex<T
         return this;
     }
 
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return "Titan0Vertex [id=" + getId() + "]";
+    }
+
 }

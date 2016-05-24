@@ -18,8 +18,9 @@
 
 define(['require',
     'backbone',
-    'hbs!tmpl/tag/TagDetailTableLayoutView_tmpl'
-], function(require, Backbone, TagDetailTableLayoutView_tmpl) {
+    'hbs!tmpl/tag/TagDetailTableLayoutView_tmpl',
+    'utils/CommonViewFunction'
+], function(require, Backbone, TagDetailTableLayoutView_tmpl, CommonViewFunction) {
     'use strict';
 
     var TagDetailTableLayoutView = Backbone.Marionette.LayoutView.extend(
@@ -93,8 +94,8 @@ define(['require',
             },
             addModalView: function(e) {
                 var that = this;
-                require(['views/tag/addTagModalView'], function(addTagModalView) {
-                    var view = new addTagModalView({
+                require(['views/tag/addTagModalView'], function(AddTagModalView) {
+                    var view = new AddTagModalView({
                         vent: that.vent,
                         guid: that.guid,
                         modalCollection: that.collection
@@ -105,41 +106,26 @@ define(['require',
                 });
             },
             deleteTagDataModal: function(e) {
-                var tagName = $(e.currentTarget).data("name");
-                var that = this;
-                require([
-                    'modules/Modal'
-                ], function(Modal) {
-                    var modal = new Modal({
-                        title: 'Are you sure you want to delete ?',
-                        okText: 'Delete',
-                        htmlContent: "<b>Tag: " + tagName + "</b>",
-                        cancelText: "Cancel",
-                        allowCancel: true,
-                        okCloses: true,
-                        showFooter: true,
-                    }).open();
-                    modal.on('ok', function() {
-                        that.deleteTagData(e);
-                    });
-                    modal.on('closeModal', function() {
-                        modal.trigger('cancel');
-                    });
+                var tagName = $(e.currentTarget).data("name"),
+                    that = this,
+                    modal = CommonViewFunction.deleteTagModel(tagName);
+                modal.on('ok', function() {
+                    that.deleteTagData(e);
+                });
+                modal.on('closeModal', function() {
+                    modal.trigger('cancel');
                 });
             },
             deleteTagData: function(e) {
                 var that = this,
                     tagName = $(e.currentTarget).data("name");
-                require(['models/VTag'], function(VTag) {
-                    var tagModel = new VTag();
-                    tagModel.deleteTag(that.guid, tagName, {
-                        beforeSend: function() {},
-                        success: function(data) {
-                            that.collection.fetch({ reset: true });
-                        },
-                        error: function(error, data, status) {},
-                        complete: function() {}
-                    });
+                CommonViewFunction.deleteTag({
+                    'tagName': tagName,
+                    'guid': that.guid,
+                    callback: function() {
+                        that.$('.fontLoader').show();
+                        that.collection.fetch({ reset: true });
+                    }
                 });
             }
         });

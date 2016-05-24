@@ -40,6 +40,7 @@ import org.apache.atlas.repository.IndexException;
 import org.apache.atlas.repository.RepositoryException;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.AtlasGraphManagement;
+import org.apache.atlas.repository.graphdb.AtlasPropertyKey;
 import org.apache.atlas.typesystem.types.AttributeInfo;
 import org.apache.atlas.typesystem.types.ClassType;
 import org.apache.atlas.typesystem.types.DataTypes;
@@ -88,7 +89,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         
         try {
             
-            if (management.containsVertexIndex(Constants.VERTEX_TYPE_PROPERTY_KEY)) {
+            if (management.containsPropertyKey(Constants.VERTEX_TYPE_PROPERTY_KEY)) {
                 LOG.info("Global indexes already exist for graph");
                 return;
             }
@@ -103,23 +104,28 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
             createdIndexNames.add(Constants.EDGE_INDEX);
             
             // create a composite index for guid as its unique
-            createCompositeAndMixedIndex(management, createdIndexNames, Constants.GUID_PROPERTY_KEY, String.class, true,
+            createIndexes(management, createdIndexNames, Constants.GUID_PROPERTY_KEY, String.class, true,
                    Multiplicity.OPTIONAL, true);
     
-            // create a composite index for entity state
-            createCompositeAndMixedIndex(management, createdIndexNames, Constants.STATE_PROPERTY_KEY, String.class, false, Multiplicity.OPTIONAL, true);
+            // create a composite index for entity creation timestamp
+            createIndexes(management, createdIndexNames, Constants.TIMESTAMP_PROPERTY_KEY, Long.class, false, Multiplicity.OPTIONAL, true);
+
+            // create a composite index for entity modification timestamp
+            createIndexes(management, createdIndexNames, Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY, Long.class, false,
+                    Multiplicity.OPTIONAL, true);
+    
     
             // create a composite and mixed index for type since it can be combined with other keys
-            createCompositeAndMixedIndex(management, createdIndexNames, Constants.ENTITY_TYPE_PROPERTY_KEY, String.class, false, Multiplicity.OPTIONAL,
+            createIndexes(management, createdIndexNames, Constants.ENTITY_TYPE_PROPERTY_KEY, String.class, false, Multiplicity.OPTIONAL,
                     true);
     
             // create a composite and mixed index for type since it can be combined with other keys
-            createCompositeAndMixedIndex(management, createdIndexNames, Constants.SUPER_TYPES_PROPERTY_KEY, String.class, false, Multiplicity.SET,
+            createIndexes(management, createdIndexNames, Constants.SUPER_TYPES_PROPERTY_KEY, String.class, false, Multiplicity.SET,
                     true);
     
             // create a composite and mixed index for traitNames since it can be combined with other
             // keys. Traits must be a set and not a list.
-            createCompositeAndMixedIndex(management, createdIndexNames, Constants.TRAIT_NAMES_PROPERTY_KEY, String.class, false, Multiplicity.SET,
+            createIndexes(management, createdIndexNames, Constants.TRAIT_NAMES_PROPERTY_KEY, String.class, false, Multiplicity.SET,
                     true);
 
             // Index for full text search
@@ -140,7 +146,11 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
     }
 
     private void createFullTextIndex(AtlasGraphManagement management, Collection<String> createdIndexNames) {
-        management.createFullTextIndex(Constants.FULLTEXT_INDEX, Constants.ENTITY_TEXT_PROPERTY_KEY, Constants.BACKING_INDEX);
+        
+         AtlasPropertyKey fullText =
+                management.makePropertyKey(Constants.ENTITY_TEXT_PROPERTY_KEY, String.class, null);
+
+        management.createFullTextIndex(Constants.FULLTEXT_INDEX, fullText, Constants.BACKING_INDEX);
         createdIndexNames.add(Constants.FULLTEXT_INDEX);
         
         LOG.info("Created mixed index for {}", Constants.ENTITY_TEXT_PROPERTY_KEY);
@@ -148,11 +158,11 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
 
     private void createTypeStoreIndexes(AtlasGraphManagement management, Collection<String> createdIndexNames) {
         //Create unique index on typeName
-        createCompositeAndMixedIndex(management, createdIndexNames, Constants.TYPENAME_PROPERTY_KEY, String.class, true, Multiplicity.OPTIONAL, true);
+        createIndexes(management, createdIndexNames, Constants.TYPENAME_PROPERTY_KEY, String.class, true, Multiplicity.OPTIONAL, true);
 
         
         //create index on vertex type
-        createCompositeAndMixedIndex(management, createdIndexNames, Constants.VERTEX_TYPE_PROPERTY_KEY, String.class, false, Multiplicity.OPTIONAL, true);
+        createIndexes(management, createdIndexNames, Constants.VERTEX_TYPE_PROPERTY_KEY, String.class, false, Multiplicity.OPTIONAL, true);
     }
 
     /**
@@ -231,12 +241,12 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         final String propertyName = typeName + "." + field.name;
         switch (field.dataType().getTypeCategory()) {
         case PRIMITIVE:
-            createCompositeAndMixedIndex(management, createdIndexNames, propertyName, getPrimitiveClass(field.dataType()), false,
+            createIndexes(management, createdIndexNames, propertyName, getPrimitiveClass(field.dataType()), field.isUnique,
                     field.multiplicity, false);
             break;
 
         case ENUM:
-            createCompositeAndMixedIndex(management, createdIndexNames, propertyName, String.class, false, field.multiplicity, false);
+            createIndexes(management, createdIndexNames, propertyName, String.class, field.isUnique, field.multiplicity, false);
             break;
 
         case ARRAY:
@@ -296,34 +306,44 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
     }
 
 
-    private void createCompositeAndMixedIndex(AtlasGraphManagement management, Collection<String> createdIndexNames, String propertyName, Class propertyClass,
-            boolean isUnique, Multiplicity cardinality, boolean force) {
+    private AtlasPropertyKey createIndexes(AtlasGraphManagement management, Collection<String> createdIndexNames, String propertyName, Class propertyClass,
+            boolean isUnique, Multiplicity cardinality, boolean isSystemProperty) {
 
-      
+	    AtlasPropertyKey propertyKey = management.getPropertyKey(propertyName);
+      	if(propertyKey == null) {
+              propertyKey = management.makePropertyKey(propertyName, propertyClass, cardinality);
         
-        if (checkIfMixedIndexApplicable(propertyClass, cardinality)) {
-            //Use backing index
-            if( ! management.vertexIndexContainsPropertyKey(Constants.VERTEX_INDEX, propertyName)) {
-                LOG.debug("Creating backing index for property {} of type {} ", propertyName, propertyClass.getName());
-                management.createBackingIndex(propertyName, Constants.VERTEX_INDEX, propertyClass, cardinality);
-                LOG.debug("Created backing index for property {} of type {} ", propertyName, propertyClass.getName());
-            }
-        }
+      		  enhanceMixedIndex(management, propertyName, propertyClass, cardinality, propertyKey);
+        
+ 	        if (isSystemProperty) {
+ 	         	LOG.debug("Creating composite index for property {} of type {} ", propertyName,
+                	propertyClass.getName());
+            	    management.createCompositeIndex(propertyName, propertyKey, isUnique);
+        	    	createdIndexNames.add(propertyName);
+        
+        	}
+        	else if(isUnique) {
+        	    // send uniqueness as false because there can be many vertexes with the same property value
+                // but state can be active / deleted
+        		   	LOG.debug("Creating composite index for property {} of type {} ", propertyName,
+                	propertyClass.getName());
+        		
+        	     management.createCompositeIndex(propertyName, propertyKey, false);	
+        	     createdIndexNames.add(propertyName);        
+        	}
 
-        //Create mixed index only for meta properties and unique constraints:
-        //Unique can't be achieved with backing/mixed index
-        //Creating composite index for every attribute will bloat up the index
-        if (force || isUnique) {
-            if( ! management.vertexIndexContainsPropertyKey(propertyName, propertyName)) {
-            LOG.debug("Creating composite index for property {} of type {} ", propertyName,
-                    propertyClass.getName());
-            
-            
-                management.createCompositeIndex(propertyName, propertyClass, cardinality, isUnique);
-            
-                createdIndexNames.add(propertyName);
-                LOG.debug("Created composite index for property {} of type {} ", propertyName, propertyClass.getName());
-            }
+	    }
+	    return propertyKey;
+    }
+
+    private void enhanceMixedIndex(AtlasGraphManagement management, String propertyName, Class propertyClass,
+                                   Multiplicity multiplicity, AtlasPropertyKey propertyKey) {
+        if (checkIfMixedIndexApplicable(propertyClass, multiplicity)) {
+            //Use backing index
+           
+            LOG.debug("Creating backing index for property {} of type {} ", propertyName, propertyClass.getName());
+            management.addIndexKey(Constants.VERTEX_INDEX, propertyKey);
+            LOG.debug("Created backing index for property {} of type {} ", propertyName, propertyClass.getName());
         }
 
     }

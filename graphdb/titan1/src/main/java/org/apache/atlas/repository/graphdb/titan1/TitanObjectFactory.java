@@ -2,13 +2,17 @@
 package org.apache.atlas.repository.graphdb.titan1;
 
 import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
+import org.apache.atlas.repository.graphdb.AtlasGraphIndex;
+import org.apache.atlas.repository.graphdb.AtlasPropertyKey;
 import org.apache.atlas.typesystem.types.Multiplicity;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import com.thinkaurelius.titan.core.Cardinality;
+import com.thinkaurelius.titan.core.PropertyKey;
 import com.thinkaurelius.titan.core.TitanGraphQuery;
+import com.thinkaurelius.titan.core.schema.TitanGraphIndex;
 
 public class TitanObjectFactory {
     
@@ -58,4 +62,29 @@ public class TitanObjectFactory {
         return new Titan1Vertex(source);
     }
 
+    public static PropertyKey createPropertyKey(AtlasPropertyKey key) {
+        return ((Titan1PropertyKey)key).getWrappedPropertyKey();
+    }
+    
+    /**
+     * @param propertyKey
+     * @return
+     */
+    public static Titan1PropertyKey createPropertyKey(PropertyKey propertyKey) {
+        if(propertyKey == null) {
+            return null;
+        }
+        return new Titan1PropertyKey(propertyKey);
+    }
+
+    /**
+     * @param index
+     * @return
+     */
+    public static AtlasGraphIndex createGraphIndex(TitanGraphIndex index) {
+        if(index == null) {
+            return null;
+        }
+        return new Titan1GraphIndex(index);
+    }
 }

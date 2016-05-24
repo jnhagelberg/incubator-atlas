@@ -54,4 +54,9 @@ public class Titan0Edge extends Titan0Element<Edge> implements AtlasEdge<Titan0V
         Vertex v = element_.getVertex(Direction.OUT);
         return GraphDbObjectFactory.createVertex(v);
     }
+    
+    @Override
+    public String toString() {
+        return "Titan0Edge [id=" + getId() + "]";
+    }
 }

@@ -21,7 +21,8 @@ define(['require',
     'hbs!tmpl/schema/SchemaTableLayoutView_tmpl',
     'collection/VSchemaList',
     'utils/Utils',
-], function(require, Backbone, SchemaTableLayoutViewTmpl, VSchemaList, Utils) {
+    'utils/CommonViewFunction'
+], function(require, Backbone, SchemaTableLayoutViewTmpl, VSchemaList, Utils, CommonViewFunction) {
     'use strict';
 
     var SchemaTableLayoutView = Backbone.Marionette.LayoutView.extend(
@@ -38,7 +39,6 @@ define(['require',
             /** ui selector cache */
             ui: {
                 tagClick: '[data-id="tagClick"]',
-                DetailValue: "[data-id='detailValue']",
                 addTag: "[data-id='addTag']",
             },
             /** ui events hash */
@@ -54,10 +54,7 @@ define(['require',
                         } else {
                             var value = e.currentTarget.text;
                             Utils.setUrl({
-                                url: '#!/dashboard/assetPage',
-                                urlParams: {
-                                    query: value
-                                },
+                                url: '#!/tag/tagAttribute/' + value,
                                 mergeBrowserUrl: false,
                                 trigger: true
                             });
@@ -70,9 +67,9 @@ define(['require',
              * @constructs
              */
             initialize: function(options) {
-                _.extend(this, _.pick(options, 'globalVent', 'name', 'vent'));
+                _.extend(this, _.pick(options, 'globalVent', 'guid', 'vent'));
                 this.schemaCollection = new VSchemaList([], {});
-                this.schemaCollection.url = "/api/atlas/lineage/hive/table/" + this.name + "/schema";
+                this.schemaCollection.url = "/api/atlas/lineage/" + this.guid + "/schema";
                 this.commonTableOptions = {
                     collection: this.schemaCollection,
                     includeFilter: false,
@@ -92,14 +89,20 @@ define(['require',
                 this.listenTo(this.schemaCollection, "reset", function(value) {
                     this.renderTableLayoutView();
                     $('.schemaTable').show();
+                    this.$('.fontLoader').hide();
                 }, this);
                 this.listenTo(this.schemaCollection, "error", function(value) {
                     $('.schemaTable').hide();
+                    this.$('.fontLoader').hide();
                 }, this);
             },
             onRender: function() {
                 this.schemaCollection.fetch({ reset: true });
                 this.renderTableLayoutView();
+            },
+            fetchCollection: function() {
+                this.$('.fontLoader').show();
+                this.schemaCollection.fetch({ reset: true });
             },
             renderTableLayoutView: function() {
                 var that = this;
@@ -109,38 +112,55 @@ define(['require',
                         globalVent: that.globalVent,
                         columns: cols,
                         gridOpts: {
-                            className: "table table-bordered table-hover table-condensed backgrid table-quickMenu",
+                            className: "table table-quickMenu",
                         },
                     })));
                 });
             },
             getSchemaTableColumns: function() {
                 var that = this;
-                return this.schemaCollection.constructor.getTableCols({
-                    name: {
-                        label: "Name",
-                        cell: "Html",
-                        editable: false,
-                        sortable: false,
-                        formatter: _.extend({}, Backgrid.CellFormatter.prototype, {
-                            fromRaw: function(rawValue, model) {
-                                return '<div><a href="#!/dashboard/detailPage/' + model.get('$id$').id + '">' + rawValue + '</a></div>';
-                            }
-                        })
-                    },
-                    comment: {
-                        label: "Comment",
-                        cell: "html",
-                        editable: false,
-                        sortable: false
-                    },
-                    dataType: {
-                        label: "DataType",
-                        cell: "html",
-                        editable: false,
-                        sortable: false
-                    },
-                    tag: {
+                var col = {};
+                if (this.schemaCollection.keyList) {
+                    _.each(this.schemaCollection.keyList, function(obj, key) {
+                        col[obj.name] = {
+                            cell: "Html",
+                            editable: false,
+                            sortable: false,
+                            orderable: true,
+                            formatter: _.extend({}, Backgrid.CellFormatter.prototype, {
+                                fromRaw: function(rawValue, model) {
+                                    if (model) {
+                                        if (!_.isArray(rawValue) && _.isObject(rawValue)) {
+                                            if (rawValue.id) {
+                                                return '<div><a href="#!/detailPage/' + rawValue.id + '">' + rawValue.$typeName$ + '</a></div>';
+                                            } else {
+                                                return rawValue.$typeName$;
+                                            }
+                                        } else if (_.isArray(rawValue)) {
+                                            var links = "";
+                                            _.each(rawValue, function(val, key) {
+                                                if (val.id) {
+                                                    links += '<div><a href="#!/detailPage/' + val.id + '">' + val.$typeName$ + '</a></div>';
+                                                } else {
+                                                    links += '<div>' + val.$typeName$ + '</div>';
+                                                }
+                                            });
+                                            return links;
+
+                                        } else if (model.get('$id$') && model.get('$id$').id && model.get('name') == rawValue) {
+                                            return '<div><a href="#!/detailPage/' + model.get('$id$').id + '">' + rawValue + '</a></div>';
+                                        } else {
+                                            return rawValue;
+                                        }
+                                    } else {
+                                        return rawValue;
+                                    }
+
+                                }
+                            })
+                        };
+                    });
+                    col['tag'] = {
                         label: "Tags",
                         cell: "Html",
                         editable: false,
@@ -150,32 +170,25 @@ define(['require',
                                 var traits = model.get('$traits$');
                                 var atags = "";
                                 _.keys(model.get('$traits$')).map(function(key) {
-                                    atags += '<a data-id="tagClick">' + traits[key].$typeName$ + '<i class="fa fa-times" data-id="delete" data-name="' + traits[key].$typeName$ + '" data-guid="' + model.get('$id$').id + '" ></i></a>';
+                                    atags += '<a class="inputTag" data-id="tagClick">' + traits[key].$typeName$ + '<i class="fa fa-times" data-id="delete" data-name="' + traits[key].$typeName$ + '" data-guid="' + model.get('$id$').id + '" ></i></a>';
                                 });
-                                return '<div class="tagList">' + atags + '</div>';
+                                return '<div class="tagList">' + atags + '<a href="javascript:void(0);" class="inputTag" data-id="addTag" data-guid="' + model.get('$id$').id + '"><i style="right:0" class="fa fa-plus"></i></a></div>';
                             }
                         })
-                    },
-                    addTag: {
-                        label: "Tools",
-                        cell: "Html",
-                        editable: false,
-                        sortable: false,
-                        formatter: _.extend({}, Backgrid.CellFormatter.prototype, {
-                            fromRaw: function(rawValue, model) {
-                                return '<a href="javascript:void(0);" data-id="addTag" data-guid="' + model.get('$id$').id + '"><i class="fa fa-tag"></i></a>';
-                            }
-                        })
-                    }
-                }, this.schemaCollection);
+                    };
+                }
+
+
+                return this.schemaCollection.constructor.getTableCols(col, this.schemaCollection);
             },
             onClickSchemaTag: function(e) {
                 var that = this;
-                require(['views/tag/addTagModalView'], function(addTagModalView) {
-                    var view = new addTagModalView({
-                        vent: that.vent,
+                require(['views/tag/addTagModalView'], function(AddTagModalView) {
+                    var view = new AddTagModalView({
                         guid: that.$(e.currentTarget).data("guid"),
-                        modalCollection: that.schemaCollection
+                        callback: function() {
+                            that.fetchCollection();
+                        }
                     });
                     // view.saveTagData = function() {
                     //override saveTagData function 
@@ -183,42 +196,26 @@ define(['require',
                 });
             },
             onClickTagCross: function(e) {
-                var tagName = $(e.target).data("name");
-                var that = this;
-                require([
-                    'modules/Modal'
-                ], function(Modal) {
-                    var modal = new Modal({
-                        title: 'Are you sure you want to delete ?',
-                        okText: 'Delete',
-                        htmlContent: "<b>Tag: " + tagName + "</b>",
-                        cancelText: "Cancel",
-                        allowCancel: true,
-                        okCloses: true,
-                        showFooter: true,
-                    }).open();
-                    modal.on('ok', function() {
-                        that.deleteTagData(e);
-                    });
-                    modal.on('closeModal', function() {
-                        modal.trigger('cancel');
-                    });
+                var tagName = $(e.target).data("name"),
+                    that = this,
+                    modal = CommonViewFunction.deleteTagModel(tagName);
+                modal.on('ok', function() {
+                    that.deleteTagData(e);
+                });
+                modal.on('closeModal', function() {
+                    modal.trigger('cancel');
                 });
             },
             deleteTagData: function(e) {
                 var that = this,
-                    tagName = $(e.target).data("name");
-                var guid = $(e.target).data("guid");
-                require(['models/VTag'], function(VTag) {
-                    var tagModel = new VTag();
-                    tagModel.deleteTag(guid, tagName, {
-                        beforeSend: function() {},
-                        success: function(data) {
-                            that.schemaCollection.fetch({ reset: true });
-                        },
-                        error: function(error, data, status) {},
-                        complete: function() {}
-                    });
+                    tagName = $(e.target).data("name"),
+                    guid = $(e.target).data("guid");
+                CommonViewFunction.deleteTag({
+                    'tagName': tagName,
+                    'guid': guid,
+                    callback: function() {
+                        that.fetchCollection();
+                    }
                 });
             }
         });

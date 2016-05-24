@@ -107,7 +107,8 @@ trait GraphUtils {
         try {
             val g = AtlasGraphProvider.getGraphInstance
             val mgmt = g.getManagementSystem
-            mgmt.createCompositeIndex("byTypeName",classOf[String], null, false)           
+            val typname = mgmt.makePropertyKey("typeName", classOf[String], null);
+            mgmt.createCompositeIndex("byTypeName", typname, false);           
             mgmt.commit()
             g
         } catch {

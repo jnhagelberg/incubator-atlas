@@ -40,6 +40,7 @@ import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.AtlasGraphManagement;
 import org.apache.atlas.repository.graphdb.AtlasGraphQuery;
 import org.apache.atlas.repository.graphdb.AtlasGraphQuery.ComparisionOperator;
+import org.apache.atlas.repository.graphdb.AtlasPropertyKey;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.typesystem.types.DataTypes.TypeCategory;
 import org.apache.atlas.typesystem.types.Multiplicity;
@@ -60,10 +61,20 @@ public class Titan0DatabaseTest {
             graph = db.getGraph();
             AtlasGraphManagement mgmt = graph.getManagementSystem();
             //create the index (which defines these properties as being mult many)
-            for(String property : AtlasGraphManagement.MULTIPLICITY_MANY_PROPERTY_KEYS) {
-                mgmt.createCompositeIndex(property, String.class, Multiplicity.SET,  false);
+            for(String propertyName : AtlasGraphManagement.MULTIPLICITY_MANY_PROPERTY_KEYS) {
+                AtlasPropertyKey propertyKey = mgmt.getPropertyKey(propertyName);
+                if(propertyKey == null) {
+                    propertyKey = mgmt.makePropertyKey(propertyName, String.class, Multiplicity.SET);                    
+                    mgmt.createCompositeIndex(propertyName, propertyKey, false);
+                }
             }
             mgmt.commit();
+            try {
+                mgmt.waitForIndexAvailibility(AtlasGraphManagement.MULTIPLICITY_MANY_PROPERTY_KEYS);
+            }
+            catch(AtlasException e) {
+                e.printStackTrace();
+            }
         }
         return (AtlasGraph<V,E>)graph;
     }

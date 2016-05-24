@@ -23,30 +23,10 @@ define(['require',
 
     var Header = Marionette.LayoutView.extend({
         template: tmpl,
-        templateHelpers: function() {
-            return {
-                urlType: this.urlType
-            };
-        },
         regions: {},
         events: {},
-        initialize: function(options) {
-            var url = window.location.href.split("/");
-            this.urlType = url[url.length - 1];
-            /*if we us only old ui then uncomment this condition*/
-            if (this.urlType == "") {
-                this.urlType = "assetPage";
-            }
-        },
-        onRender: function() {},
-        addTagsFileds: function() {
-            var that = this;
-            require(['views/tag/createTagsLayoutView'], function(createTagsLayoutView) {
-                var view = new createTagsLayoutView({
-                    vent: that.vent
-                });
-            });
-        }
+        initialize: function(options) {},
+        onRender: function() {}
     });
     return Header;
 });

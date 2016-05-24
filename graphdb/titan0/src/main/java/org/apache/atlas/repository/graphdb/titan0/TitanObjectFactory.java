@@ -18,9 +18,11 @@
 package org.apache.atlas.repository.graphdb.titan0;
 
 import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
+import org.apache.atlas.repository.graphdb.AtlasPropertyKey;
 import org.apache.atlas.typesystem.types.Multiplicity;
 
 import com.thinkaurelius.titan.core.Cardinality;
+import com.thinkaurelius.titan.core.PropertyKey;
 import com.tinkerpop.blueprints.Direction;
 
 /**
@@ -72,6 +74,10 @@ public class TitanObjectFactory {
         }
         // default to LIST as this is the most forgiving
         return Cardinality.LIST;
+    }
+    
+    public static PropertyKey createPropertyKey(AtlasPropertyKey key) {
+        return ((Titan0PropertyKey)key).getWrappedPropertyKey();
     }
 
 }

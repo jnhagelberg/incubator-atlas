@@ -131,7 +131,7 @@ public class Titan0Graph implements AtlasGraph<Titan0Vertex, Titan0Edge> {
 
     @Override
     public AtlasGraphManagement getManagementSystem() {
-        return new Titan0DatabaseManager(getGraph().getManagementSystem());
+        return new Titan0DatabaseManager(getGraph(), getGraph().getManagementSystem());
     }
 
     @Override

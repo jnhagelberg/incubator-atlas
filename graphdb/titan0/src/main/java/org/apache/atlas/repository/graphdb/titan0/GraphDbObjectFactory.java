@@ -18,6 +18,10 @@
 
 package org.apache.atlas.repository.graphdb.titan0;
 
+import org.apache.atlas.repository.graphdb.AtlasGraphIndex;
+
+import com.thinkaurelius.titan.core.PropertyKey;
+import com.thinkaurelius.titan.core.schema.TitanGraphIndex;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Vertex;
@@ -72,6 +76,28 @@ public class GraphDbObjectFactory {
             return null;
         }
         return new Titan0Vertex(source);
+    }
+
+    /**
+     * @param propertyKey
+     * @return
+     */
+    public static Titan0PropertyKey createPropertyKey(PropertyKey propertyKey) {
+        if(propertyKey == null) {
+            return null;
+        }
+        return new Titan0PropertyKey(propertyKey);
+    }
+
+    /**
+     * @param index
+     * @return
+     */
+    public static AtlasGraphIndex createGraphIndex(TitanGraphIndex index) {
+        if(index == null) {
+            return null;
+        }
+        return new Titan0GraphIndex(index);
     }
 
 }

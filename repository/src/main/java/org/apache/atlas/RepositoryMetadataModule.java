@@ -20,7 +20,7 @@ package org.apache.atlas;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.apache.atlas.discovery.DiscoveryService;
-import org.apache.atlas.discovery.HiveLineageService;
+import org.apache.atlas.discovery.DataSetLineageService;
 import org.apache.atlas.discovery.LineageService;
 import org.apache.atlas.discovery.graph.GraphBackedDiscoveryService;
 import org.apache.atlas.listener.EntityChangeListener;
@@ -89,7 +89,7 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
         // bind the DiscoveryService interface to an implementation
         bind(DiscoveryService.class).to(GraphBackedDiscoveryService.class).asEagerSingleton();
 
-        bind(LineageService.class).to(HiveLineageService.class).asEagerSingleton();
+        bind(LineageService.class).to(DataSetLineageService.class).asEagerSingleton();
 
         bindAuditRepository(binder());
 
@@ -118,7 +118,11 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
     private static final String DELETE_HANDLER_IMPLEMENTATION_PROPERTY = "atlas.DeleteHandler.impl";
 
     private Class<? extends DeleteHandler> getDeleteHandler() {
-        return ApplicationProperties.getClass(DELETE_HANDLER_IMPLEMENTATION_PROPERTY,
-                SoftDeleteHandler.class.getName());
+        try {
+            return ApplicationProperties.getClass(DELETE_HANDLER_IMPLEMENTATION_PROPERTY,
+                    SoftDeleteHandler.class.getName(), DeleteHandler.class);
+        } catch (AtlasException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

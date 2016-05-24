@@ -51,6 +51,7 @@ import org.apache.atlas.typesystem.types.IDataType;
 import org.apache.atlas.typesystem.types.Multiplicity;
 import org.apache.atlas.typesystem.types.TypeSystem;
 import org.apache.atlas.typesystem.types.ValueConversionException;
+import org.apache.atlas.typesystem.types.utils.TypesUtil;
 import org.apache.atlas.utils.ParamChecker;
 import org.codehaus.jettison.json.JSONArray;
 import org.slf4j.Logger;
@@ -423,13 +424,35 @@ public final class GraphHelper {
     }
 
     public static String string(AtlasVertex<?,?> vertex) {
-        return String.format("vertex[id=%s type=%s guid=%s]", vertex.getId().toString(), getTypeName(vertex),
-                getIdFromVertex(vertex));
+        if (LOG.isDebugEnabled()) {
+            return String.format("vertex[id=%s type=%s guid=%s]", vertex.getId().toString(), getTypeName(vertex),
+                    getIdFromVertex(vertex));
+        } else {
+            return String.format("vertex[id=%s]", vertex.getId().toString());
+        }
     }
 
     public static String string(AtlasEdge<?,?> edge) {
-        return String.format("edge[id=%s label=%s from %s -> to %s]", edge.getId().toString(), edge.getLabel(),
-                string(edge.getOutVertex()), string(edge.getInVertex()));
+   		if (LOG.isDebugEnabled()) {
+            return String.format("edge[id=%s label=%s from %s -> to %s]", edge.getId().toString(), edge.getLabel(),
+                    string(edge.getOutVertex()), string(edge.getInVertex()));
+        } else {
+            return String.format("edge[id=%s]", edge.getId().toString());
+        }
+    }
+
+    
+    public static AttributeInfo getAttributeInfoForSystemAttributes(String field) {
+        switch (field) {
+        case Constants.STATE_PROPERTY_KEY:
+        case Constants.GUID_PROPERTY_KEY:
+            return TypesUtil.newAttributeInfo(field, DataTypes.STRING_TYPE);
+
+        case Constants.TIMESTAMP_PROPERTY_KEY:
+        case Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY:
+            return TypesUtil.newAttributeInfo(field, DataTypes.LONG_TYPE);
+        }
+        return null;
     }
     
     public static ITypedReferenceableInstance[] deserializeClassInstances(TypeSystem typeSystem, String entityInstanceDefinition)

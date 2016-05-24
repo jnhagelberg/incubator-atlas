@@ -70,10 +70,10 @@ public interface AtlasGraphManagement {
      * Creates a full text index for the given property
      *
      * @param  indexName the name of the index to create
-     * @param propertyKey the name of the property
+     * @param propertyKey full text property to index
      * @param backingIndex the name of the backing index to use
      */
-    void createFullTextIndex(String indexName, String propertyKey, String backingIndex);
+    void createFullTextIndex(String indexName, AtlasPropertyKey propertyKey, String backingIndex);
 
     /**
      * Rolls back the changes that have been made to the management system.
@@ -87,54 +87,58 @@ public interface AtlasGraphManagement {
     void commit();
 
     /**
-     * Creates a composite index for the given property.
+     * Blocks until the indices with the given names are fully enabled.  This always
+     * looks at the latest committed changes to the graph.  It is independent of
+     * the state of the graph management transaction and can be called
+     * at any time.
      *
-     * @param propertyName name of the property being indexed
-     * @param propertyClass the java class of the property value(s)
-     * @param multiplicity the multiplicity of the property
-     * @param isUnique whether the property values must be unique
-     */
-    void createCompositeIndex(String propertyName, Class propertyClass, Multiplicity multiplicity,
-            boolean isUnique);
-
-    /**
-     * Creates an index for a property.
-     *
-     * @param propertyName name of the property being indexed
-     * @param vertexIndexName name of the index to create
-     * @param propertyClass the java class of the property value(s)
-     * @param multiplicity the multiplicity of the property
-     */
-    void createBackingIndex(String propertyName, String vertexIndexName, Class propertyClass,
-            Multiplicity multiplicity);
-
-    /**
-     * Blocks until the indices with the given names are fully enabled.
      *
      * @param indexNames the names of the indices to wait for.
      *
      * @throws AtlasException if the timeout is exceeded while waiting for the indices to
      *  be enabled.  The timeout is currently hard-coded to 10 minutes.
      */
-    void waitForIndexAvailibility(Collection<String> indexNames) throws AtlasException;
+    void waitForIndexAvailibility(Collection<String> indexNames) throws AtlasException;  
 
     /**
-     * Checks whether the given vertex index exists and contains a property
-     * key with the given name.
-     *
-     * @param vertexIndex
      * @param propertyName
+     * @param propertyClass
+     * @param cardinality
      * @return
      */
-    boolean vertexIndexContainsPropertyKey(String vertexIndex, String propertyName);
+    AtlasPropertyKey makePropertyKey(String propertyName, Class propertyClass, Multiplicity cardinality);
 
     /**
-     * Checks whether the a vertex index with the specified name has been created.
-     *
-     * @param vertexIndex
+     * @param propertyKey
      * @return
      */
-    boolean containsVertexIndex(String vertexIndex);
+    AtlasPropertyKey getPropertyKey(String propertyName);
+
+    /**
+     * Creates a composite index for the graph.
+     * 
+     * @param propertyName
+     * @param propertyKey
+     * @param isUnique
+     */
+    void createCompositeIndex(String propertyName, AtlasPropertyKey propertyKey, boolean isUnique);
+
+    /**
+     * Adds a property key to the given index in the graph.
+     * 
+     * @param vertexIndex
+     * @param propertyKey
+     */
+    void addIndexKey(String vertexIndex, AtlasPropertyKey propertyKey);
+
+    /**
+     * Looks up the index with the specified name in the graph.  Returns null if
+     * there is no index with the given name.
+     * 
+     * @param edgeIndex
+     * @return
+     */
+    AtlasGraphIndex getGraphIndex(String indexName);
 
 
 }
