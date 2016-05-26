@@ -454,8 +454,24 @@
                 <skipDocs>false</skipDocs>
             </properties>
         </profile>
+	<profile>
+	  <id>titan0</id>
+	  <activation>
+	    <property>
+	          <name>!titan1</name>
+            </property>
+	  </activation>
+	  <modules>
+	     <module>catalog</module>
+	  </modules>
+	</profile>
         <profile>
             <id>titan1</id>
+	    <activation>
+	        <property>
+                    <name>titan1</name>
+		</property>
+	     </activation>
             <properties>
                 <plugin.class>org.apache.atlas.repository.graphdb.titan1.Titan1Database</plugin.class>
             </properties>
@@ -482,6 +498,11 @@
         </profile>
         <profile>
             <id>ibm-graph-db</id>
+	       <activation>
+	        <property>
+		    <name>ibm-graph-db</name>
+		 </property>
+	     </activation>
             <properties>
                 <plugin.class>com.ibm.analytics.atlas.graphdb.IBMGraphDatabase</plugin.class>
             </properties>
@@ -517,7 +538,7 @@
 	<module>graphdb</module>
         <module>repository</module>
         <module>authorization</module>
-        <module>catalog</module>
+
         <!-- <module>dashboard</module> -->
         <module>dashboardv2</module>
         <module>webapp</module>
