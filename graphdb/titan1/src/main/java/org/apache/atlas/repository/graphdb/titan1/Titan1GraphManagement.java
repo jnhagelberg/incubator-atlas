@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.base.Preconditions;
 import com.thinkaurelius.titan.core.Cardinality;
 import com.thinkaurelius.titan.core.PropertyKey;
+import com.thinkaurelius.titan.core.TitanGraph;
 import com.thinkaurelius.titan.core.schema.Mapping;
 import com.thinkaurelius.titan.core.schema.PropertyKeyMaker;
 import com.thinkaurelius.titan.core.schema.SchemaStatus;
@@ -37,10 +38,12 @@ public class Titan1GraphManagement implements AtlasGraphManagement {
     
     private static final char[] RESERVED_CHARS = {'{', '}', '"', '$', Token.SEPARATOR_CHAR};
     
+    private TitanGraph graph_;
     private TitanManagement management_;
     
-    public Titan1GraphManagement(TitanManagement managementSystem) {
-        management_ = managementSystem;        
+    public Titan1GraphManagement(TitanGraph graph, TitanManagement managementSystem) {
+        graph_ = graph;
+    	management_ = managementSystem;        
     }
 
     @Override
@@ -76,24 +79,6 @@ public class Titan1GraphManagement implements AtlasGraphManagement {
         return management_.containsPropertyKey(propertyName);
     }
     
-    private PropertyKey getOrCreatePropertyKey(String propertyName, Class propertyClass, Cardinality cardinality) {
-        
-        //titan 1 does not validate that there are no special characters in property names.  Perhaps that
-        //restriction was removed.  To be consistent, though, add that check back in here.  Otherwise
-        //DefaultMetadataServiceTest.testTypeUpdateWithReservedAttributes() fails.
-        checkName(propertyName);
-        
-        PropertyKey propertyKey = management_.getPropertyKey(propertyName);
-        if (propertyKey != null) {
-            return propertyKey;
-        }
-        PropertyKeyMaker propertyKeyBuilder = management_.makePropertyKey(propertyName).dataType(propertyClass);
-        if(cardinality != null) {
-            propertyKeyBuilder.cardinality(cardinality);
-        }
-        return propertyKey = propertyKeyBuilder.make();   
-    }
-
     @Override
     public void rollback() {
         management_.rollback();
@@ -113,64 +98,83 @@ public class Titan1GraphManagement implements AtlasGraphManagement {
             Preconditions.checkArgument(name.indexOf(c) < 0, "Name can not contains reserved character %s: %s", c, name);
        
     }
-    
-        /* (non-Javadoc)
+    /* (non-Javadoc)
      * @see org.apache.atlas.repository.graphdb.AtlasGraphManagement#waitForIndexAvailibility(java.util.Collection)
      */
     @Override
     public void waitForIndexAvailibility(Collection<String> indexNames) throws AtlasException {
-
-        long start = System.currentTimeMillis();
-        long timeoutTime = start + 1000*60*10; //wait at most 10 minutes
-
-        //keeps track of what indices are still not fully enabled
-        Collection<String> pendingIndices = new HashSet<String>();
-        pendingIndices.addAll(indexNames);
-
-
-        //wait for index to become active
-        long currentTime = System.currentTimeMillis();
-
-        while(currentTime < timeoutTime) {
-
-            //check status of all indices
-            removeEnabledIndicesFromCollection(pendingIndices);
-
-            if(pendingIndices.size() == 0) {
-                long completeTime = System.currentTimeMillis();
-
-                LOG.info("Indices fully enabled after " + (completeTime - start) + " ms");
-                return;
-            }
-
-            logActivationStatus(pendingIndices);
-
-            try {
-                Thread.sleep(1000);
-            }
-            catch(InterruptedException e) { }
+        TitanManagement mgmt =  null;
+        boolean mgmtRollbackNeeded = false;
+        
+        if(management_.isOpen()) {
+            mgmt = management_;
         }
-        StringBuilder builder = new StringBuilder();
-        builder.append("Timed out waiting for indices to activate.  Could not activate the following indices:");
-        appendPendingIndexList(pendingIndices, builder);
-        throw new AtlasException(builder.toString());
+        else {
+            //start a new management transaction and roll it back
+            //when we're done
+            mgmtRollbackNeeded = true;
+            mgmt = graph_.openManagement();
+        }
+        
+        try {
+            long start = System.currentTimeMillis();
+            long timeoutTime = start + 1000*60*10; //wait at most 10 minutes
+    
+            //keeps track of what indices are still not fully enabled
+            Collection<String> pendingIndices = new HashSet<String>();
+            pendingIndices.addAll(indexNames);
+    
+    
+            //wait for index to become active
+            long currentTime = System.currentTimeMillis();
+    
+            while(currentTime < timeoutTime) {
+    
+                //check status of all indices
+                removeEnabledIndicesFromCollection(mgmt, pendingIndices);
+    
+                if(pendingIndices.size() == 0) {
+                    long completeTime = System.currentTimeMillis();
+    
+                    LOG.info("Indices fully enabled after " + (completeTime - start) + " ms");
+                    return;
+                }
+    
+                logActivationStatus(pendingIndices);
+    
+                try {
+                    Thread.sleep(1000);
+                }
+                catch(InterruptedException e) { }
+            }
+            StringBuilder builder = new StringBuilder();
+            builder.append("Timed out waiting for indices to activate.  Could not activate the following indices:");
+            appendPendingIndexList(pendingIndices, builder);
+            throw new AtlasException(builder.toString());
+        }
+        finally {
+            //not making any changes
+            if(mgmtRollbackNeeded) {
+                mgmt.rollback();
+            }
+        }
     }
 
 
 
-    private void removeEnabledIndicesFromCollection(Collection<String> pendingIndices) {
+    private void removeEnabledIndicesFromCollection(TitanManagement mgmt, Collection<String> pendingIndices) {
 
         Iterator<String> it = pendingIndices.iterator();
         while(it.hasNext()) {
             String name = it.next();
-            if(isIndexFullyEnabled(name)) {
+            if(isIndexFullyEnabled(mgmt, name)) {
                 it.remove();
             }
         }
     }
 
-    private boolean isIndexFullyEnabled(String name) {
-        TitanGraphIndex index = management_.getGraphIndex(name);
+    private boolean isIndexFullyEnabled(TitanManagement mgmt, String name) {
+        TitanGraphIndex index = mgmt.getGraphIndex(name);
         for(PropertyKey key : index.getFieldKeys()) {
             if(index.getIndexStatus(key) != SchemaStatus.ENABLED) {
                 return false;
@@ -208,7 +212,6 @@ public class Titan1GraphManagement implements AtlasGraphManagement {
            }
         }
     }
-
     /* (non-Javadoc)
      * @see org.apache.atlas.repository.graphdb.AtlasGraphManagement#makePropertyKey(java.lang.String, java.lang.Class, org.apache.atlas.typesystem.types.Multiplicity)
      */

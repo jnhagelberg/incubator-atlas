@@ -147,7 +147,7 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
 
     @Override
     public AtlasGraphManagement getManagementSystem() {
-        return new Titan1GraphManagement(getGraph().openManagement());
+        return new Titan1GraphManagement(getGraph(), getGraph().openManagement());
     }
 
     @Override
@@ -276,15 +276,13 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
     @Override
     public Object executeGremlinScript(String gremlinQuery) throws ScriptException {
         
-        //temporarily enable type checking
-        //TypeCheckedCustomizerProvider provider = new TypeCheckedCustomizerProvider();
-        CompileStaticCustomizerProvider provider2 = new CompileStaticCustomizerProvider();
+        //temporarily enable type checking        
+        //CompileStaticCustomizerProvider provider2 = new CompileStaticCustomizerProvider();
 
         //ScriptEngineManager manager = new ScriptEngineManager();
-        GremlinGroovyScriptEngine engine = new GremlinGroovyScriptEngine( provider2);
-        ScriptContext ctx = new SimpleScriptContext();
-        StringBuilder builder = new StringBuilder();
-        
+        GremlinGroovyScriptEngine engine = new GremlinGroovyScriptEngine();
+
+        StringBuilder builder = new StringBuilder();        
         builder.append("import static org.apache.tinkerpop.gremlin.process.traversal.P.*;");
         builder.append("import static org.apache.tinkerpop.gremlin.process.traversal.dsl.graph.__.*;");
         builder.append("import java.util.function.Function;");
@@ -294,7 +292,7 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
         builder.append(gremlinQuery);
         Bindings bindings = engine.createBindings();
         bindings.put("g", getGraph().traversal());
-        ctx.setBindings(bindings, ScriptContext.GLOBAL_SCOPE);
+        
         Object result = engine.eval(builder.toString(), bindings);
         return result;
     }
