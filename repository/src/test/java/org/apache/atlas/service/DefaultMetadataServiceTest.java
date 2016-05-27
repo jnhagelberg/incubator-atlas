@@ -97,7 +97,7 @@ public class DefaultMetadataServiceTest {
     private Referenceable table;
 
     private Id tableId;
-    
+
     private final String NAME = "name";
 
 
@@ -449,7 +449,7 @@ public class DefaultMetadataServiceTest {
 
     @Test
     public void testUpdateEntityArrayOfClass() throws Exception {
-        
+
         //test array of class with id
         final List<Referenceable> columns = new ArrayList<>();
         Map<String, Object> values = new HashMap<>();
@@ -976,9 +976,9 @@ public class DefaultMetadataServiceTest {
     }
 
     private static class DeleteEntitiesChangeListener implements EntityChangeListener {
-        
+
         private Collection<ITypedReferenceableInstance> deletedEntities_;
-        
+
         @Override
         public void onEntitiesAdded(Collection<ITypedReferenceableInstance> entities)
             throws AtlasException {
@@ -1004,7 +1004,7 @@ public class DefaultMetadataServiceTest {
             throws AtlasException {
             deletedEntities_ = entities;
         }
-        
+
         public Collection<ITypedReferenceableInstance> getDeletedEntities() {
             return deletedEntities_;
         }

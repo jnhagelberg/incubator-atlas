@@ -35,7 +35,7 @@ public class HierarchicalTypeDependencySorterTest {
         TypeSystem ts = TypeSystem.getInstance();
         ts.reset();
     }
-    
+
     @SuppressWarnings("rawtypes")
     @Test
     public void testSimpleModel() throws AtlasException {

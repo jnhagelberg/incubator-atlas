@@ -44,10 +44,10 @@ import org.apache.atlas.repository.graphdb.GremlinVersion
  *
  * This is a work in progress.
  */
-trait GraphPersistenceStrategies {   
-    
+trait GraphPersistenceStrategies {
+
     def getSupportedGremlinVersion() : GremlinVersion
-    
+
     /**
      * Name of attribute used to store typeName in vertex
      */
@@ -99,10 +99,10 @@ trait GraphPersistenceStrategies {
     }
 
     def fieldPrefixInSelect(): String = {
-        
+
         if(getSupportedGremlinVersion() == GremlinVersion.THREE) {
             //this logic is needed to remove extra results from
-            //what is emitted by repeat loops.  Technically 
+            //what is emitted by repeat loops.  Technically
             //for queries that don't have a loop in them we could just use "it"
             //the reason for this is that in repeat loops with an alias,
             //although the alias gets set to the right value, for some
@@ -116,7 +116,7 @@ trait GraphPersistenceStrategies {
         else {
             "it"
         }
-        
+
     }
 
     /**
@@ -131,13 +131,13 @@ trait GraphPersistenceStrategies {
 
     def gremlinCompOp(op: ComparisonExpression) = {
          if( getSupportedGremlinVersion() == GremlinVersion.TWO) {
-             gremlin2CompOp(op);             
+             gremlin2CompOp(op);
          }
          else {
             gremlin3CompOp(op);
          }
      }
-    
+
     private def gremlin2CompOp(op: ComparisonExpression) = op.symbol match {
         case "=" => "T.eq"
         case "!=" => "T.neq"
@@ -147,7 +147,7 @@ trait GraphPersistenceStrategies {
         case "<=" => "T.lte"
         case _ => throw new ExpressionException(op, "Comparison operator not supported in Gremlin")
     }
-    
+
     private def gremlin3CompOp(op: ComparisonExpression) = op.symbol match {
         case "=" => "eq"
         case "!=" => "neq"
@@ -202,7 +202,7 @@ trait GraphPersistenceStrategies {
      * loop/repeat steps and a few other places
      */
     private def _typeTestExpression(typeName: String, itRef: String): String = {
-        
+
         if( getSupportedGremlinVersion() == GremlinVersion.TWO) {
              s"""{(${itRef}.'${typeAttributeName}' == '${typeName}') |
        | (${itRef}.'${superTypeAttributeName}' ?
@@ -213,12 +213,12 @@ trait GraphPersistenceStrategies {
             //gremlin 3
             s"""has('${typeAttributeName}',eq('${typeName}')).or().has('${superTypeAttributeName}',eq('${typeName}'))"""
         }
-  }    
+  }
 
     private def propertyValueSet(vertexRef : String, attrName: String) : String = {
-        s"""org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils.set(${vertexRef}.values('${attrName})"""        
+        s"""org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils.set(${vertexRef}.values('${attrName})"""
     }
-    
+
     private def typeTestExpressionMultiStep(typeName : String, intSeq : IntSequence) : Seq[String] = {
 
         val varName = s"_var_${intSeq.next}"
@@ -236,7 +236,7 @@ trait GraphPersistenceStrategies {
                 // _()
                 //s"g.V(${varName}.collect{it.id()} as String[])"
                 s"g.V(${varName} as Object[])"
-            }                
+            }
         )
     }
 
@@ -251,15 +251,15 @@ trait GraphPersistenceStrategies {
     }
 }
 
-abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {        
-    
+abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
+
     val typeAttributeName = "typeName"
     val superTypeAttributeName = "superTypeNames"
     val idAttributeName = "guid"
 
     def edgeLabel(dataType: IDataType[_], aInfo: AttributeInfo) = s"__${dataType.getName}.${aInfo.name}"
 
-    def edgeLabel(propertyName: String) = s"__${propertyName}"   
+    def edgeLabel(propertyName: String) = s"__${propertyName}"
 
     def traitLabel(cls: IDataType[_], traitName: String) = s"${cls.getName}.$traitName"
 
@@ -439,14 +439,14 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
 }
 
 object Gremlin2GraphPersistenceStrategy1 extends GraphPersistenceStrategy1 {
-    
+
     override def getSupportedGremlinVersion() : GremlinVersion =  {
         return GremlinVersion.TWO;
     }
 }
 
 object Gremlin3GraphPersistenceStrategy1 extends GraphPersistenceStrategy1 {
-    
+
     override def getSupportedGremlinVersion() : GremlinVersion =  {
         return GremlinVersion.THREE;
     }

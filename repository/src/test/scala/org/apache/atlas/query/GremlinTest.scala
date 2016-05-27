@@ -57,7 +57,7 @@ class GremlinTest extends BaseGremlinTest {
     RequestContext.createContext();
   }
 
-  
+
   @BeforeClass
   def beforeAll() {
     TypeSystem.getInstance().reset()
@@ -94,10 +94,10 @@ class GremlinTest extends BaseGremlinTest {
         } catch {
             case ex : ValueConversionException => throw ex
             case ex : TypeNotFoundException => throw ex
-            case ex : Exception => throw new IllegalArgumentException("Unable to deserialize json", ex)            
-        }        
+            case ex : Exception => throw new IllegalArgumentException("Unable to deserialize json", ex)
+        }
     }
-  
+
   @AfterClass
   def afterAll() {
     g.shutdown()

@@ -96,7 +96,7 @@ public interface AtlasElement {
 
     /**
      * Determines if this element exists in the graph database
-     * 
+     *
      * @return
      */
     boolean exists();

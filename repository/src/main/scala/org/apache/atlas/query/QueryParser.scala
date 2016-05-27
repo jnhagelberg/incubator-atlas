@@ -90,13 +90,13 @@ trait ExpressionUtils {
     }
 
     def limit(input: Expression, lmt: Literal[Integer], offset: Literal[Integer]) = {
-        input.limit(lmt, offset) 
+        input.limit(lmt, offset)
     }
-    
+
     def order(input: Expression, odr: String, asc: Boolean) = {
         input.order(odr, asc)
     }
-        
+
     def leftmostId(e: Expression) = {
         var le: IdExpression = null
         e.traverseUp { case i: IdExpression if le == null => le = i}
@@ -161,7 +161,7 @@ object QueryParser extends StandardTokenParsers with QueryKeywords with Expressi
     def singleQuery = singleQrySrc ~ opt(loopExpression) ~ opt(selectClause) ~ opt(orderby) ~ opt(limitOffset) ^^ {
       case s ~ l ~ sel ~ odr ~ lmtoff => {
         var expressiontree = s
-        if (l.isDefined) //Note: The order of if statements is important. 
+        if (l.isDefined) //Note: The order of if statements is important.
         {
           expressiontree = loop(expressiontree, l.get);
         }
@@ -222,21 +222,21 @@ object QueryParser extends StandardTokenParsers with QueryKeywords with Expressi
       case o ~ odr ~ None => (odr, true)
       case o ~ odr ~ asc => (odr, asc.get)
     }
-    
+
     def limitOffset = LIMIT ~ lmt ~ opt (offset) ^^ {
       case l ~ lt ~ None => (lt, 0)
       case l ~ lt ~ of => (lt, of.get)
     }
-    
+
     def offset = OFFSET ~ ofset  ^^ {
       case offset ~ of  => of
     }
-    
+
     def asce = asc ^^ {
       case DESC  => false
       case  _ => true
     }
-    
+
     def loopExpression: Parser[(Expression, Option[Literal[Integer]], Option[String])] =
         LOOP ~ (LPAREN ~> query <~ RPAREN) ~ opt(intConstant <~ TIMES) ~ opt(AS ~> alias) ^^ {
             case l ~ e ~ None ~ a => (e, None, a)
@@ -292,15 +292,15 @@ object QueryParser extends StandardTokenParsers with QueryKeywords with Expressi
     }
 
     def alias = ident | stringLit
-    
+
     def lmt = intConstant
-    
+
     def ofset = intConstant
 
     def order = ident | stringLit
-    
+
     def asc =  ident | stringLit
-    
+
     def literal = booleanConstant ^^ {
         boolean(_)
         } |

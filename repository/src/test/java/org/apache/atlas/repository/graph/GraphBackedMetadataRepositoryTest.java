@@ -269,7 +269,7 @@ public class GraphBackedMetadataRepositoryTest {
         Assert.assertEquals(traitNames.size(), 2);
         Assert.assertTrue(traitNames.contains(TestUtils.PII));
         Assert.assertTrue(traitNames.contains(TestUtils.CLASSIFICATION));
-        
+
         // Verify modification timestamp was updated.
         GraphHelper.getInstance().getVertexForGUID(aGUID);
         Long modificationTimestampPostUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY);
@@ -308,7 +308,7 @@ public class GraphBackedMetadataRepositoryTest {
         repositoryService.addTrait(getGUID(), null);
         Assert.fail();
     }
-    
+
     @Test(dependsOnMethods = "testAddTrait", expectedExceptions = RepositoryException.class)
     public void testAddTraitForBadEntity() throws Exception {
         TraitType traitType = typeSystem.getDataType(TraitType.class, TestUtils.PII);
@@ -338,7 +338,7 @@ public class GraphBackedMetadataRepositoryTest {
         Assert.assertEquals(traitNames.size(), 2);
         Assert.assertTrue(traitNames.contains(TestUtils.CLASSIFICATION));
         Assert.assertFalse(traitNames.contains(TestUtils.PII));
-        
+
         // Verify modification timestamp was updated.
         GraphHelper.getInstance().getVertexForGUID(aGUID);
         Long modificationTimestampPostUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY);

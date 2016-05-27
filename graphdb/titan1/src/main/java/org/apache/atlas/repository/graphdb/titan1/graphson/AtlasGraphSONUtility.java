@@ -28,21 +28,21 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 /**
  * This class was largely removed from tinkerpop 1.  We're adding it back here to avoid
  * changing the format of the JSON that we produce.
- * 
+ *
  * Helps write individual graph elements to TinkerPop JSON format known as GraphSON.
  *
  * @author Stephen Mallette (http://stephen.genoprime.com)
  */
 public class AtlasGraphSONUtility {
 
-    private static final JsonNodeFactory jsonNodeFactory = JsonNodeFactory.instance;      
+    private static final JsonNodeFactory jsonNodeFactory = JsonNodeFactory.instance;
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
     private final AtlasGraphSONMode mode;
     private final List<String> vertexPropertyKeys;
     private final List<String> edgePropertyKeys;
-    
+
     private final ElementPropertiesRule vertexPropertiesRule;
     private final ElementPropertiesRule edgePropertiesRule;
     private final boolean normalized;
@@ -60,9 +60,9 @@ public class AtlasGraphSONUtility {
      */
     private AtlasGraphSONUtility(final AtlasGraphSONMode mode, final Set<String> vertexPropertyKeySet,
                            final Set<String> edgePropertyKeySet) {
-        
+
         AtlasElementPropertyConfig config = AtlasElementPropertyConfig.includeProperties(vertexPropertyKeySet, edgePropertyKeySet);
-    
+
         this.vertexPropertyKeys = config.getVertexPropertyKeys();
         this.edgePropertyKeys = config.getEdgePropertyKeys();
         this.vertexPropertiesRule = config.getVertexPropertiesRule();
@@ -70,7 +70,7 @@ public class AtlasGraphSONUtility {
         this.normalized = config.isNormalized();
 
         this.mode = mode;
-        
+
         this.includeReservedVertexId = includeReservedKey(mode, AtlasGraphSONTokens._ID, vertexPropertyKeys, this.vertexPropertiesRule);
         this.includeReservedEdgeId = includeReservedKey(mode, AtlasGraphSONTokens._ID, edgePropertyKeys, this.edgePropertiesRule);
         this.includeReservedVertexType = includeReservedKey(mode, AtlasGraphSONTokens._TYPE, vertexPropertyKeys, this.vertexPropertiesRule);
@@ -148,7 +148,7 @@ public class AtlasGraphSONUtility {
     }
 
 
-   
+
     /**
      * Creates a Jettison JSONObject from a graph element.
      *
@@ -467,10 +467,10 @@ public class AtlasGraphSONUtility {
 
         return type;
     }
-    
-    
-   
+
+
+
     static class ElementFactory {
-        
+
     }
 }

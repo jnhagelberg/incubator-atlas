@@ -39,14 +39,14 @@
             <groupId>org.apache.atlas</groupId>
             <artifactId>atlas-graphdb-api</artifactId>
         </dependency>
-	
+
 	<dependency>
             <groupId>org.apache.atlas</groupId>
             <artifactId>atlas-graphdb-impls</artifactId>
 	    <type>pom</type>
             <scope>test</scope>
         </dependency>
-	
+
 
         <dependency>
             <groupId>org.apache.atlas</groupId>

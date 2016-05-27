@@ -30,13 +30,13 @@ public class Titan1IndexQuery implements AtlasIndexQuery<Titan1Vertex, Titan1Edg
 
     private static final class IndexQueryResultMapper
             implements Mapper<TitanIndexQuery.Result<TitanVertex>, AtlasIndexQuery.Result<Titan1Vertex, Titan1Edge>> {
-        
+
         @Override
         public AtlasIndexQuery.Result<Titan1Vertex, Titan1Edge> map(TitanIndexQuery.Result<TitanVertex> source) {
             return new ResultImpl(source);
         }
     }
-    
+
     static class ResultImpl implements AtlasIndexQuery.Result<Titan1Vertex, Titan1Edge> {
         TitanIndexQuery.Result<TitanVertex> source_;
 

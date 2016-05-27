@@ -35,9 +35,9 @@ import static org.testng.Assert.assertTrue;
 
 @Guice(modules = RepositoryMetadataModule.class)
 public class HBaseBasedAuditRepositoryTest extends AuditRepositoryTestBase {
-    
+
     private TableName tableName;
-    
+
 
     @Inject
     private EntityAuditRepository repository;
@@ -46,7 +46,7 @@ public class HBaseBasedAuditRepositoryTest extends AuditRepositoryTestBase {
     protected boolean isRepositoryTestable() {
         return (repository instanceof HBaseBasedAuditRepository);
     }
-    
+
     @BeforeClass
     public void setup() throws Exception {
         if(! isRepositoryTestable()) {
@@ -80,6 +80,6 @@ public class HBaseBasedAuditRepositoryTest extends AuditRepositoryTestBase {
         Admin admin = connection.getAdmin();
         assertTrue(admin.tableExists(tableName));
     }
-    
-   
+
+
 }

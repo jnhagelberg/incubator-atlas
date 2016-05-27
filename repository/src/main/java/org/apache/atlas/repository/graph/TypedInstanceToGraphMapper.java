@@ -205,7 +205,7 @@ public final class TypedInstanceToGraphMapper {
             case ARRAY:
                 mapArrayCollectionToVertex(typedInstance, instanceVertex, attributeInfo, operation);
                 break;
-                
+
             case MAP:
                 mapMapCollectionToVertex(typedInstance, instanceVertex, attributeInfo, operation);
                 break;
@@ -390,10 +390,10 @@ public final class TypedInstanceToGraphMapper {
                 }
             }
         }
-    }  
-    
-    
-  
+    }
+
+
+
 
 
     private <V,E> void getEdges(List<String> edgeIds, Map<String, AtlasEdge<V,E>> edgeMap) {
@@ -450,7 +450,7 @@ public final class TypedInstanceToGraphMapper {
                 newElementsCreated.add(newEntry);
             }
         }
-        
+
         // for dereference on way out
         GraphHelper.setProperty(instanceVertex, propertyName, newKeysCreated);
 

@@ -186,7 +186,7 @@ public class GraphBackedDiscoveryService implements DiscoveryService {
                     oRow.put(k.toString(), v.toString());
                 }
             } else if (atlasResultEntry instanceof AtlasVertex) {
-                AtlasVertex<?,?> vertex = (AtlasVertex<?,?>)atlasResultEntry;               
+                AtlasVertex<?,?> vertex = (AtlasVertex<?,?>)atlasResultEntry;
                 for (String key : vertex.getPropertyKeys()) {
                     Object value = GraphHelper.getProperty(vertex,  key);
                     if (value != null) {

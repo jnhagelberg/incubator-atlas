@@ -21,49 +21,49 @@ import com.thinkaurelius.titan.core.TitanGraph;
 
 public class Titan1Element<T extends Element> implements AtlasElement {
 
-    
+
     private T element_;
     protected Object id_;
     private TitanGraph graph_;
-    
-    
+
+
     public Titan1Element(TitanGraph graph, String id) {
         id_ = id;
         graph_ = graph;
     }
-    
-    
+
+
     public Titan1Element(T element) {
         element_ = element;
         id_ = element.id();
     }
-    
+
     @Override
     public <T> T getProperty(String propertyName) {
-        
-        
+
+
         //add explicit logic to return null if the property does not exist
         //This is the behavior Atlas expects.  Titan 1 throws an exception
-        //in this scenario.       
+        //in this scenario.
         Property p = getWrappedElement().property(propertyName);
         if(p.isPresent()) {
             return (T)p.value();
         }
         return null;
     }
-    
+
     @Override
     public Set<String> getPropertyKeys() {
         return getWrappedElement().keys();
     }
-    
+
     @Override
-    public void removeProperty(String propertyName) {  
+    public void removeProperty(String propertyName) {
         Iterator<? extends Property<String>> it = getWrappedElement().properties(propertyName);
         while(it.hasNext()) {
             Property<String> property = it.next();
             property.remove();
-        }        
+        }
     }
 
     @Override
@@ -75,16 +75,16 @@ public class Titan1Element<T extends Element> implements AtlasElement {
             throw new AtlasSchemaViolationException(e);
         }
     }
-    
+
     @Override
     public Object getId() {
         return id_;
     }
-    
+
 
     //not in interface
     public T getWrappedElement() {
-        
+
         T element = getElement();
         if(element == null) {
             throw new IllegalStateException("The vertex " + id_ + " does not exist!");
@@ -92,12 +92,12 @@ public class Titan1Element<T extends Element> implements AtlasElement {
         return element;
     }
 
-    private T getElement() {        
-        
+    private T getElement() {
+
         if(element_ != null) {
             return element_;
         }
-        
+
         if(getClass() == Titan1Vertex.class) {
             Iterator<Vertex> it = graph_.vertices(id_);
             if(! it.hasNext()) {
@@ -108,10 +108,10 @@ public class Titan1Element<T extends Element> implements AtlasElement {
         }
         return null;
     }
-    
+
     @Override
     public JSONObject toJson(Set<String> propertyKeys) throws JSONException {
-        
+
         return AtlasGraphSONUtility.jsonFromElement(this, propertyKeys, AtlasGraphSONMode.NORMAL);
     }
 
@@ -121,8 +121,8 @@ public class Titan1Element<T extends Element> implements AtlasElement {
         result = 17*result + getClass().hashCode();
         result = 17*result + getWrappedElement().hashCode();
         return result;
-    }    
-    
+    }
+
     @Override
     public boolean equals(Object other) {
         if(other.getClass() != getClass()) {
@@ -146,7 +146,7 @@ public class Titan1Element<T extends Element> implements AtlasElement {
     @Override
     public void setListProperty(String propertyName, List<String> values) {
         setProperty(propertyName, values);
-        
+
     }
 
     /* (non-Javadoc)
@@ -162,8 +162,8 @@ public class Titan1Element<T extends Element> implements AtlasElement {
      */
     @Override
     public <T> void setJsonProperty(String propertyName, T value) {
-        setProperty(propertyName, value); 
-        
+        setProperty(propertyName, value);
+
     }
 
     /* (non-Javadoc)
@@ -173,5 +173,5 @@ public class Titan1Element<T extends Element> implements AtlasElement {
     public <T> T getJsonProperty(String propertyName) {
        return getProperty(propertyName);
     }
-    
+
 }

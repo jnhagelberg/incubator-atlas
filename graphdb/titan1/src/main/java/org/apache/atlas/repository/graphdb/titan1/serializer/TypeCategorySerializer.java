@@ -8,5 +8,5 @@ import com.thinkaurelius.titan.graphdb.database.serialize.attribute.EnumSerializ
 public class TypeCategorySerializer extends EnumSerializer<TypeCategory> {
     public TypeCategorySerializer() {
         super(TypeCategory.class);
-    }       
+    }
 }

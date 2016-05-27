@@ -37,11 +37,11 @@ public class AuditRepositoryTestBase {
 
     @Test
     public void testAddEvents() throws Exception {
-        
+
         if(! isRepositoryTestable()) {
             return;
         }
-        
+
         EntityAuditEvent event = new EntityAuditEvent(rand(), System.currentTimeMillis(), "u1",
                 EntityAuditEvent.EntityAuditAction.ENTITY_CREATE, "d1");
 
@@ -55,7 +55,7 @@ public class AuditRepositoryTestBase {
 
     @Test
     public void testListPagination() throws Exception {
-        
+
         if(! isRepositoryTestable()) {
             return;
         }
@@ -105,7 +105,7 @@ public class AuditRepositoryTestBase {
         assertEquals(actual.getTimestamp(), expected.getTimestamp());
         assertEquals(actual.getDetails(), expected.getDetails());
     }
-    
+
     protected boolean isRepositoryTestable() {
         return true;
     }

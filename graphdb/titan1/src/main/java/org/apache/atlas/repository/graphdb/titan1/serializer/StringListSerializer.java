@@ -14,12 +14,12 @@ public class StringListSerializer implements AttributeSerializer<List<String>> {
 
     private StringSerializer stringSerializer_ = new StringSerializer();
     @Override
-    public List<String> read(ScanBuffer buffer) {            
+    public List<String> read(ScanBuffer buffer) {
         int length = (int)VariableLong.readPositive(buffer);
         List<String> result = new ArrayList<String>(length);
         for(int i = 0; i < length; i++) {
             result.add(stringSerializer_.read(buffer));
-        } 
+        }
         return result;
     }
 
@@ -30,5 +30,5 @@ public class StringListSerializer implements AttributeSerializer<List<String>> {
             stringSerializer_.write(buffer, attr);
         }
     }
-    
+
 }

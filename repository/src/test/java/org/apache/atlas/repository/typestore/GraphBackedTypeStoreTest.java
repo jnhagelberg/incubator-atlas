@@ -195,7 +195,7 @@ public class GraphBackedTypeStoreTest {
             edgeCount = countOutgoingEdges(typeVertex, gbTypeStore.getEdgeLabel("Department", "employees"));
             Assert.assertEquals(edgeCount, 1, "Should only be 1 edge for employees attribute on Department type vertex");
         }
-        
+
         //Validate the updated types
         TypesDef types = typeStore.restore();
         ts.reset();
@@ -233,7 +233,7 @@ public class GraphBackedTypeStoreTest {
             ImmutableList.of(deptTypeDef, superTypeDef2));
         ts.updateTypes(typesDef);
         typeStore.store(ts, ImmutableList.of(superTypeDef2.typeName, deptTypeDef.typeName));
-        
+
         // ATLAS-474: verify that type update did not write duplicate edges to the type store.
         if (typeStore instanceof GraphBackedTypeStore) {
             GraphBackedTypeStore gbTypeStore = (GraphBackedTypeStore) typeStore;
@@ -245,7 +245,7 @@ public class GraphBackedTypeStoreTest {
             edgeCount = countOutgoingEdges(typeVertex, gbTypeStore.getEdgeLabel("Department", "employees"));
             Assert.assertEquals(edgeCount, 1);
         }
-        
+
         // Verify Department now has 2 super types.
         TypesDef types = typeStore.restore();
         for (HierarchicalTypeDefinition<ClassType> classTypeDef : types.classTypesAsJavaList()) {
@@ -265,7 +265,7 @@ public class GraphBackedTypeStoreTest {
         Assert.assertTrue(deptType.superTypes.containsAll(
             Arrays.asList("Division", superTypeDef2.typeName)));
    }
-    
+
     private int countOutgoingEdges(AtlasVertex typeVertex, String edgeLabel) {
 
         Iterable<AtlasEdge> outGoingEdgesByLabel = GraphHelper.getOutGoingEdgesByLabel(typeVertex, edgeLabel);

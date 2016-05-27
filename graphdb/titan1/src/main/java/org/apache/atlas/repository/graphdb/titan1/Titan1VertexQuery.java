@@ -15,7 +15,7 @@ public class Titan1VertexQuery implements AtlasVertexQuery<Titan1Vertex, Titan1E
 
     private TitanVertexQuery<?> query_;
 
-    public Titan1VertexQuery(TitanVertexQuery<?> query) {       
+    public Titan1VertexQuery(TitanVertexQuery<?> query) {
         query_ = query;
     }
 
@@ -23,7 +23,7 @@ public class Titan1VertexQuery implements AtlasVertexQuery<Titan1Vertex, Titan1E
     public AtlasVertexQuery<Titan1Vertex, Titan1Edge> direction(AtlasEdgeDirection queryDirection) {
         query_.direction(TitanObjectFactory.createDirection(queryDirection));
         return this;
-        
+
     }
 
     @Override
@@ -36,13 +36,13 @@ public class Titan1VertexQuery implements AtlasVertexQuery<Titan1Vertex, Titan1E
     public Iterable<AtlasEdge<Titan1Vertex, Titan1Edge>> edges() {
         Iterable vertices = query_.edges();
         return new IterableAdapter<Edge,AtlasEdge<Titan1Vertex, Titan1Edge>>(vertices, EdgeMapper.INSTANCE);
-   
+
     }
 
     @Override
     public long count() {
         return query_.count();
     }
-    
-    
+
+
 }

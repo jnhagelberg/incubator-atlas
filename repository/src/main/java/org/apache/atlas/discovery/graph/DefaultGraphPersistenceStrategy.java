@@ -54,7 +54,7 @@ import com.google.common.collect.ImmutableList;
 /**
  * TBD - where should templates be - class or method level?  Right now
  * using method level to be consistent with superclass.
- * 
+ *
  * Default implementation of GraphPersistenceStrategy.
  */
 public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategies {
@@ -105,7 +105,7 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
     public <V,E> List<String> traitNames(AtlasVertex<V,E> vertex) {
         return GraphHelper.getTraitNames(vertex);
     }
-    
+
     @Override
     public String fieldPrefixInSelect() {
         return GraphPersistenceStrategies$class.fieldPrefixInSelect(this);
@@ -214,7 +214,7 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
     public String gremlinCompOp(Expressions.ComparisonExpression op) {
         return GraphPersistenceStrategies$class.gremlinCompOp(this, op);
     }
-       
+
     @Override
     public String loopObjectExpression(IDataType<?> dataType) {
         return GraphPersistenceStrategies$class.loopObjectExpression(this, dataType);
@@ -249,7 +249,7 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
     public boolean addGraphVertexPrefix(scala.collection.Traversable<String> preStatements) {
         return GraphPersistenceStrategies$class.addGraphVertexPrefix(this, preStatements);
     }
-    
+
     @Override
     public GremlinVersion getSupportedGremlinVersion() {
         return metadataRepository.getSupportedGremlinVersion();

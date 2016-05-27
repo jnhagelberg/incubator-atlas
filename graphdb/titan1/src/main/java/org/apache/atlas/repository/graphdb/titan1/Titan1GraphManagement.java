@@ -35,14 +35,14 @@ import com.thinkaurelius.titan.graphdb.internal.Token;
 public class Titan1GraphManagement implements AtlasGraphManagement {
 
     private static final Logger LOG = LoggerFactory.getLogger(Titan1GraphManagement.class);
-    
+
     private static final char[] RESERVED_CHARS = {'{', '}', '"', '$', Token.SEPARATOR_CHAR};
-    
+
     private TitanGraph graph_;
     private TitanManagement management_;
-    
+
     public Titan1GraphManagement(TitanGraph graph, TitanManagement managementSystem) {
-        management_ = managementSystem;        
+        management_ = managementSystem;
         graph_ = graph;
     }
 
@@ -50,27 +50,27 @@ public class Titan1GraphManagement implements AtlasGraphManagement {
     public void buildMixedVertexIndex(String index, String backingIndex) {
        buildMixedIndex(index, Vertex.class, backingIndex);
     }
-    
+
     @Override
     public void buildMixedEdgeIndex(String index, String backingIndex) {
        buildMixedIndex(index, Edge.class, backingIndex);
     }
-       
+
     private void buildMixedIndex(String index, Class<? extends Element> titanClass, String backingIndex) {
-       
+
        management_.buildIndex(index, titanClass).buildMixedIndex(backingIndex);
     }
-    
-    
+
+
     @Override
-    public void createFullTextIndex(String indexName, AtlasPropertyKey propertyKey, String backingIndex) { 
-        
+    public void createFullTextIndex(String indexName, AtlasPropertyKey propertyKey, String backingIndex) {
+
         PropertyKey fullText = TitanObjectFactory.createPropertyKey(propertyKey);
 
         management_.buildIndex(indexName, Vertex.class)
             .addKey(fullText, com.thinkaurelius.titan.core.schema.Parameter.of("mapping", Mapping.TEXT))
             .buildMixedIndex(backingIndex);
-     
+
     }
 
 
@@ -78,16 +78,16 @@ public class Titan1GraphManagement implements AtlasGraphManagement {
     public boolean containsPropertyKey(String propertyName) {
         return management_.containsPropertyKey(propertyName);
     }
-    
+
     @Override
     public void rollback() {
         management_.rollback();
-        
+
     }
 
     @Override
-    public void commit() { 
-        management_.commit();   
+    public void commit() {
+        management_.commit();
     }
 
     private static void checkName(String name) {
@@ -96,7 +96,7 @@ public class Titan1GraphManagement implements AtlasGraphManagement {
         Preconditions.checkArgument(StringUtils.isNotBlank(name), "Need to specify name");
         for (char c : RESERVED_CHARS)
             Preconditions.checkArgument(name.indexOf(c) < 0, "Name can not contains reserved character %s: %s", c, name);
-       
+
     }
     /* (non-Javadoc)
      * @see org.apache.atlas.repository.graphdb.AtlasGraphManagement#waitForIndexAvailibility(java.util.Collection)
@@ -118,29 +118,29 @@ public class Titan1GraphManagement implements AtlasGraphManagement {
         try {
             long start = System.currentTimeMillis();
             long timeoutTime = start + 1000*60*10; //wait at most 10 minutes
-    
+
             //keeps track of what indices are still not fully enabled
             Collection<String> pendingIndices = new HashSet<String>();
             pendingIndices.addAll(indexNames);
-    
-    
+
+
             //wait for index to become active
             long currentTime = System.currentTimeMillis();
-    
+
             while(currentTime < timeoutTime) {
-    
+
                 //check status of all indices
                 removeEnabledIndicesFromCollection(mgmt, pendingIndices);
-    
+
                 if(pendingIndices.size() == 0) {
                     long completeTime = System.currentTimeMillis();
-    
+
                     LOG.info("Indices fully enabled after " + (completeTime - start) + " ms");
                     return;
                 }
-    
+
                 logActivationStatus(pendingIndices);
-    
+
                 try {
                     Thread.sleep(1000);
                 }
@@ -216,7 +216,7 @@ public class Titan1GraphManagement implements AtlasGraphManagement {
      */
     @Override
     public AtlasPropertyKey makePropertyKey(String propertyName, Class propertyClass, Multiplicity multiplicity) {
-    
+
         PropertyKeyMaker propertyKeyBuilder = management_.makePropertyKey(propertyName).dataType(propertyClass);
         Cardinality cardinality = TitanObjectFactory.createCardinality(multiplicity);
         if(cardinality != null) {
@@ -248,7 +248,7 @@ public class Titan1GraphManagement implements AtlasGraphManagement {
         if (enforceUniqueness) {
             indexBuilder.unique();
         }
-        indexBuilder.buildCompositeIndex();        
+        indexBuilder.buildCompositeIndex();
     }
 
 

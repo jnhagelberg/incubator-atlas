@@ -180,7 +180,7 @@ public final class GraphHelper {
 
         return null;
     }
-    
+
         /**
      * Returns the active edge for the given edge label.
      * If the vertex is deleted and there is no active edge, it returns the latest deleted edge
@@ -194,7 +194,7 @@ public final class GraphHelper {
         Iterable<AtlasEdge<V,E>> edges = GraphHelper.getOutGoingEdgesByLabel(vertex, edgeLabel);
         AtlasEdge<V,E> latestDeletedEdge = null;
         if(edges != null) {
-            
+
             long latestDeletedEdgeTime = Long.MIN_VALUE;
             for(AtlasEdge<V,E> edge : edges) {
                 String edgeState = edge.getProperty(Constants.STATE_PROPERTY_KEY);
@@ -273,10 +273,10 @@ public final class GraphHelper {
         LOG.debug("Adding property {} = \"{}\" to vertex {}", propertyName, value, string(vertex));
         vertex.addProperty(propertyName, value);
     }
-    
+
     /**
      * Remove the specified edge from the graph.
-     * 
+     *
      * @param edge
      */
     public <V,E> void removeEdge(AtlasEdge<V,E> edge) {
@@ -286,11 +286,11 @@ public final class GraphHelper {
         graph.removeEdge(edge);
         LOG.info("Removed edge {}", edge);
     }
-    
-    
+
+
     /**
      * Remove the specified vertex from the graph.
-     * 
+     *
      * @param vertex
      */
     public <V,E> void removeVertex(AtlasVertex<V,E> vertex) {
@@ -329,9 +329,9 @@ public final class GraphHelper {
     }
 
     public static Object getProperty(AtlasVertex<?,?> entityVertex, String propertyName) {
-        
+
         //these are the only two properties that are defined as
-        //being multiplicity many properties in Gremlin.  Todo - 
+        //being multiplicity many properties in Gremlin.  Todo -
         //generalize this.
         if(propertyName.equals(Constants.TRAIT_NAMES_PROPERTY_KEY) ||
            propertyName.equals(Constants.SUPER_TYPES_PROPERTY_KEY)) {
@@ -341,13 +341,13 @@ public final class GraphHelper {
             return entityVertex.getProperty(propertyName);
         }
     }
-    
+
     public static List<String> getTraitNames(AtlasVertex<?,?> entityVertex) {
         ArrayList<String> traits = new ArrayList<>();
         Collection<String> propertyValues = entityVertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY);
         for(String value : propertyValues) {
             traits.add(value);
-        }        
+        }
         return traits;
     }
 
@@ -404,7 +404,7 @@ public final class GraphHelper {
     private <V,E> AtlasGraph<V,E> getGraph() {
         return (AtlasGraph<V,E>)graph;
     }
-    
+
     public static void dumpToLog(final AtlasGraph<?,?> graph) {
         LOG.debug("*******************Graph Dump****************************");
         LOG.debug("Vertices of {}", graph);
@@ -441,7 +441,7 @@ public final class GraphHelper {
         }
     }
 
-    
+
     public static AttributeInfo getAttributeInfoForSystemAttributes(String field) {
         switch (field) {
         case Constants.STATE_PROPERTY_KEY:
@@ -454,7 +454,7 @@ public final class GraphHelper {
         }
         return null;
     }
-    
+
     public static ITypedReferenceableInstance[] deserializeClassInstances(TypeSystem typeSystem, String entityInstanceDefinition)
     throws AtlasException {
         try {
@@ -485,7 +485,7 @@ public final class GraphHelper {
             throw new IllegalArgumentException("Unable to deserialize json", e);
         }
     }
-    
+
     public static boolean elementExists(AtlasElement v) {
         return v != null && v.exists();
     }

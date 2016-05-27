@@ -31,23 +31,23 @@ public interface AtlasGraphIndex {
      */
     boolean isMixedIndex();
 
-    
+
     /**
      * Indicates if the index is a composite index.
      * @return
      */
     boolean isCompositeIndex();
-    
+
     /**
      * Indicates if the index applies to edges
-     * 
+     *
      * @return
      */
     boolean isEdgeIndex();
-    
+
     /**
      * Indicates if the index applies to vertices
-     * 
+     *
      * @return
      */
     boolean isVertexIndex();

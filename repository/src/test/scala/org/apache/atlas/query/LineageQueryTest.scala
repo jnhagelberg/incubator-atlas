@@ -39,7 +39,7 @@ class LineageQueryTest extends BaseGremlinTest {
         RequestContext.createContext();
     }
 
-    
+
     @BeforeClass
     def beforeAll() {
       TypeSystem.getInstance().reset()

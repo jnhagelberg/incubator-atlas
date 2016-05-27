@@ -86,7 +86,7 @@ class TypesSerializationTest extends BaseTest with TypeHelpers {
             new EnumValue("DB", 1),
             new EnumValue("TABLE", 2),
             new EnumValue("PARTITION", 3))
-            
+
          ts.defineEnumType("TestType", "TestType-description",
             new EnumValue("A", 1),
             new EnumValue("B", 2),
@@ -129,7 +129,7 @@ class TypesSerializationTest extends BaseTest with TypeHelpers {
         val securityClearanceTypeDef: HierarchicalTypeDefinition[TraitType] = createTraitTypeDef("SecurityClearance", List(),
             requiredAttr("level", DataTypes.INT_TYPE)
         )
-        
+
         val securityClearanceTypeDefWithDesc: HierarchicalTypeDefinition[TraitType] = createTraitTypeDef("SecurityClearance2", Some("SecurityClearance-Description"), List(),
             requiredAttr("level", DataTypes.INT_TYPE)
         )
@@ -204,7 +204,7 @@ class TypesSerializationTest extends BaseTest with TypeHelpers {
       val typesDef2 = TypesSerialization.fromJson(ser)
 
       Assert.assertEquals(sDef, typesDef2.structTypes(0))
-    
+
       //Now with description
       val sDef2 = structDef("ts1", Some("ts1-description"), requiredAttr("a", DataTypes.INT_TYPE),
       optionalAttr("b", DataTypes.BOOLEAN_TYPE),
@@ -279,7 +279,7 @@ class TypesSerializationTest extends BaseTest with TypeHelpers {
       new EnumValue("DB", 1),
       new EnumValue("TABLE", 2),
       new EnumValue("PARTITION", 3))
-    
+
     val typDefs = Seq(e1,e2,e3,e4,e5)
     typDefs.foreach { tDef =>
       val ser2 = TypesSerialization.toJson(tDef)

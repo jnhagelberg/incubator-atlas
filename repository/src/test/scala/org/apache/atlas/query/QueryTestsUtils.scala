@@ -108,7 +108,7 @@ trait GraphUtils {
             val g = AtlasGraphProvider.getGraphInstance
             val mgmt = g.getManagementSystem
             val typname = mgmt.makePropertyKey("typeName", classOf[String], null);
-            mgmt.createCompositeIndex("byTypeName", typname, false);           
+            mgmt.createCompositeIndex("byTypeName", typname, false);
             mgmt.commit()
             g
         } catch {
@@ -205,12 +205,12 @@ object QueryTestsUtils extends GraphUtils {
         ()
     }
 
-    def setupTestGraph(repo : MetadataRepository, gp: AtlasGraphProvider): AtlasGraph[_,_] = {        
-        
+    def setupTestGraph(repo : MetadataRepository, gp: AtlasGraphProvider): AtlasGraph[_,_] = {
+
         //start with a clean graph
-        AtlasGraphProvider.unloadGraph();    
+        AtlasGraphProvider.unloadGraph();
         val g = AtlasGraphProvider.getGraphInstance();
-        
+
         var cl : ClassLoader = Thread.currentThread().getContextClassLoader;
         var instancesJsonUrl : URL =  cl.getResource("hive-instances.json")
 
@@ -218,10 +218,10 @@ object QueryTestsUtils extends GraphUtils {
         val json = try source.mkString finally source.close()
         var importer = new JSONImporter(TypeSystem.getInstance(), json);
         importer.doImport(repo);
-        g.commit();        
+        g.commit();
         g
     }
-    
+
    def getTitanConfiguration() : Configuration = {
       val configProperties : Configuration = ApplicationProperties.get();
       return ApplicationProperties.getSubsetConfiguration(configProperties, "atlas.graph");
@@ -243,7 +243,7 @@ trait BaseGremlinTest {
       println(rJ)
     }
   }
-  
+
 
 
 }

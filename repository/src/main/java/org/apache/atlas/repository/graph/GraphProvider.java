@@ -23,5 +23,5 @@ import org.apache.atlas.repository.graphdb.AtlasGraph;
 
 public interface GraphProvider<T extends AtlasGraph> extends CheckedProvider<T> {
     @Override
-    T get();   
+    T get();
 }

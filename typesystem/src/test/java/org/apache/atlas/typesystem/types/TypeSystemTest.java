@@ -102,7 +102,7 @@ public class TypeSystemTest extends BaseTest {
         type = getTypeSystem().getDataType(StructType.class, typeName);
         Assert.assertNotNull(type);
         Assert.assertEquals(type.getDescription(), typeDescription);
-        
+
     }
 
     @Test
@@ -242,7 +242,7 @@ public class TypeSystemTest extends BaseTest {
         HierarchicalTypeDefinition<ClassType> testDataSetDef = TypesUtil.createClassTypeDef("TestDataSet", ImmutableSet.of("TestObject"));
         HierarchicalTypeDefinition<ClassType> testColumnDef = TypesUtil.createClassTypeDef("TestColumn", ImmutableSet.of("TestObject"),
             createRequiredAttrDef("name", DataTypes.STRING_TYPE));
-        HierarchicalTypeDefinition<ClassType> testRelationalDataSetDef = 
+        HierarchicalTypeDefinition<ClassType> testRelationalDataSetDef =
             TypesUtil.createClassTypeDef("TestRelationalDataSet", ImmutableSet.of("TestDataSet"),
                 new AttributeDefinition("columns", DataTypes.arrayTypeName("TestColumn"),
                     Multiplicity.OPTIONAL, true, null));

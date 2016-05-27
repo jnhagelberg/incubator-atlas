@@ -75,7 +75,7 @@ public class TitanObjectFactory {
         // default to LIST as this is the most forgiving
         return Cardinality.LIST;
     }
-    
+
     public static PropertyKey createPropertyKey(AtlasPropertyKey key) {
         return ((Titan0PropertyKey)key).getWrappedPropertyKey();
     }

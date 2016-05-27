@@ -29,13 +29,13 @@ public class AtlasEdgeLabel {
     private final String edgeLabel_;
     private final String qualifiedMapKey_;
     private final String qualifiedAttributeName_;
-    
+
     public AtlasEdgeLabel(String edgeLabel) {
         String labelWithoutPrefix = edgeLabel.substring(GraphHelper.EDGE_LABEL_PREFIX.length());
         String[] fields = labelWithoutPrefix.split("\\.", 3);
         if (fields.length < 2 || fields.length > 3) {
-            throw new IllegalArgumentException("Invalid edge label " + edgeLabel + 
-                ": expected 2 or 3 label components but found " + fields.length); 
+            throw new IllegalArgumentException("Invalid edge label " + edgeLabel +
+                ": expected 2 or 3 label components but found " + fields.length);
         }
         typeName_ = fields[0];
         attributeName_ = fields[1];
@@ -51,19 +51,19 @@ public class AtlasEdgeLabel {
         }
         edgeLabel_ = edgeLabel;
     }
-    
+
     public String getTypeName() {
         return typeName_;
     }
-    
+
     public String getAttributeName() {
         return attributeName_;
     }
-    
+
     public String getMapKey() {
         return mapKey_;
     }
-    
+
     public String getEdgeLabel() {
         return edgeLabel_;
     }
@@ -71,10 +71,10 @@ public class AtlasEdgeLabel {
     public String getQualifiedMapKey() {
         return qualifiedMapKey_;
     }
-    
-    
+
+
     public String getQualifiedAttributeName() {
-    
+
         return qualifiedAttributeName_;
     }
 
@@ -90,5 +90,5 @@ public class AtlasEdgeLabel {
         sb.append(", edgeLabel: ").append(edgeLabel_).append(')');
         return sb.toString();
     }
-    
+
 }

@@ -44,7 +44,7 @@ class GremlinTest2 extends BaseGremlinTest {
     RequestContext.createContext();
   }
 
-  
+
   @BeforeClass
   def beforeAll() {
     TypeSystem.getInstance().reset()
@@ -166,5 +166,5 @@ class GremlinTest2 extends BaseGremlinTest {
            Gremlin3GraphPersistenceStrategy1
        }
    }
-  
+
 }

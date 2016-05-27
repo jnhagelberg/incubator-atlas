@@ -45,14 +45,14 @@ import com.thinkaurelius.titan.core.util.TitanCleanup;
 
 public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
 
-    
+
     public Titan1Graph() {
 
     }
 
     @Override
     public AtlasEdge<Titan1Vertex, Titan1Edge> addEdge(AtlasVertex<Titan1Vertex, Titan1Edge> outVertex, AtlasVertex<Titan1Vertex, Titan1Edge> inVertex, String edgeLabel) {
-        
+
         try {
             Vertex oV = outVertex.getV().getWrappedElement();
             Vertex iV = inVertex.getV().getWrappedElement();
@@ -66,7 +66,7 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
 
     @Override
     public AtlasGraphQuery<Titan1Vertex, Titan1Edge> query() {
-              
+
         TitanGraphQuery<?> query = getGraph().query();
         return TitanObjectFactory.createQuery(query);
     }
@@ -80,46 +80,46 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
 
     @Override
     public void removeEdge(AtlasEdge<Titan1Vertex, Titan1Edge> edge) {
-        
+
         Edge wrapped = edge.getE().getWrappedElement();
         wrapped.remove();
-        
+
     }
 
     @Override
     public void removeVertex(AtlasVertex<Titan1Vertex, Titan1Edge> vertex) {
         Vertex wrapped = vertex.getV().getWrappedElement();
-        wrapped.remove();        
+        wrapped.remove();
     }
 
     @Override
     public Iterable<AtlasEdge<Titan1Vertex, Titan1Edge>> getEdges() {
-        
+
         Iterator<Edge> edges = getGraph().edges();
         final Iterator<AtlasEdge<Titan1Vertex, Titan1Edge>> resultIt = new IteratorAdapter<>(edges, EdgeMapper.INSTANCE);
-        
+
         return new Iterable<AtlasEdge<Titan1Vertex, Titan1Edge>>() {
 
             @Override
             public Iterator<AtlasEdge<Titan1Vertex, Titan1Edge>> iterator() {
                 return resultIt;
-            }            
+            }
         };
-        
+
     }
 
     @Override
     public Iterable<AtlasVertex<Titan1Vertex, Titan1Edge>> getVertices() {
-        
+
         Iterator<Vertex> vertices = getGraph().vertices();
         final Iterator<AtlasVertex<Titan1Vertex, Titan1Edge>> resultIt = new IteratorAdapter<>(vertices, VertexMapper.INSTANCE);
-        
+
         return new Iterable<AtlasVertex<Titan1Vertex, Titan1Edge>>() {
 
             @Override
             public Iterator<AtlasVertex<Titan1Vertex, Titan1Edge>> iterator() {
                 return resultIt;
-            }            
+            }
         };
     }
 
@@ -131,7 +131,7 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
 
     @Override
     public void commit() {
-        getGraph().tx().commit();        
+        getGraph().tx().commit();
     }
 
     @Override
@@ -155,32 +155,32 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
         getGraph().close();
     }
 
-  
+
     @Override
-    public Set<String> getEdgeIndexKeys() {        
-        return getIndexKeys(Edge.class);               
+    public Set<String> getEdgeIndexKeys() {
+        return getIndexKeys(Edge.class);
     }
-    
-    public Set<String> getVertexIndexKeys() {        
-        return getIndexKeys(Vertex.class);               
+
+    public Set<String> getVertexIndexKeys() {
+        return getIndexKeys(Vertex.class);
     }
-       
+
     private Set<String> getIndexKeys(Class<? extends Element> titanElementClass) {
-          
+
         TitanManagement mgmt = getGraph().openManagement();
         Iterable<TitanGraphIndex> indices = mgmt.getGraphIndexes(titanElementClass);
-        Set<String> result = new HashSet<String>(); 
+        Set<String> result = new HashSet<String>();
         for(TitanGraphIndex index : indices) {
             result.add(index.name());
         }
         mgmt.commit();
         return result;
-       
+
     }
-    
+
     @Override
     public AtlasVertex<Titan1Vertex, Titan1Edge> getVertex(String vertexId) {
-      
+
         //use lazy vertex retrieval (mostly to test this feature)
         return new Titan1Vertex(getGraph(), vertexId);
     }
@@ -195,26 +195,26 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
         }
         return element;
     }
-    
+
     @Override
     public Iterable<AtlasVertex<Titan1Vertex, Titan1Edge>> getVertices(String key, Object value) {
-        AtlasGraphQuery<Titan1Vertex, Titan1Edge> query = query();        
+        AtlasGraphQuery<Titan1Vertex, Titan1Edge> query = query();
         query.has(key, value);
         return query.vertices();
     }
-    
+
     @Override
     public Object getGremlinColumnValue(Object rowValue, String colName, int idx) {
-                
-        Object rawColumnValue = null;        
-        if(rowValue instanceof Map) { 
+
+        Object rawColumnValue = null;
+        if(rowValue instanceof Map) {
            rawColumnValue = ((Map<?,?>)rowValue).get(colName);
         }
         else {
             //when there is only one column, result does not come back as a map
             rawColumnValue = rowValue;
         }
-        
+
         Object value = null;
         if(rawColumnValue instanceof List && idx >= 0) {
             value = ((List<?>)rawColumnValue).get(idx);
@@ -222,7 +222,7 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
         else {
             value = rawColumnValue;
         }
-        
+
         return convertGremlinValue(value);
     }
 
@@ -242,24 +242,24 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
 
         return GremlinVersion.THREE;
     }
- 
+
     @Override
     public List<Object> convertPathQueryResultToList(Object rawValue) {
         ImmutablePath path =  (ImmutablePath)rawValue;
         return path.objects();
-        
+
     }
-    
+
     @Override
     public void clear() {
         TitanCleanup.clear(getGraph());
-        
+
     }
-    
+
     private TitanGraph getGraph() {
         return Titan1Database.getGraphInstance();
     }
-    
+
     @Override
     public void exportToGson(OutputStream os) throws IOException {
 
@@ -267,7 +267,7 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
        GraphSONWriter.Builder builder = GraphSONWriter.build();
        builder.mapper(mapper);
        GraphSONWriter writer = builder.create();
-       writer.writeGraph(os, getGraph());        
+       writer.writeGraph(os, getGraph());
     }
 
     /* (non-Javadoc)
@@ -276,7 +276,7 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
     @Override
     public Object executeGremlinScript(String gremlinQuery) throws ScriptException {
 
-        
+
         ScriptEngineManager manager = new ScriptEngineManager();
         ScriptEngine engine = manager.getEngineByName("gremlin-groovy");
         Bindings bindings = engine.createBindings();

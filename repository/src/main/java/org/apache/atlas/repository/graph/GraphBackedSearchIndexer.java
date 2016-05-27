@@ -60,7 +60,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
     private static final Logger LOG = LoggerFactory.getLogger(GraphBackedSearchIndexer.class);
 
     private final AtlasGraph<?,?> graph;
-    
+
     List<Class> MIXED_INDEX_EXCLUSIONS = new ArrayList<Class>() {{
             add(Boolean.class);
             add(BigDecimal.class);
@@ -71,7 +71,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
     public GraphBackedSearchIndexer(AtlasGraphProvider graphProvider) throws RepositoryException, AtlasException {
         this(graphProvider, ApplicationProperties.get());
     }
-    
+
     GraphBackedSearchIndexer( GraphProvider<AtlasGraph> graphProvider, Configuration configuration)
             throws IndexException, RepositoryException {
         this.graph = (AtlasGraph<?,?>)graphProvider.get();
@@ -84,45 +84,45 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
      * Initializes the indices for the graph - create indices for Global AtlasVertex Keys
      */
     private void initialize() throws RepositoryException, IndexException {
-        
+
         AtlasGraphManagement management = graph.getManagementSystem();
-        
+
         try {
-            
+
             if (management.containsPropertyKey(Constants.VERTEX_TYPE_PROPERTY_KEY)) {
                 LOG.info("Global indexes already exist for graph");
                 return;
             }
 
-            Set<String> createdIndexNames = new HashSet<String>();            
+            Set<String> createdIndexNames = new HashSet<String>();
             /* This is called only once, which is the first time Atlas types are made indexable .*/
             LOG.info("Indexes do not exist, Creating indexes for graph.");
             management.buildMixedVertexIndex(Constants.VERTEX_INDEX, Constants.BACKING_INDEX);
             createdIndexNames.add(Constants.VERTEX_INDEX);
-            
+
             management.buildMixedEdgeIndex(Constants.EDGE_INDEX, Constants.BACKING_INDEX);
             createdIndexNames.add(Constants.EDGE_INDEX);
-            
+
             // create a composite index for guid as its unique
             createIndexes(management, createdIndexNames, Constants.GUID_PROPERTY_KEY, String.class, true,
                    Multiplicity.OPTIONAL, true);
-    
+
             // create a composite index for entity creation timestamp
             createIndexes(management, createdIndexNames, Constants.TIMESTAMP_PROPERTY_KEY, Long.class, false, Multiplicity.OPTIONAL, true);
 
             // create a composite index for entity modification timestamp
             createIndexes(management, createdIndexNames, Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY, Long.class, false,
                     Multiplicity.OPTIONAL, true);
-    
-    
+
+
             // create a composite and mixed index for type since it can be combined with other keys
             createIndexes(management, createdIndexNames, Constants.ENTITY_TYPE_PROPERTY_KEY, String.class, false, Multiplicity.OPTIONAL,
                     true);
-    
+
             // create a composite and mixed index for type since it can be combined with other keys
             createIndexes(management, createdIndexNames, Constants.SUPER_TYPES_PROPERTY_KEY, String.class, false, Multiplicity.SET,
                     true);
-    
+
             // create a composite and mixed index for traitNames since it can be combined with other
             // keys. Traits must be a set and not a list.
             createIndexes(management, createdIndexNames, Constants.TRAIT_NAMES_PROPERTY_KEY, String.class, false, Multiplicity.SET,
@@ -138,7 +138,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
 
             management.waitForIndexAvailibility(createdIndexNames);
             LOG.info("Index creation for global keys complete.");
-            
+
         } catch (Throwable t) {
             rollback(management);
             throw new RepositoryException(t);
@@ -146,13 +146,13 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
     }
 
     private void createFullTextIndex(AtlasGraphManagement management, Collection<String> createdIndexNames) {
-        
+
          AtlasPropertyKey fullText =
                 management.makePropertyKey(Constants.ENTITY_TEXT_PROPERTY_KEY, String.class, Multiplicity.OPTIONAL);
 
         management.createFullTextIndex(Constants.FULLTEXT_INDEX, fullText, Constants.BACKING_INDEX);
         createdIndexNames.add(Constants.FULLTEXT_INDEX);
-        
+
         LOG.info("Created mixed index for {}", Constants.ENTITY_TEXT_PROPERTY_KEY);
     }
 
@@ -160,7 +160,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         //Create unique index on typeName
         createIndexes(management, createdIndexNames, Constants.TYPENAME_PROPERTY_KEY, String.class, true, Multiplicity.OPTIONAL, true);
 
-        
+
         //create index on vertex type
         createIndexes(management, createdIndexNames, Constants.VERTEX_TYPE_PROPERTY_KEY, String.class, false, Multiplicity.OPTIONAL, true);
     }
@@ -190,7 +190,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
 
         //Commit indexes
         commit(management);
-        
+
         management.waitForIndexAvailibility(createdIndexNames);
     }
 
@@ -312,24 +312,24 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
 	    AtlasPropertyKey propertyKey = management.getPropertyKey(propertyName);
       	if(propertyKey == null) {
               propertyKey = management.makePropertyKey(propertyName, propertyClass, cardinality);
-        
+
       		  enhanceMixedIndex(management, propertyName, propertyClass, cardinality, propertyKey);
-        
+
  	        if (isSystemProperty) {
  	         	LOG.debug("Creating composite index for property {} of type {} ", propertyName,
                 	propertyClass.getName());
             	    management.createCompositeIndex(propertyName, propertyKey, isUnique);
         	    	createdIndexNames.add(propertyName);
-        
+
         	}
         	else if(isUnique) {
         	    // send uniqueness as false because there can be many vertexes with the same property value
                 // but state can be active / deleted
         		   	LOG.debug("Creating composite index for property {} of type {} ", propertyName,
                 	propertyClass.getName());
-        		
-        	     management.createCompositeIndex(propertyName, propertyKey, false);	
-        	     createdIndexNames.add(propertyName);        
+
+        	     management.createCompositeIndex(propertyName, propertyKey, false);
+        	     createdIndexNames.add(propertyName);
         	}
 
 	    }
@@ -340,7 +340,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
                                    Multiplicity multiplicity, AtlasPropertyKey propertyKey) {
         if (checkIfMixedIndexApplicable(propertyClass, multiplicity)) {
             //Use backing index
-           
+
             LOG.debug("Creating backing index for property {} of type {} ", propertyName, propertyClass.getName());
             management.addIndexKey(Constants.VERTEX_INDEX, propertyKey);
             LOG.debug("Created backing index for property {} of type {} ", propertyName, propertyClass.getName());

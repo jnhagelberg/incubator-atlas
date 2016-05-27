@@ -331,9 +331,9 @@ object Expressions {
         def instance() = new InstanceExpression(this)
 
         def path() = new PathExpression(this)
-        
+
         def limit(lmt: Literal[Integer], offset : Literal[Integer]) = new LimitExpression(this, lmt, offset)
-        
+
         def order(odr: String, asc: Boolean) = new OrderExpression(this, odr, asc)
     }
 
@@ -458,7 +458,7 @@ object Expressions {
             child.dataType
         }
     }
-       
+
     case class BackReference(alias: String, reference: Expression, child: Option[Expression]) extends Expression {
         val children = if (child.isDefined) List(child.get) else Nil
         val dataType = reference.dataType
@@ -687,7 +687,7 @@ object Expressions {
             case (s: AliasExpression, _) => s
             case (x, i) => new AliasExpression(x, s"${x}")
         }
-        
+
 
         lazy val dataType = {
             if (!resolved) {
@@ -773,7 +773,7 @@ object Expressions {
     override def toString = s"$child withPath"
   }
 
-  case class LimitExpression(child: Expression, limit: Literal[Integer], offset: Literal[Integer]) extends Expression with UnaryNode { 
+  case class LimitExpression(child: Expression, limit: Literal[Integer], offset: Literal[Integer]) extends Expression with UnaryNode {
 
     override def toString = s"$child  limit $limit offset $offset "
 
@@ -785,8 +785,8 @@ object Expressions {
             child.dataType
     }
   }
-  
-  case class OrderExpression(child: Expression, odr: String, asc: Boolean) extends Expression with UnaryNode { 
+
+  case class OrderExpression(child: Expression, odr: String, asc: Boolean) extends Expression with UnaryNode {
 
     override def toString = s"$child  order $odr asc $asc"
 

@@ -35,11 +35,11 @@ import com.thinkaurelius.titan.core.schema.TitanGraphIndex;
 public class Titan1GraphIndex implements AtlasGraphIndex {
 
     public TitanGraphIndex wrapped_;
-    
+
     public Titan1GraphIndex(TitanGraphIndex toWrap) {
         wrapped_ = toWrap;
     }
-    
+
     /* (non-Javadoc)
      * @see org.apache.atlas.repository.graphdb.AtlasGraphIndex#isMixedIndex()
      */
@@ -92,14 +92,14 @@ public class Titan1GraphIndex implements AtlasGraphIndex {
         }
         return result;
     }
-    
+
     @Override
     public int hashCode() {
         int result = 17;
         result = 37*result + wrapped_.hashCode();
         return result;
     }
-    
+
     @Override
     public boolean equals(Object other) {
         if(!(other instanceof Titan1GraphIndex)) {
@@ -107,7 +107,7 @@ public class Titan1GraphIndex implements AtlasGraphIndex {
         }
         Titan1GraphIndex otherKey = (Titan1GraphIndex)other;
         return otherKey.wrapped_.equals(wrapped_);
-        
+
     }
 
 

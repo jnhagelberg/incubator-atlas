@@ -91,7 +91,7 @@ public final class TestUtils {
                 }
             }
         }
-	    
+
         return tempFile.getPath();
     }
 
@@ -153,7 +153,7 @@ public final class TestUtils {
         Referenceable juliusAddr = new Referenceable("Address");
         Referenceable max = new Referenceable("Person");
         Referenceable maxAddr = new Referenceable("Address");
-        
+
         hrDept.set("name", "hr");
         john.set("name", "John");
         john.set("department", hrDept);
@@ -173,7 +173,7 @@ public final class TestUtils {
         juliusAddr.set("city", "Newtonville");
         julius.set("address", juliusAddr);
         julius.set("subordinates", ImmutableList.<Referenceable>of());
-        
+
         max.set("name", "Max");
         max.set("department", hrDept);
         maxAddr.set("street", "Ripley St");
@@ -181,7 +181,7 @@ public final class TestUtils {
         max.set("address", maxAddr);
         max.set("manager", jane);
         max.set("mentor", julius);
-        
+
         john.set("manager", jane);
         john.set("mentor", max);
         hrDept.set("employees", ImmutableList.of(john, jane, julius, max));

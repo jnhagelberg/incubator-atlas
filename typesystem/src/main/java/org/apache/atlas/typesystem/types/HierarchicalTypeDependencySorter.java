@@ -31,14 +31,14 @@ import com.google.common.collect.ImmutableSet;
  * Sorts hierarchical types by supertype dependency
  */
 public class HierarchicalTypeDependencySorter {
-    
+
     /**
-     * Sorts the specified hierarchical types by supertype dependencies, 
+     * Sorts the specified hierarchical types by supertype dependencies,
      * such that any type A which is a supertype of type B
-     * will always be located earlier in the result list; that is, the supertype 
+     * will always be located earlier in the result list; that is, the supertype
      * A would be found at some index i and subtype B would be found at some index j,
      * and i < j.
-     * 
+     *
      * @param types  hierarchical types to be sorted
      * @return hierarchical types sorted by supertype dependency
      */
@@ -54,10 +54,10 @@ public class HierarchicalTypeDependencySorter {
         }
         return result;
     }
-    
-    private static <T extends HierarchicalType> void addToResult(T type, List<T> result, 
+
+    private static <T extends HierarchicalType> void addToResult(T type, List<T> result,
         Set<T> processed, Map<String, T> typesByName) {
-        
+
         if (processed.contains(type)) {
             return;
         }

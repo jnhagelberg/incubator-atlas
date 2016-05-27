@@ -26,7 +26,7 @@ public interface Mapper<S, T> {
 
     /**
      * Converts the source object into an instance of the target class
-     * 
+     *
      * @param source
      * @return
      */

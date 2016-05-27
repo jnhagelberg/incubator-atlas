@@ -98,7 +98,7 @@ public interface AtlasGraphManagement {
      * @throws AtlasException if the timeout is exceeded while waiting for the indices to
      *  be enabled.  The timeout is currently hard-coded to 10 minutes.
      */
-    void waitForIndexAvailibility(Collection<String> indexNames) throws AtlasException;  
+    void waitForIndexAvailibility(Collection<String> indexNames) throws AtlasException;
 
     /**
      * @param propertyName
@@ -116,7 +116,7 @@ public interface AtlasGraphManagement {
 
     /**
      * Creates a composite index for the graph.
-     * 
+     *
      * @param propertyName
      * @param propertyKey
      * @param isUnique
@@ -125,7 +125,7 @@ public interface AtlasGraphManagement {
 
     /**
      * Adds a property key to the given index in the graph.
-     * 
+     *
      * @param vertexIndex
      * @param propertyKey
      */
@@ -134,7 +134,7 @@ public interface AtlasGraphManagement {
     /**
      * Looks up the index with the specified name in the graph.  Returns null if
      * there is no index with the given name.
-     * 
+     *
      * @param edgeIndex
      * @return
      */

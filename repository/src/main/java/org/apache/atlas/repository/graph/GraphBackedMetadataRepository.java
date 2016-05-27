@@ -60,7 +60,7 @@ import com.google.common.base.Preconditions;
 public class GraphBackedMetadataRepository implements MetadataRepository {
 
     private static final Logger LOG = LoggerFactory.getLogger(GraphBackedMetadataRepository.class);
-    
+
     private static TypeSystem typeSystem = TypeSystem.getInstance();
 
     private static final GraphHelper graphHelper = GraphHelper.getInstance();
@@ -185,7 +185,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
 
         return entityList;
     }
-    
+
     /**
      * Gets the list of trait names for a given entity represented by a guid.
      *
@@ -231,7 +231,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
             GraphHelper.addProperty(instanceVertex, Constants.TRAIT_NAMES_PROPERTY_KEY, traitName);
             GraphHelper.setProperty(instanceVertex, Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY,
                     RequestContext.get().getRequestTime());
-            
+
         } catch (RepositoryException e) {
             throw e;
         } catch (Exception e) {
@@ -250,7 +250,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
     @GraphTransaction
     public void deleteTrait(String guid, String traitNameToBeDeleted) throws TraitNotFoundException, EntityNotFoundException, RepositoryException {
         LOG.info("Deleting trait={} from entity={}", traitNameToBeDeleted, guid);
-        
+
         AtlasVertex instanceVertex = graphHelper.getVertexForGUID(guid);
 
         List<String> traitNames = GraphHelper.getTraitNames(instanceVertex);
@@ -273,7 +273,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         }
     }
 
-    
+
     private void updateTraits(AtlasVertex instanceVertex, List<String> traitNames) {
         // remove the key
         instanceVertex.removeProperty(Constants.TRAIT_NAMES_PROPERTY_KEY);
@@ -322,7 +322,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         if (guids == null || guids.size() == 0) {
             throw new IllegalArgumentException("guids must be non-null and non-empty");
         }
-        
+
         for (String guid : guids) {
             if (guid == null) {
                 LOG.warn("deleteEntities: Ignoring null guid");
@@ -343,11 +343,11 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         RequestContext requestContext = RequestContext.get();
         return new TypeUtils.Pair<>(requestContext.getDeletedEntityIds(), requestContext.getDeletedEntities());
     }
-    
+
     public GremlinVersion getSupportedGremlinVersion() {
         return graph.getSupportedGremlinVersion();
     }
-    
+
     private <V,E> AtlasGraph<V,E> getGraph() {
         return (AtlasGraph<V,E>)graph;
     }

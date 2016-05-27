@@ -35,11 +35,11 @@ import com.tinkerpop.blueprints.Vertex;
 public class Titan0GraphIndex implements AtlasGraphIndex {
 
     public TitanGraphIndex wrapped_;
-    
+
     public Titan0GraphIndex(TitanGraphIndex toWrap) {
         wrapped_ = toWrap;
     }
-    
+
     /* (non-Javadoc)
      * @see org.apache.atlas.repository.graphdb.AtlasGraphIndex#isMixedIndex()
      */

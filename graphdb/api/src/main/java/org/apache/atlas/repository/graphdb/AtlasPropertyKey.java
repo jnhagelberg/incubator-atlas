@@ -25,6 +25,6 @@ package org.apache.atlas.repository.graphdb;
  * @param <E> edge class used by the graph
  */
 public interface AtlasPropertyKey {
-    
+
     String getName();
 }

@@ -48,20 +48,20 @@ import com.google.inject.Inject;
 
 @Guice(modules = RepositoryMetadataModule.class)
 public class GraphBackedSearchIndexerTest {
-    
+
     @Inject
     private GraphProvider<AtlasGraph> graphProvider;
 
     @Inject
     private GraphBackedSearchIndexer graphBackedSearchIndexer;
-    
+
     @Test
     public void verifySystemMixedIndexes() {
 
         AtlasGraph titanGraph = graphProvider.get();
         AtlasGraphManagement managementSystem = titanGraph.getManagementSystem();
-    
-    
+
+
         AtlasGraphIndex edgeIndex = managementSystem.getGraphIndex(Constants.EDGE_INDEX);
         assertNotNull(edgeIndex);
         assertTrue(edgeIndex.isMixedIndex());

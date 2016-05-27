@@ -109,12 +109,12 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
         LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, vertex);
         vertex.setProperty(propertyName, value);
     }
-    
+
     private void addJsonProperty(AtlasVertex<V,E> vertex, String propertyName, String value) throws AtlasException {
         LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, vertex);
         vertex.setJsonProperty(propertyName, value);
     }
-    
+
     private void addListProperty(AtlasVertex<V,E> vertex, String propertyName, List<String> value) throws AtlasException {
         LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, vertex);
         vertex.setListProperty(propertyName, value);
@@ -217,17 +217,17 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
     }
 
     private void addEdge(AtlasVertex<V,E> fromVertex, AtlasVertex<V,E> toVertex, String label) {
-        
+
         Iterable<AtlasEdge<V,E>> edges = GraphHelper.getOutGoingEdgesByLabel(fromVertex, label);
         // ATLAS-474: Check if this type system edge already exists, to avoid duplicates.
         for(AtlasEdge<V,E> edge : edges) {
 
             if (edge.getInVertex().equals(toVertex)) {
-                LOG.debug("Edge from {} to {} with label {} already exists", 
+                LOG.debug("Edge from {} to {} with label {} already exists",
                     toString(fromVertex), toString(toVertex), label);
                 return;
             }
-        }        
+        }
         LOG.debug("Adding edge from {} to {} with label {}", toString(fromVertex), toString(toVertex), label);
         graph.addEdge(fromVertex, toVertex, label);
     }
@@ -247,7 +247,7 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
         while (vertices.hasNext()) {
             AtlasVertex<V,E> vertex = vertices.next();
             //temporary workaround
-            
+
             DataTypes.TypeCategory typeCategory = getTypeCategory(vertex);
             String typeName = vertex.getProperty(Constants.TYPENAME_PROPERTY_KEY);
             String typeDescription = vertex.getProperty(Constants.TYPEDESCRIPTION_PROPERTY_KEY);

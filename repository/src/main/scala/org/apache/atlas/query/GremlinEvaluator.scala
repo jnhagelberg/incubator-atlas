@@ -35,7 +35,7 @@ case class GremlinQueryResult(query: String,
     def toJson = JsonHelper.toJson(this)
 }
 
-class GremlinEvaluator[V, E](qry: GremlinQuery, persistenceStrategy: GraphPersistenceStrategies, g: AtlasGraph[V, E]) {   
+class GremlinEvaluator[V, E](qry: GremlinQuery, persistenceStrategy: GraphPersistenceStrategies, g: AtlasGraph[V, E]) {
 
     /**
      *
@@ -78,8 +78,8 @@ class GremlinEvaluator[V, E](qry: GremlinQuery, persistenceStrategy: GraphPersis
         import scala.collection.JavaConversions._
         val rType = qry.expr.dataType
         val oType = if (qry.isPathExpresion) qry.expr.children(0).dataType else rType
-        val rawRes = g.executeGremlinScript(qry.queryStr);        
-     
+        val rawRes = g.executeGremlinScript(qry.queryStr);
+
         if (!qry.hasSelectList) {
             val rows = rawRes.asInstanceOf[java.util.List[AnyRef]].map { v =>
                 val iV = instanceObject(v)
@@ -89,7 +89,7 @@ class GremlinEvaluator[V, E](qry: GremlinQuery, persistenceStrategy: GraphPersis
             }
             GremlinQueryResult(qry.expr.toString, rType, rows.toList)
         } else {
-            val sType = oType.asInstanceOf[StructType]            
+            val sType = oType.asInstanceOf[StructType]
             val rows = rawRes.asInstanceOf[java.util.List[AnyRef]].map { r =>
                 val rV = instanceObject(r)
                 val sInstance = sType.createInstance()

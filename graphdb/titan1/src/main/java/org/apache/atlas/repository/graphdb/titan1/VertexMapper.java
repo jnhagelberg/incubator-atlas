@@ -7,11 +7,11 @@ import org.apache.tinkerpop.gremlin.structure.Edge;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 public class VertexMapper implements Mapper<Vertex, AtlasVertex<Titan1Vertex, Titan1Edge>> {
-    
+
     public static VertexMapper INSTANCE = new VertexMapper();
-    
+
     private VertexMapper() {
-        
+
     }
     @Override
     public AtlasVertex<Titan1Vertex, Titan1Edge> map(Vertex source) {

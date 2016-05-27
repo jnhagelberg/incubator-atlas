@@ -36,7 +36,7 @@
         <tinkerpop.version>3.0.1-incubating</tinkerpop.version>
         <titan.version>1.0.0</titan.version>
     </properties>
-    
+
     <dependencies>
         <dependency>
             <groupId>org.apache.atlas</groupId>
@@ -56,7 +56,7 @@
             <artifactId>commons-configuration</artifactId>
             <scope>provided</scope>
         </dependency>
-        
+
         <dependency>
             <groupId>com.thinkaurelius.titan</groupId>
             <artifactId>titan-core</artifactId>
@@ -104,7 +104,7 @@
             <artifactId>titan-lucene</artifactId>
             <version>1.0.0</version>
         </dependency>
-        
+
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
@@ -142,11 +142,11 @@
                 </executions>
             </plugin>
 
-            <!-- 
+            <!--
                  Create 'uber' jar that contains all of the dependencies (except those whose scope is provided)
                  Only titan 1 and its dependencies are included.  The other dependencies are bundled in the war file.
 
-We also relocate the Google guava packages to avoid conflicts with Atlas code which depends on Guava 14 
+We also relocate the Google guava packages to avoid conflicts with Atlas code which depends on Guava 14
             -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -158,13 +158,13 @@ We also relocate the Google guava packages to avoid conflicts with Atlas code wh
                         <goals>
                             <goal>shade</goal>
                         </goals>
-                        <configuration>                    
+                        <configuration>
                             <shadedArtifactAttached>false</shadedArtifactAttached>
                             <artifactSet>
                                 <excludes>
                                     <!-- these are bundled with Atlas -->
                                     <exclude>org.slf4j:*</exclude>
-                                </excludes>                                
+                                </excludes>
                             </artifactSet>
                             <relocations>
                                 <relocation>
@@ -199,8 +199,8 @@ We also relocate the Google guava packages to avoid conflicts with Atlas code wh
                 <groupId>org.apache.tinkerpop</groupId>
                 <artifactId>gremlin-core</artifactId>
                 <version>3.0.1-incubating</version>
-            </dependency> 
-            
+            </dependency>
+
             <dependency>
                 <groupId>org.apache.tinkerpop</groupId>
                 <artifactId>tinkergraph-gremlin</artifactId>
@@ -260,5 +260,5 @@ We also relocate the Google guava packages to avoid conflicts with Atlas code wh
             </dependency>
         </dependencies>
 
-    </dependencyManagement>            
+    </dependencyManagement>
 </project>

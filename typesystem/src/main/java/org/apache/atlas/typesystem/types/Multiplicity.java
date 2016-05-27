@@ -44,7 +44,7 @@ public final class Multiplicity {
     public boolean isMany() {
         return upper > 1;
     }
-    
+
     public boolean nullAllowed() {
         return lower == 0;
     }

@@ -11,9 +11,9 @@ import com.thinkaurelius.titan.graphdb.database.serialize.attribute.ByteArraySer
 public class BigIntegerSerializer implements AttributeSerializer<BigInteger> {
 
     ByteArraySerializer delegate = new ByteArraySerializer();
-    
+
     @Override
-    public BigInteger read(ScanBuffer buffer) {            
+    public BigInteger read(ScanBuffer buffer) {
         byte[] value = delegate.read(buffer);
         return new BigInteger(value);
     }
@@ -23,5 +23,5 @@ public class BigIntegerSerializer implements AttributeSerializer<BigInteger> {
         byte[] value = attribute.toByteArray();
         delegate.write(buffer, value);
     }
-    
+
 }

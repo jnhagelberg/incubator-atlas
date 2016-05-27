@@ -51,7 +51,7 @@ case class GremlinQuery(expr: Expression, queryStr: String, resultMaping: Map[St
     def hasSelectList = resultMaping != null
 
     def isPathExpresion = expr.isInstanceOf[PathExpression]
-    
+
 }
 
 trait SelectExpressionHandling {
@@ -89,7 +89,7 @@ trait SelectExpressionHandling {
             case _ => e
         }
     }
-    
+
     def getSelectExpressionSrc(e: Expression): List[String] = {
         val l = ArrayBuffer[String]()
         e.traverseUp {
@@ -98,8 +98,8 @@ trait SelectExpressionHandling {
         }
         l.toSet.toList
     }
-    
-    
+
+
 
     def validateSelectExprHaveOneSrc: PartialFunction[Expression, Unit] = {
         case SelectExpression(_, selList) => {
@@ -219,7 +219,7 @@ class GremlinTranslator(expr: Expression,
         val stats = gPersistenceBehavior.typeTestExpression(typeName, counter)
         preStatements ++= stats.init
         stats.last
-    }       
+    }
 
 
     private def genQuery(expr: Expression, inSelect: Boolean): String = expr match {
@@ -277,7 +277,7 @@ class GremlinTranslator(expr: Expression,
                     }
                     else {
                         return genHasPredicate(fieldGremlinExpr, c, l);
-                    }                    
+                    }
                 }
             }
         }
@@ -293,7 +293,7 @@ class GremlinTranslator(expr: Expression,
                     //use 'where' instead
                     var child : Expression = children.head;
                     //if child is a back expression, that expression becomes an argument to where
-                    
+
                     return s"""where(${genQuery(child, inSelect)})""";
                 }
                 else {
@@ -302,9 +302,9 @@ class GremlinTranslator(expr: Expression,
                    return s"""$symb${children.map( genQuery(_, inSelect)).mkString("(", ",", ")")}"""
                 }
            }
-           else {          
+           else {
                 s"""$symb${children.map("_()." + genQuery(_, inSelect)).mkString("(", ",", ")")}"""
-           }           
+           }
         }
         case sel@SelectExpression(child, selList) => {
               val m = groupSelectExpressionsBySrc(sel)
@@ -322,7 +322,7 @@ class GremlinTranslator(expr: Expression,
                     _.mkString("[", ",", "]")
                }
 
-               if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {               
+               if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
                     val srcNamesString = srcNamesList.mkString("[", ",", "]")
                     val srcExprsString = srcExprsStringList.foldLeft("")(_ + "{" + _ + "}")
                     s"${genQuery(child, inSelect)}.select($srcNamesString)$srcExprsString"
@@ -338,7 +338,7 @@ class GremlinTranslator(expr: Expression,
                }
         }
         case loop@LoopExpression(input, loopExpr, t) => {
-            
+
             if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
                val inputQry = genQuery(input, inSelect)
                val loopingPathGExpr = genQuery(loopExpr, inSelect)
@@ -352,15 +352,15 @@ class GremlinTranslator(expr: Expression,
                val inputQry = genQuery(input, inSelect)
                val repeatExpr = s"""repeat(__.${genQuery(loopExpr, inSelect)})"""
                val optTimesExpr = if (t.isDefined) s".times(${t.get.value})" else ""
-               val emitExpr = s""".emit(${gPersistenceBehavior.loopObjectExpression(input.dataType)})"""               
-               
+               val emitExpr = s""".emit(${gPersistenceBehavior.loopObjectExpression(input.dataType)})"""
+
                s"""${inputQry}.${repeatExpr}${optTimesExpr}${emitExpr}"""
-                
+
             }
         }
         case BackReference(alias, _, _) => {
-         
-            if (inSelect) { 
+
+            if (inSelect) {
                 gPersistenceBehavior.fieldPrefixInSelect()
             } else {
                 if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
@@ -400,7 +400,7 @@ class GremlinTranslator(expr: Expression,
         case in@InstanceExpression(child) => {
           s"${genQuery(child, inSelect)}"
         }
-        case pe@PathExpression(child) => {  
+        case pe@PathExpression(child) => {
             if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
                  s"${genQuery(child, inSelect)}.path"
             }
@@ -416,17 +416,17 @@ class GremlinTranslator(expr: Expression,
               //Ordering is case insensitive.
               case false=> orderby = s"order{it.b.getProperty('$odr').toLowerCase() <=> it.a.getProperty('$odr').toLowerCase()}"//descending
               case _ => orderby = s"order{it.a.getProperty('$odr').toLowerCase() <=> it.b.getProperty('$odr').toLowerCase()}"
-              
+
             }
           }
           else {
-              
+
                asc  match {
                //builds a closure comparison function based on provided order by clause in DSL. This will be used to sort the results by gremlin order pipe.
               //Ordering is case insensitive.
               case false=> orderby = s"order().by('$odr',{ a,b -> b.toString().toLowerCase() <=> a.toString().toLowerCase() })"
               case _ => orderby = s"order().by('$odr',{ a,b -> a.toString().toLowerCase() <=> b.toString().toLowerCase() })"
-              
+
             }
 
           }
@@ -440,18 +440,18 @@ class GremlinTranslator(expr: Expression,
             else {
                 val totalResultRows = limit.value + offset.value
                 s"""${genQuery(child, inSelect)}.range($offset,$totalResultRows)"""
-                
+
             }
         }
         case x => throw new GremlinTranslationException(x, "expression not yet supported")
-    }    
+    }
 
     def genPropertyAccessExpr(e: Expression, fInfo : FieldInfo, propertyName: String, inSelect: Boolean) : String = {
-        if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {                 
+        if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
             s"${genQuery(e, inSelect)}.$propertyName"
         }
         else {
-            val attrInfo : AttributeInfo = fInfo.attrInfo; 
+            val attrInfo : AttributeInfo = fInfo.attrInfo;
             val attrType : IDataType[_] = attrInfo.dataType;
             if(inSelect) {
                 s"${genQuery(e, inSelect)}.${getPrimitiveTypeQualifier(attrType)}value($propertyName)"
@@ -461,9 +461,9 @@ class GremlinTranslator(expr: Expression,
             }
         }
     }
-    
+
     def genHasPredicate(fieldGremlinExpr: String, c: ComparisonExpression, expr2: Any) : String = {
-            
+
             if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
                 return s"""has("${fieldGremlinExpr}", ${gPersistenceBehavior.gremlinCompOp(c)}, $expr2)""";
             }
@@ -471,11 +471,11 @@ class GremlinTranslator(expr: Expression,
                 return s"""has("${fieldGremlinExpr}", ${gPersistenceBehavior.gremlinCompOp(c)}($expr2))""";
             }
     }
-   
+
     def getPrimitiveTypeQualifier : PartialFunction[IDataType[_],String]  = {
 
         case t:BooleanType => "<Boolean>";
-        case t:ByteType => "<Byte>";        
+        case t:ByteType => "<Byte>";
         case t:DateType => "<Long>"; //dates are stored numerically
         case t:DoubleType => "<Double>";
         case t:FloatType => "<Float>";
@@ -485,15 +485,15 @@ class GremlinTranslator(expr: Expression,
         case t:StringType => "<String>";
         case default => "";
     }
-    
+
     def genFullQuery(expr: Expression): String = {
         var q = genQuery(expr, false)
         if(gPersistenceBehavior.addGraphVertexPrefix(preStatements)) {
             q = s"g.V.$q"
         }
-               
+
         q = s"$q.toList()"
-             
+
         q = (preStatements ++ Seq(q) ++ postStatements).mkString("", ";", "")
         /*
          * the L:{} represents a groovy code block; the label is needed
@@ -511,9 +511,9 @@ class GremlinTranslator(expr: Expression,
         e1 = e1.transformUp(addAliasToLoopInput())
         e1 = e1.transformUp(instanceClauseToTop(e1))
         e1 = e1.transformUp(traitClauseWithInstanceForTop(e1))
-        
+
        //Following code extracts the select expressions from expression tree.
-        
+
              val  se = SelectExpressionHelper.extractSelectExpression(e1)
              if (se.isDefined)
              {
@@ -549,7 +549,7 @@ class GremlinTranslator(expr: Expression,
            case _ => {
              None
            }
-           
+
       }
     }
     }

@@ -64,7 +64,7 @@ public class Titan0DatabaseTest {
             for(String propertyName : AtlasGraphManagement.MULTIPLICITY_MANY_PROPERTY_KEYS) {
                 AtlasPropertyKey propertyKey = mgmt.getPropertyKey(propertyName);
                 if(propertyKey == null) {
-                    propertyKey = mgmt.makePropertyKey(propertyName, String.class, Multiplicity.SET);                    
+                    propertyKey = mgmt.makePropertyKey(propertyName, String.class, Multiplicity.SET);
                     mgmt.createCompositeIndex(propertyName, propertyKey, false);
                 }
             }

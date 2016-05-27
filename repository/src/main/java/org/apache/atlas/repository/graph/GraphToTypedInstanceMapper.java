@@ -57,9 +57,9 @@ public final class GraphToTypedInstanceMapper {
     private static final Logger LOG = LoggerFactory.getLogger(GraphToTypedInstanceMapper.class);
     private static TypeSystem typeSystem = TypeSystem.getInstance();
     private static final GraphHelper graphHelper = GraphHelper.getInstance();
-    
+
     private final AtlasGraph<?,?> graph;
-    
+
 
     public GraphToTypedInstanceMapper(AtlasGraph<?,?> graph) {
         this.graph = graph;
@@ -161,7 +161,7 @@ public final class GraphToTypedInstanceMapper {
     private <V,E> Object mapVertexToClassReference(AtlasVertex<V,E> instanceVertex, AttributeInfo attributeInfo,
         String relationshipLabel, IDataType dataType, String edgeId) throws AtlasException {
         LOG.debug("Finding edge for {} -> label {} ", instanceVertex, relationshipLabel);
- 
+
  		AtlasEdge<V,E> edge;
         if (edgeId == null) {
             edge = GraphHelper.getEdgeForLabel(instanceVertex, relationshipLabel);

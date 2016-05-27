@@ -64,22 +64,22 @@ public class Titan1Database implements GraphDatabase<Titan1Vertex, Titan1Edge> {
     private static volatile TitanGraph graphInstance;
 
     public Titan1Database() {
-        
+
         //load the Gremlin 3 sugar plugin
          SugarLoader.load();
-         
+
          //update registry
-         GraphSONMapper.build().addRegistry(TitanIoRegistry.INSTANCE).create();           
+         GraphSONMapper.build().addRegistry(TitanIoRegistry.INSTANCE).create();
     }
-    
+
     public static Configuration getConfiguration() throws AtlasException {
-        Configuration configProperties = ApplicationProperties.get();        
-        
+        Configuration configProperties = ApplicationProperties.get();
+
         Configuration titanConfig = ApplicationProperties.getSubsetConfiguration(configProperties, GRAPH_PREFIX);
-       
-        
+
+
         //add serializers for non-standard property value types that Atlas uses
-        
+
         titanConfig.addProperty("attributes.custom.attribute1.attribute-class",TypeCategory.class.getName());
         titanConfig.addProperty("attributes.custom.attribute1.serializer-class",TypeCategorySerializer.class.getName());
 
@@ -87,17 +87,17 @@ public class Titan1Database implements GraphDatabase<Titan1Vertex, Titan1Edge> {
         titanConfig.addProperty("attributes.custom.attribute2.attribute-class", ArrayList.class.getName());
         titanConfig.addProperty("attributes.custom.attribute2.serializer-class",StringListSerializer.class.getName());
 
-        
+
         titanConfig.addProperty("attributes.custom.attribute3.attribute-class", BigInteger.class.getName());
         titanConfig.addProperty("attributes.custom.attribute3.serializer-class", BigIntegerSerializer.class.getName());
 
-        
+
         titanConfig.addProperty("attributes.custom.attribute4.attribute-class", BigDecimal.class.getName());
         titanConfig.addProperty("attributes.custom.attribute4.serializer-class", BigDecimalSerializer.class.getName());
 
         return titanConfig;
     }
-    
+
 
     public static TitanGraph getGraphInstance() {
         if (graphInstance == null) {
@@ -111,36 +111,36 @@ public class Titan1Database implements GraphDatabase<Titan1Vertex, Titan1Edge> {
                     }
 
                     graphInstance = TitanFactory.open(config);
-                                        
+
                     TitanManagement mgmt = graphInstance.openManagement();
                     //todo: refactor to use Constants class.  need that to be in the classpath...
                     createPropertyKeyIfNeeded("__traitNames", mgmt);
                     createPropertyKeyIfNeeded("__superTypeNames", mgmt);
 
                     mgmt.commit();
-                    
+
                     validateIndexBackend(config);
                 }
             }
         }
         return graphInstance;
     }
-    
-    private static void createPropertyKeyIfNeeded(String name, TitanManagement mgmt) {        
+
+    private static void createPropertyKeyIfNeeded(String name, TitanManagement mgmt) {
 
         if(! mgmt.containsRelationType(name)) {
             mgmt.makePropertyKey(name).dataType(String.class).cardinality(Cardinality.SET).make();
         }
     }
-     
+
 
     public static void unload() {
         synchronized (Titan1Database.class) {
-            
+
             if(graphInstance == null) {
                 return;
             }
-            
+
             graphInstance.close();
             graphInstance = null;
         }
@@ -152,7 +152,7 @@ public class Titan1Database implements GraphDatabase<Titan1Vertex, Titan1Edge> {
         TitanManagement managementSystem = getGraphInstance().openManagement();
         String currentIndexBackend = managementSystem.get(INDEX_BACKEND_CONF);
         managementSystem.commit();
-        
+
         if(!configuredIndexBackend.equals(currentIndexBackend)) {
             throw new RuntimeException("Configured Index Backend " + configuredIndexBackend + " differs from earlier configured Index Backend " + currentIndexBackend + ". Aborting!");
         }
@@ -169,7 +169,7 @@ public class Titan1Database implements GraphDatabase<Titan1Vertex, Titan1Edge> {
     }
 
     @Override
-    public void unloadGraph() { 
+    public void unloadGraph() {
         unload();
     }
 

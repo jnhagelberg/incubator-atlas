@@ -112,7 +112,7 @@ public class Titan0DatabaseManager implements AtlasGraphManagement {
     public void waitForIndexAvailibility(Collection<String> indexNames) throws AtlasException {
         TitanManagement mgmt =  null;
         boolean mgmtRollbackNeeded = false;
-        
+
         if(management_.isOpen()) {
             mgmt = management_;
         }
@@ -122,33 +122,33 @@ public class Titan0DatabaseManager implements AtlasGraphManagement {
             mgmtRollbackNeeded = true;
             mgmt = graph_.getManagementSystem();
         }
-        
+
         try {
             long start = System.currentTimeMillis();
             long timeoutTime = start + 1000*60*10; //wait at most 10 minutes
-    
+
             //keeps track of what indices are still not fully enabled
             Collection<String> pendingIndices = new HashSet<String>();
             pendingIndices.addAll(indexNames);
-    
-    
+
+
             //wait for index to become active
             long currentTime = System.currentTimeMillis();
-    
+
             while(currentTime < timeoutTime) {
-    
+
                 //check status of all indices
                 removeEnabledIndicesFromCollection(mgmt, pendingIndices);
-    
+
                 if(pendingIndices.size() == 0) {
                     long completeTime = System.currentTimeMillis();
-    
+
                     LOG.info("Indices fully enabled after " + (completeTime - start) + " ms");
                     return;
                 }
-    
+
                 logActivationStatus(pendingIndices);
-    
+
                 try {
                     Thread.sleep(1000);
                 }
@@ -225,9 +225,9 @@ public class Titan0DatabaseManager implements AtlasGraphManagement {
      */
     @Override
     public AtlasPropertyKey makePropertyKey(String propertyName, Class propertyClass, Multiplicity multiplicity) {
-    
+
         PropertyKeyMaker propertyKeyBuilder = management_.makePropertyKey(propertyName).dataType(propertyClass);
-        
+
         if(multiplicity != null) {
             Cardinality cardinality = TitanObjectFactory.createCardinality(multiplicity);
             propertyKeyBuilder.cardinality(cardinality);
@@ -242,7 +242,7 @@ public class Titan0DatabaseManager implements AtlasGraphManagement {
      */
     @Override
     public AtlasPropertyKey getPropertyKey(String propertyName) {
-        
+
         return GraphDbObjectFactory.createPropertyKey(management_.getPropertyKey(propertyName));
     }
 
@@ -258,7 +258,7 @@ public class Titan0DatabaseManager implements AtlasGraphManagement {
         if (enforceUniqueness) {
             indexBuilder.unique();
         }
-        indexBuilder.buildCompositeIndex();        
+        indexBuilder.buildCompositeIndex();
     }
 
 

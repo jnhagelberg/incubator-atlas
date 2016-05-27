@@ -78,7 +78,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
 
         ITypedReferenceableInstance hrDept = TestUtils.createDeptEg1(typeSystem);
         repositoryService.createEntities(hrDept);
-        
+
         ITypedReferenceableInstance jane = repositoryService.getEntityDefinition("Person", "name", "Jane");
         Id janeGuid = jane.getId();
         ClassType personType = typeSystem.getDataType(ClassType.class, "Person");
@@ -172,11 +172,11 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
                 return String.format("%s.get().property('%s').isPresent() && %s.get().value('%s')",var,property,var,property);
             }
             else {
-                return String.format("%s.%s",var,property); 
+                return String.format("%s.%s",var,property);
             }
-           
+
     }
-    
+
     @Test
     public void testRawSearch1() throws Exception {
         // Query for all Vertices in Graph
@@ -185,7 +185,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
         List<Map<String, Object>> resultList = (List<Map<String, Object>>) r;
         Assert.assertTrue(resultList.size() > 0);
         System.out.println("search result = " + r);
-        
+
         // Query for all Vertices of a Type
         r = discoveryService.searchByGremlin("g.V.filter{" + getPropertySyntax("it", Constants.ENTITY_TYPE_PROPERTY_KEY) + " == 'Department'}.toList()");
         Assert.assertTrue(r instanceof List);
@@ -206,7 +206,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
         for (String name : Arrays.asList("John", "Max")) {
             Assert.assertTrue(names.contains(name));
         }
-        
+
         // Query for all Vertices modified after 01/01/2015 00:00:00 GMT
         r = discoveryService.searchByGremlin("g.V.filter{" + getPropertySyntax("it", Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY) + " > 1420070400000}.toList()");
         Assert.assertTrue(r instanceof List);
@@ -224,7 +224,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
 
     @DataProvider(name = "dslQueriesProvider")
     private Object[][] createDSLQueries() {
-      
+
         return new Object[][]{
                 {"from hive_db", 3},
                 {"hive_db", 3},
@@ -254,11 +254,11 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
                 {"hive_db where (name = \"Reporting\") select name as _col_0, owner as _col_1", 1},
                 {"hive_db where hive_db is JdbcAccess", 0}, //Not supposed to work
                 {"hive_db hive_table", 8},
-                {"hive_db where hive_db has name", 3},                
-                            
+                {"hive_db where hive_db has name", 3},
+
                 //this query works correctly with Gremlin 3.  Fails with Gremlin 2 --> ATLAS-145
                 {"hive_db as db1 hive_table where (db1.name = \"Reporting\")", isGremlin3() ? 2 : 0},
-                    
+
                 {"hive_db where (name = \"Reporting\") select name as _col_0, (createTime + 1) as _col_1 ", 1},
                 {"hive_table where (name = \"sales_fact\" and createTime > \"2014-01-01\" ) select name as _col_0, createTime as _col_1 ", 1},
                 {"hive_table where (name = \"sales_fact\" and createTime >= \"2014-12-11T02:35:58.440Z\" ) select name as _col_0, createTime as _col_1 ", 1},
@@ -300,12 +300,12 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
                 {"hive_partition as p where values = ['2015-01-01']", 1},
 //              {"StorageDesc select cols", 6} //Not working since loading of lists needs to be fixed yet
         };
-        
+
     }
 
     private boolean isGremlin3() {
         return AtlasGraphProvider.getGraphInstance().getSupportedGremlinVersion() == GremlinVersion.THREE;
-        
+
     }
 
     @DataProvider(name = "dslLimitQueriesProvider")
@@ -334,55 +334,55 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
                 {"hive_db, hive_table limit 5", 5},
                 {"hive_db, hive_table limit 5 offset 0", 5},
                 {"hive_db, hive_table limit 5 offset 5", 3},
-                
+
                 {"View is JdbcAccess", 2},
                 {"View is JdbcAccess limit 1", 1},
                 {"View is JdbcAccess limit 2 offset 1", 1},
                 {"hive_db as db1, hive_table where db1.name = \"Reporting\"", isGremlin3() ? 2 : 0}, //Not working - ATLAS-145
-                
-                
+
+
                 {"from hive_table", 8},
                 {"from hive_table limit 5", 5},
                 {"from hive_table limit 5 offset 5", 3}, //30
-                
+
                 {"hive_table", 8},
                 {"hive_table limit 5", 5},
                 {"hive_table limit 5 offset 5", 3},
-                
+
                 {"hive_table isa Dimension", 3},
                 {"hive_table isa Dimension limit 2", 2},
                 {"hive_table isa Dimension limit 2 offset 0", 2},
                 {"hive_table isa Dimension limit 2 offset 1", 2},
                 {"hive_table isa Dimension limit 3 offset 1", 2},
-                
+
                 {"hive_column where hive_column isa PII", 6},
                 {"hive_column where hive_column isa PII limit 5", 5}, //40
                 {"hive_column where hive_column isa PII limit 5 offset 1", 5},
                 {"hive_column where hive_column isa PII limit 5 offset 5", 1},
-                
-                
+
+
                 {"View is Dimension" , 2},
                 {"View is Dimension limit 1" , 1},
                 {"View is Dimension limit 1 offset 1" , 1},
                 {"View is Dimension limit 10 offset 1" , 1},
-                
+
                 {"hive_column select hive_column.name", 29},
                 {"hive_column select hive_column.name limit 5", 5},
                 {"hive_column select hive_column.name limit 5 offset 28", 1},
-                
+
                 {"hive_column select name", 29}, //50
                 {"hive_column select name limit 5", 5},
                 {"hive_column select name limit 5 offset 28 ", 1},
-                
+
                 {"hive_column where hive_column.name=\"customer_id\"", 4},
                 {"hive_column where hive_column.name=\"customer_id\" limit 2", 2},
                 {"hive_column where hive_column.name=\"customer_id\" limit 2 offset 1", 2},
                 {"hive_column where hive_column.name=\"customer_id\" limit 10 offset 3", 1},
-                
+
                 {"from hive_table select hive_table.name", 8},
                 {"from hive_table select hive_table.name limit 5", 5},
                 {"from hive_table select hive_table.name limit 5 offset 5", 3},
-                
+
                 {"hive_db where (name = \"Reporting\")", 1}, //60
                 {"hive_db where (name = \"Reporting\") limit 10", 1},
                 {"hive_db where (name = \"Reporting\") select name as _col_0, owner as _col_1", 1},
@@ -395,18 +395,18 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
                 {"hive_db where hive_db has name limit 5", 3},
                 {"hive_db where hive_db has name limit 2 offset 0", 2}, //70
                 {"hive_db where hive_db has name limit 2 offset 1", 2},
-                
+
                 {"hive_db as db1 hive_table where (db1.name = \"Reporting\")", isGremlin3() ? 2 : 0}, //Not working -> ATLAS-145
                 {"hive_db where (name = \"Reporting\") select name as _col_0, (createTime + 1) as _col_1 ", 1},
                 {"hive_db where (name = \"Reporting\") select name as _col_0, (createTime + 1) as _col_1 limit 10", 1},
                 {"hive_db where (name = \"Reporting\") select name as _col_0, (createTime + 1) as _col_1 limit 10 offset 1", 0},
                 {"hive_db where (name = \"Reporting\") select name as _col_0, (createTime + 1) as _col_1 limit 10 offset 0", 1},
-                
+
                 {"hive_table where (name = \"sales_fact\" and createTime > \"2014-01-01\" ) select name as _col_0, createTime as _col_1 ", 1},
                 {"hive_table where (name = \"sales_fact\" and createTime > \"2014-01-01\" ) select name as _col_0, createTime as _col_1 limit 10 ", 1},
                 {"hive_table where (name = \"sales_fact\" and createTime > \"2014-01-01\" ) select name as _col_0, createTime as _col_1 limit 10 offset 0", 1},
                 {"hive_table where (name = \"sales_fact\" and createTime > \"2014-01-01\" ) select name as _col_0, createTime as _col_1 limit 10 offset 5", 0},
-                
+
                 {"hive_table where (name = \"sales_fact\" and createTime >= \"2014-12-11T02:35:58.440Z\" ) select name as _col_0, createTime as _col_1 ", 1},
                 {"hive_table where (name = \"sales_fact\" and createTime >= \"2014-12-11T02:35:58.440Z\" ) select name as _col_0, createTime as _col_1 limit 10 offset 0", 1},
                 {"hive_table where (name = \"sales_fact\" and createTime >= \"2014-12-11T02:35:58.440Z\" ) select name as _col_0, createTime as _col_1 limit 10 offset 1", 0},
@@ -418,30 +418,30 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
                 {"Dimension limit 2", 2},
                 {"Dimension limit 2 offset 1", 2},
                 {"Dimension limit 5 offset 4", 1},
-                
+
                 {"JdbcAccess", 2},
                 {"JdbcAccess limit 5 offset 0", 2},
                 {"JdbcAccess limit 2 offset 1", 1},
                 {"JdbcAccess limit 1", 1},
-                
+
                 {"ETL", 3},
                 {"ETL limit 2", 2},
                 {"ETL limit 1", 1},
                 {"ETL limit 1 offset 0", 1},
                 {"ETL limit 2 offset 1", 2},
-                
+
                 {"Metric", 5},
                 {"Metric limit 10", 5},
                 {"Metric limit 2", 2},
                 {"Metric limit 10 offset 1", 4},
-                
-                
-                
+
+
+
                 {"PII", 6},
                 {"PII limit 10", 6},
                 {"PII limit 2", 2},
                 {"PII limit 10 offset 1", 5},
-                
+
                 {"`Log Data`", 4},
                 {"`Log Data` limit 3", 3},
                 {"`Log Data` limit 10 offset 2", 2},
@@ -456,10 +456,10 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
                 {"hive_partition as p where values = ['2015-01-01']", 1},
                 {"hive_partition as p where values = ['2015-01-01'] limit 10", 1},
                 {"hive_partition as p where values = ['2015-01-01'] limit 10 offset 1", 0},
-                
+
         };
     }
-    
+
     @DataProvider(name = "dslOrderByQueriesProvider")
     private Object[][] createDSLQueriesWithOrderBy() {
         Boolean isAscending = Boolean.TRUE;
@@ -473,48 +473,48 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
                 {"hive_column select hive_column.name orderby 'hive_column.name' desc limit 10 withPath", 10, "name", !isAscending},
                 {"from hive_db orderby 'hive_db.owner' limit 3", 3, "owner", isAscending},
                 {"hive_db where hive_db.name=\"Reporting\" orderby 'owner'", 1, "owner", isAscending},
-                
+
                 {"hive_db where hive_db.name=\"Reporting\" orderby 'hive_db.owner' limit 10 ", 1, "owner", isAscending},
                 {"hive_db where hive_db.name=\"Reporting\" select name, owner orderby 'hive_db.name' ", 1, "name", isAscending},
                 {"hive_db has name orderby 'hive_db.owner' limit 10 offset 0", 3, "owner", isAscending},
-                
+
                 {"from hive_table orderby 'hive_table.owner'", 8, "owner", isAscending},
                 {"from hive_table orderby 'hive_table.owner' limit 8", 8, "owner", isAscending},
-                
+
                 {"hive_table orderby 'hive_table.owner'", 8, "owner", isAscending},
                 {"hive_table orderby 'hive_table.owner' limit 8", 8, "owner", isAscending},
                 {"hive_table orderby 'hive_table.owner' limit 8 offset 0", 8, "owner", isAscending},
                 {"hive_table orderby 'hive_table.owner' desc limit 8 offset 0", 8, "owner", !isAscending},
-                
+
                 {"hive_table isa Dimension orderby 'hive_table.owner'", 3, "owner", isAscending},//order not working
                 {"hive_table isa Dimension orderby 'hive_table.owner' limit 3", 3, "owner", isAscending},
                 {"hive_table isa Dimension orderby 'hive_table.owner' limit 3 offset 0", 3, "owner", isAscending},
                 {"hive_table isa Dimension orderby 'hive_table.owner' desc limit 3 offset 0", 3, "owner", !isAscending},
-                
+
                 {"hive_column where hive_column isa PII orderby 'hive_column.name'", 6, "name", isAscending},
                 {"hive_column where hive_column isa PII orderby 'hive_column.name' limit 5", 5, "name", isAscending},
                 {"hive_column where hive_column isa PII orderby 'hive_column.name' limit 5 offset 1", 5, "name", isAscending},
                 {"hive_column where hive_column isa PII orderby 'hive_column.name' desc limit 5 offset 1", 5, "name", !isAscending},
-                
-                
+
+
                 {"hive_column select hive_column.name orderby 'hive_column.name' ", 29, "hive_column.name", isAscending},
                 {"hive_column select hive_column.name orderby 'hive_column.name' limit 5", 5, "hive_column.name", isAscending},
                 {"hive_column select hive_column.name orderby 'hive_column.name' desc limit 5", 5, "hive_column.name", !isAscending},
                 {"hive_column select hive_column.name orderby 'hive_column.name' limit 5 offset 28", 1, "hive_column.name", isAscending},
-                
+
                 {"hive_column select name orderby 'hive_column.name'", 29, "name", isAscending},
                 {"hive_column select name orderby 'hive_column.name' limit 5", 5, "name", isAscending},
                 {"hive_column select name orderby 'hive_column.name' desc", 29, "name", !isAscending},
-                
+
                 {"hive_column where hive_column.name=\"customer_id\" orderby 'hive_column.name'", 4, "name", isAscending},
                 {"hive_column where hive_column.name=\"customer_id\" orderby 'hive_column.name' limit 2", 2, "name", isAscending},
                 {"hive_column where hive_column.name=\"customer_id\" orderby 'hive_column.name' limit 2 offset 1", 2, "name", isAscending},
-                
+
                 {"from hive_table select owner orderby 'hive_table.owner'", 8, "owner", isAscending},
                 {"from hive_table select owner orderby 'hive_table.owner' limit 5", 5, "owner", isAscending},
                 {"from hive_table select owner orderby 'hive_table.owner' desc limit 5", 5, "owner", !isAscending},
                 {"from hive_table select owner orderby 'hive_table.owner' limit 5 offset 5", 3, "owner", isAscending},
-                
+
                 {"hive_db where (name = \"Reporting\") orderby 'hive_db.name'", 1, "name", isAscending},
                 {"hive_db where (name = \"Reporting\") orderby 'hive_db.name' limit 10", 1, "name", isAscending},
                 {"hive_db where (name = \"Reporting\") select name as _col_0, owner as _col_1 orderby '_col_1'", 1, "_col_1", isAscending}, //will it work
@@ -523,17 +523,17 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
                 {"hive_db where hive_db has name orderby 'hive_db.owner' limit 5", 3, "owner", isAscending},
                 {"hive_db where hive_db has name orderby 'hive_db.owner' limit 2 offset 0", 2, "owner", isAscending},
                 {"hive_db where hive_db has name orderby 'hive_db.owner' limit 2 offset 1", 2, "owner", isAscending},
-                
+
                 {"hive_db where (name = \"Reporting\") select name as _col_0, (createTime + 1) as _col_1 orderby '_col_1'", 1, "_col_1", isAscending},
                 {"hive_db where (name = \"Reporting\") select name as _col_0, (createTime + 1) as _col_1 orderby '_col_1' limit 10", 1, "_col_1", isAscending},
                 {"hive_db where (name = \"Reporting\") select name as _col_0, (createTime + 1) as _col_1 orderby '_col_1' limit 10 offset 1", 0, "_col_1", isAscending},
                 {"hive_db where (name = \"Reporting\") select name as _col_0, (createTime + 1) as _col_1 orderby '_col_1' limit 10 offset 0", 1, "_col_1", isAscending},
-                
+
                 {"hive_table where (name = \"sales_fact\" and createTime > \"2014-01-01\" ) select name as _col_0, createTime as _col_1 orderby '_col_1' ", 1, "_col_1", isAscending},
                 {"hive_table where (name = \"sales_fact\" and createTime > \"2014-01-01\" ) select name as _col_0, createTime as _col_1 orderby '_col_1' limit 10 ", 1, "_col_1", isAscending},
                 {"hive_table where (name = \"sales_fact\" and createTime > \"2014-01-01\" ) select name as _col_0, createTime as _col_1 orderby '_col_1' limit 10 offset 0", 1, "_col_1", isAscending},
                 {"hive_table where (name = \"sales_fact\" and createTime > \"2014-01-01\" ) select name as _col_0, createTime as _col_1 orderby '_col_1' limit 10 offset 5", 0, "_col_1", isAscending},
-                
+
                 {"hive_table where (name = \"sales_fact\" and createTime >= \"2014-12-11T02:35:58.440Z\" ) select name as _col_0, createTime as _col_1 orderby '_col_0' ", 1, "_col_0", isAscending},
                 {"hive_table where (name = \"sales_fact\" and createTime >= \"2014-12-11T02:35:58.440Z\" ) select name as _col_0, createTime as _col_1 orderby '_col_0' limit 10 offset 0", 1, "_col_0", isAscending},
                 {"hive_table where (name = \"sales_fact\" and createTime >= \"2014-12-11T02:35:58.440Z\" ) select name as _col_0, createTime as _col_1 orderby '_col_0' limit 10 offset 1", 0, "_col_0", isAscending},
@@ -542,7 +542,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
 
         };
     }
-    
+
     @Test(dataProvider = "dslOrderByQueriesProvider")
     public void  testSearchByDSLQueriesWithOrderBy(String dslQuery, Integer expectedNumRows, String orderBy, boolean ascending) throws Exception {
         System.out.println("Executing dslQuery = " + dslQuery);
@@ -561,7 +561,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
         assertNotNull(typeName);
 
         JSONArray rows = results.getJSONArray("rows");
-       
+
         assertNotNull(rows);
         assertEquals(rows.length(), expectedNumRows.intValue()); // some queries may not have any results
         List<String> returnedList = new ArrayList<String> ();
@@ -595,10 +595,10 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
                 }
             }
         }
-        
+
         System.out.println("query [" + dslQuery + "] returned [" + rows.length() + "] rows");
     }
-    
+
     @Test(dataProvider = "dslQueriesProvider")
     public void  testSearchByDSLQueries(String dslQuery, Integer expectedNumRows) throws Exception {
         System.out.println("Executing dslQuery = " + dslQuery);
@@ -645,9 +645,9 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
         assertNotNull(rows);
         System.out.println("query [" + dslQuery + "] returned [" + rows.length() + "] rows.  Expected: " + expectedNumRows.intValue() + ".  Result: " + ((rows.length() == expectedNumRows.intValue()) ? "SUCCESS" : "FAILURE"));
         assertEquals(rows.length(), expectedNumRows.intValue()); // some queries may not have any results
-        
+
     }
-    
+
     @DataProvider(name = "invalidDslQueriesProvider")
     private Object[][] createInvalidDSLQueries() {
         return new String[][]{{"from Unknown"}, {"Unknown"}, {"Unknown is Blah"},};

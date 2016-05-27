@@ -28,11 +28,11 @@ import com.thinkaurelius.titan.core.PropertyKey;
 public class Titan1PropertyKey implements AtlasPropertyKey {
 
     private PropertyKey wrapped_;
-    
+
     public Titan1PropertyKey(PropertyKey toWrap) {
         wrapped_ = toWrap;
     }
-    
+
     /* (non-Javadoc)
      * @see org.apache.atlas.repository.graphdb.AtlasPropertyKey#getName()
      */
@@ -47,14 +47,14 @@ public class Titan1PropertyKey implements AtlasPropertyKey {
     public PropertyKey getWrappedPropertyKey() {
         return wrapped_;
     }
-    
+
     @Override
     public int hashCode() {
         int result = 17;
         result = 37*result + wrapped_.hashCode();
         return result;
     }
-    
+
     @Override
     public boolean equals(Object other) {
         if(!(other instanceof Titan1PropertyKey)) {
@@ -62,7 +62,7 @@ public class Titan1PropertyKey implements AtlasPropertyKey {
         }
         Titan1PropertyKey otherKey = (Titan1PropertyKey)other;
         return otherKey.getWrappedPropertyKey().equals(getWrappedPropertyKey());
-        
+
     }
 
 }

@@ -112,8 +112,8 @@ public interface MetadataRepository {
      * @throws RepositoryException
      */
     TypeUtils.Pair<List<String>, List<ITypedReferenceableInstance>> deleteEntities(List<String> guids) throws RepositoryException;
-    
-    
+
+
     // Trait management functions
 
     /**

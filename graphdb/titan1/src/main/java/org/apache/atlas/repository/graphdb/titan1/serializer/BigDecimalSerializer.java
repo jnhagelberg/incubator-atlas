@@ -11,9 +11,9 @@ import com.thinkaurelius.titan.diskstorage.WriteBuffer;
 public class BigDecimalSerializer implements AttributeSerializer<BigDecimal> {
 
     private BigIntegerSerializer bigIntegerDelegate_ = new BigIntegerSerializer();
-    
+
     @Override
-    public BigDecimal read(ScanBuffer buffer) {            
+    public BigDecimal read(ScanBuffer buffer) {
         BigInteger unscaledVal = bigIntegerDelegate_.read(buffer);
         int scale = buffer.getInt();
         return new BigDecimal(unscaledVal, scale);
@@ -24,7 +24,7 @@ public class BigDecimalSerializer implements AttributeSerializer<BigDecimal> {
         BigInteger unscaledVal = attribute.unscaledValue();
         int scale = attribute.scale();
         bigIntegerDelegate_.write(buffer, unscaledVal);
-        buffer.putInt(scale);        
+        buffer.putInt(scale);
     }
-    
+
 }

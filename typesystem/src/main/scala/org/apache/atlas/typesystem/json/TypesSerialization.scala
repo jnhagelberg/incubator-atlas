@@ -229,7 +229,7 @@ trait TypeHelpers {
     HierarchicalTypeDefinition[TraitType] = {
         createTraitTypeDef(name, None, superTypes, attrDefs:_*)
     }
-    
+
     def createTraitTypeDef(name: String, description: Option[String], superTypes: Seq[String], attrDefs: AttributeDefinition*):
     HierarchicalTypeDefinition[TraitType] = {
         val sts = ImmutableSet.copyOf(superTypes.toArray)
@@ -241,7 +241,7 @@ trait TypeHelpers {
     HierarchicalTypeDefinition[ClassType] = {
          createClassTypeDef( name, None, superTypes, attrDefs:_*)
     }
-    
+
     def createClassTypeDef(name: String, description: Option[String], superTypes: Seq[String], attrDefs: AttributeDefinition*):
     HierarchicalTypeDefinition[ClassType] = {
         val sts = ImmutableSet.copyOf(superTypes.toArray)

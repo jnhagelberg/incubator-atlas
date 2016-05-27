@@ -81,13 +81,13 @@ public class ClassTest extends HierarchicalTypeTest<ClassType> {
         HierarchicalTypeDefinition<ClassType> clsType = TypesUtil
                 .createClassTypeDef("Random", ImmutableSet.<String>of(),
                         TypesUtil.createRequiredAttrDef("name", DataTypes.STRING_TYPE));
-        
+
         TypesDef typesDef = getTypesDef(clsType);
         String json = TypesSerialization.toJson(typesDef);
         System.out.println("json " +  json);
         TypesSerialization.fromJson(json);
     }
-    
+
     @Test
     public void testSerDeWithDescription() throws Exception {
         HierarchicalTypeDefinition<ClassType> clsType = TypesUtil

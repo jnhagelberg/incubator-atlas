@@ -59,7 +59,7 @@ import com.google.inject.throwingproviders.ThrowingProviderBinder;
  */
 public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
 
-    
+
     @Override
     protected void configure() {
         // special wiring for Titan Graph

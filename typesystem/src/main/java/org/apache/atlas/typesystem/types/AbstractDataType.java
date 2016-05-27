@@ -30,7 +30,7 @@ abstract class AbstractDataType<T> implements IDataType<T> {
 
     public final String name;
     public final String description;
-    
+
     public AbstractDataType(String name, String description) {
 
         super();
@@ -92,6 +92,6 @@ abstract class AbstractDataType<T> implements IDataType<T> {
     @Override
     public String getDescription() {
         return description;
-    }    
+    }
 }
 

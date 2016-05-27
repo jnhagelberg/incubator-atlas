@@ -33,27 +33,27 @@ import org.apache.atlas.typesystem.types.TypeSystem;
 public class JSONImporter {
 
     private TypeSystem typeSystem_;
-    
+
     private Map<String,DependencyTreeNode> instanceNodes_ = new HashMap<String, DependencyTreeNode>();
-    
+
     //unimported nodes with no unresolved dependencies.  Updated in
     //waves
     private List<DependencyTreeNode> leafNodes_ = new ArrayList<DependencyTreeNode>();
-    
+
 
 
     public JSONImporter(TypeSystem typeSystem, String json) throws AtlasException {
-        typeSystem_ = typeSystem; 
+        typeSystem_ = typeSystem;
         ITypedReferenceableInstance[] instancesFromJson = deserializeClassInstances(json);
-        
+
         //create dependency tree nodes (with no children) for all instances
         for(ITypedReferenceableInstance instance : instancesFromJson) {
             DependencyTreeNode node = new DependencyTreeNode(instance);
             instanceNodes_.put(instance.getId().id, node);
         }
-                
+
         //determine the dependencies between the dependency tree nodes
-        //based on the references in the underlying instance.  
+        //based on the references in the underlying instance.
         //For each node, adds the DependendencyTreeNodes for the referenced objects
         //as children.  Any nodes with no referenced objects become part
         //of the initial set of leaf nodes.
@@ -76,7 +76,7 @@ public class JSONImporter {
     private void findAndAddChildren(TypeSystem typeSystem, DependencyTreeNode node) throws AtlasException {
         IReferenceableInstance inst = node.getInstance();
         ClassType entityType = typeSystem.getDataType(ClassType.class, inst.getTypeName());
-        
+
         for(Map.Entry<String,Object> valueMapEntry: inst.getValuesMap().entrySet()) {
             String key = valueMapEntry.getKey();
             Object value = valueMapEntry.getValue();
@@ -88,22 +88,22 @@ public class JSONImporter {
             //TBD: map handling
             if(value instanceof Collection) {
                 referencedValues = (Collection<Object>)value;
-                
+
             }
             else {
                 referencedValues = Collections.singleton(value);
-            }                
+            }
 
             for(Object referencedValue : referencedValues) {
                 if(referencedValue instanceof IReferenceableInstance) {
                     IReferenceableInstance refdInst = (IReferenceableInstance)referencedValue;
                     DependencyTreeNode refdNode = instanceNodes_.get(refdInst.getId().id);
-                    if(refdNode == null) {      
+                    if(refdNode == null) {
                         throw new AtlasException(inst.getId() + " refers to the non existent entity " + refdInst.getId());
                     }
                     node.addChild(key, refdNode);
                 }
-                
+
             }
         }
     }
@@ -113,7 +113,7 @@ public class JSONImporter {
         AttributeInfo info =  entityType.fieldMapping().fields.get(key);
         return isReference(info.dataType());
     }
-    
+
     private boolean isReference(IDataType< ?> dt) {
 
         //structs don't have guids.  Struct instances are always inlined in the object they
@@ -123,19 +123,19 @@ public class JSONImporter {
         }
         if(dt.getTypeCategory() == TypeCategory.ARRAY) {
             ArrayType at = (ArrayType)dt;
-            return isReference(at.getElemType());            
+            return isReference(at.getElemType());
         }
         if(dt.getTypeCategory() == TypeCategory.MAP) {
             //map keys must be strings
             MapType mt = (MapType)dt;
-            return isReference(mt.getValueType());            
+            return isReference(mt.getValueType());
         }
         return false;
     }
-    
-    
+
+
     public void doImport(MetadataRepository repo) throws AtlasException {
-        
+
         //do the import in passes.  In each pass, we save the objects in
         //Atlas that only have dependencies on objects that were previously
         //saved in Atlas by the import.  We start with the objects that
@@ -143,7 +143,7 @@ public class JSONImporter {
         //that depend on those objects and see if they are now able
         //to be imported.  In pass two, we save all of those objects.
         //We repeat this process until all of the objects have been imported.
-        
+
         //Note that this was designed to be able to import the json corresponding
         //to the HiveTitanSample.  It is not able to handle graphs
         //that have cycles.  It could be extended to do this if we
@@ -153,28 +153,28 @@ public class JSONImporter {
         //to turn the graph into a tree.  We would need to record the references
         //that were removed in order to do this somewhere else.  We would first
         //save the objects with only the references that are in the tree
-        //we computed.  Then, as a second step, we would go though and 
+        //we computed.  Then, as a second step, we would go though and
         //update the objects with the remaining references.
-        
+
         while(! leafNodes_.isEmpty()) {
-            
+
             importLeafNodes(repo);
-            
+
             leafNodes_ = determineNewLeafNodes();
         }
-        
+
     }
 
 
     private  List<DependencyTreeNode> determineNewLeafNodes() {
-        
+
         Set<DependencyTreeNode> newLeafNodes = new HashSet<DependencyTreeNode>();
         for(DependencyTreeNode node : leafNodes_) {
             for(DependencyTreeNode leafParent : node.getParents()) {
                 if(leafParent.isLeaf() && ! leafParent.wasImported()) {
                     newLeafNodes.add(leafParent);
                 }
-            }                
+            }
         }
         return new ArrayList<DependencyTreeNode>(newLeafNodes);
     }
@@ -182,14 +182,14 @@ public class JSONImporter {
 
     private void importLeafNodes(MetadataRepository repo)
             throws AtlasException, RepositoryException, EntityExistsException {
-        
+
         ITypedReferenceableInstance[] toImport = new ITypedReferenceableInstance[leafNodes_.size()];
         int idx = 0;
         for(DependencyTreeNode node : leafNodes_) {
             node.updateReferencedGuids();
-            toImport[idx++] = node.getInstance();                
+            toImport[idx++] = node.getInstance();
         }
-        
+
         //each call to createEntities adds stuff to the context, and as a result calling
         //it multiple times without resetting the context causes it to produce incorrect
         //results.  To avoid this, all calls need to take place within a fresh context.
@@ -199,19 +199,19 @@ public class JSONImporter {
         //or call a different api that does not modify the context
         RequestContext.createContext();
         List<String> guids = repo.createEntities(toImport);
-   
-        
+
+
         //set the new guids in the DependencyTreeNodes
         //using the values we got back from Atlas.
         for(int i = 0; i < guids.size(); i++) {
             leafNodes_.get(i).setNewGuid(guids.get(i));
         }
     }
-    
+
     private ITypedReferenceableInstance[] deserializeClassInstances(String entityInstanceDefinition)
             throws AtlasException {
         return GraphHelper.deserializeClassInstances(typeSystem_, entityInstanceDefinition);
-        
-    }    
+
+    }
 
 }
