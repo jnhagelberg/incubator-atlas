@@ -115,4 +115,29 @@ public class Titan0Element<T extends Element> implements AtlasElement {
         Titan0Element otherElement = (Titan0Element) other;
         return getWrappedElement().equals(otherElement.getWrappedElement());
     }
+
+    /* (non-Javadoc)
+     * @see org.apache.atlas.repository.graphdb.AtlasElement#exists()
+     */
+    @Override
+    public boolean exists() {
+        return true;
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.atlas.repository.graphdb.AtlasElement#setJsonProperty(java.lang.String, java.lang.Object)
+     */
+    @Override
+    public <T> void setJsonProperty(String propertyName, T value) {
+        setProperty(propertyName, value);
+
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.atlas.repository.graphdb.AtlasElement#getJsonProperty(java.lang.String)
+     */
+    @Override
+    public <T> T getJsonProperty(String propertyName) {
+       return getProperty(propertyName);
+    }
 }
