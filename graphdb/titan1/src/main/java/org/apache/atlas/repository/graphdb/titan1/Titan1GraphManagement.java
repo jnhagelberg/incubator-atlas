@@ -79,24 +79,6 @@ public class Titan1GraphManagement implements AtlasGraphManagement {
         return management_.containsPropertyKey(propertyName);
     }
     
-    private PropertyKey getOrCreatePropertyKey(String propertyName, Class propertyClass, Cardinality cardinality) {
-        
-        //titan 1 does not validate that there are no special characters in property names.  Perhaps that
-        //restriction was removed.  To be consistent, though, add that check back in here.  Otherwise
-        //DefaultMetadataServiceTest.testTypeUpdateWithReservedAttributes() fails.
-        checkName(propertyName);
-        
-        PropertyKey propertyKey = management_.getPropertyKey(propertyName);
-        if (propertyKey != null) {
-            return propertyKey;
-        }
-        PropertyKeyMaker propertyKeyBuilder = management_.makePropertyKey(propertyName).dataType(propertyClass);
-        if(cardinality != null) {
-            propertyKeyBuilder.cardinality(cardinality);
-        }
-        return propertyKey = propertyKeyBuilder.make();   
-    }
-
     @Override
     public void rollback() {
         management_.rollback();
@@ -116,21 +98,22 @@ public class Titan1GraphManagement implements AtlasGraphManagement {
             Preconditions.checkArgument(name.indexOf(c) < 0, "Name can not contains reserved character %s: %s", c, name);
        
     }
-    
-        /* (non-Javadoc)
+    /* (non-Javadoc)
      * @see org.apache.atlas.repository.graphdb.AtlasGraphManagement#waitForIndexAvailibility(java.util.Collection)
      */
     @Override
     public void waitForIndexAvailibility(Collection<String> indexNames) throws AtlasException {
 
         TitanManagement mgmt;
-        boolean rollbackNeeded = false;
+        boolean mgmtRollbackNeeded = false;
         if(management_.isOpen()) {
             mgmt = management_;
         }
         else {
+            //start a new management transaction and roll it back
+            //when we're done
+            mgmtRollbackNeeded = true;
             mgmt = graph_.openManagement();
-            rollbackNeeded = true;
         }
         try {
             long start = System.currentTimeMillis();
@@ -169,7 +152,8 @@ public class Titan1GraphManagement implements AtlasGraphManagement {
             throw new AtlasException(builder.toString());
         }
         finally {
-            if(rollbackNeeded) {
+            // not making any changes
+            if(mgmtRollbackNeeded) {
                 mgmt.rollback();
             }
         }
@@ -227,7 +211,6 @@ public class Titan1GraphManagement implements AtlasGraphManagement {
            }
         }
     }
-
     /* (non-Javadoc)
      * @see org.apache.atlas.repository.graphdb.AtlasGraphManagement#makePropertyKey(java.lang.String, java.lang.Class, org.apache.atlas.typesystem.types.Multiplicity)
      */
