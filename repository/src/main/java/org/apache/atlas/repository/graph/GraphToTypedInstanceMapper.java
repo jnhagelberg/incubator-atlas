@@ -164,12 +164,12 @@ public final class GraphToTypedInstanceMapper {
  
  		AtlasEdge<V,E> edge;
         if (edgeId == null) {
-            edge = GraphHelper.getEdgeForLabel(instanceVertex, relationshipLabel);;
+            edge = GraphHelper.getEdgeForLabel(instanceVertex, relationshipLabel);
         } else {
             edge = graphHelper.getEdgeById(edgeId);
         }
 
-        if (edge != null) {
+        if (GraphHelper.elementExists(edge)) {
             final AtlasVertex<V,E> referenceVertex = edge.getInVertex();
             final String guid = referenceVertex.getProperty(Constants.GUID_PROPERTY_KEY);
             LOG.debug("Found vertex {} for label {} with guid {}", referenceVertex, relationshipLabel, guid);
@@ -278,7 +278,7 @@ public final class GraphToTypedInstanceMapper {
             edge = graphHelper.getEdgeById(edgeId);
         }
 
-        if (edge != null) {
+        if (GraphHelper.elementExists(edge)) {
             structInstance = structType.createInstance();
             AtlasVertex<V,E> structInstanceVertex = edge.getInVertex();
             LOG.debug("Found struct instance {}, mapping to instance {} ", string(structInstanceVertex),
@@ -348,7 +348,7 @@ public final class GraphToTypedInstanceMapper {
 
     public ITypedInstance getReferredEntity(String edgeId, IDataType<?> referredType) throws AtlasException {
         final AtlasEdge<?,?> edge = graph.getEdge(edgeId);
-        if (edge != null) {
+        if (GraphHelper.elementExists(edge)) {
             final AtlasVertex<?,?> referredVertex = edge.getInVertex();
             if (referredVertex != null) {
                 switch (referredType.getTypeCategory()) {

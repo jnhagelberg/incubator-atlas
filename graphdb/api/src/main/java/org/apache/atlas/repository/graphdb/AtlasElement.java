@@ -94,4 +94,24 @@ public interface AtlasElement {
      */
     JSONObject toJson(Set<String> propertyKeys) throws JSONException;
 
+    /**
+     * Determines if this element exists in the graph database
+     * 
+     * @return
+     */
+    boolean exists();
+
+    /**
+     * @param propertyName
+     * @param value
+     */
+    <T> void setJsonProperty(String propertyName, T value);
+
+    /**
+     * @param propertyName
+     * @return
+     */
+    <T> T getJsonProperty(String propertyName);
+
+
 }

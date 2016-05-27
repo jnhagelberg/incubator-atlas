@@ -24,14 +24,13 @@ import static org.apache.atlas.repository.graph.GraphHelper.string;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.RequestContext;
 import org.apache.atlas.repository.Constants;
-import org.apache.atlas.typesystem.exception.NullRequiredAttributeException;
 import org.apache.atlas.repository.graphdb.AtlasEdge;
 import org.apache.atlas.repository.graphdb.AtlasEdgeDirection;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
+import org.apache.atlas.typesystem.exception.NullRequiredAttributeException;
 import org.apache.atlas.typesystem.persistence.Id;
 import org.apache.atlas.typesystem.types.AttributeInfo;
 import org.apache.atlas.typesystem.types.DataTypes;
@@ -193,7 +192,7 @@ public abstract class DeleteHandler {
     public void deleteReference(AtlasVertex<?,?> instanceVertex, String edgeLabel, DataTypes.TypeCategory typeCategory,
                                 boolean isComposite) throws AtlasException {
         AtlasEdge<?,?> edge = GraphHelper.getEdgeForLabel(instanceVertex, edgeLabel);
-        if (edge != null) {
+        if (GraphHelper.elementExists(edge)) {
             deleteReference(edge, typeCategory, isComposite);
         }
     }
@@ -273,7 +272,7 @@ public abstract class DeleteHandler {
                 elements = new ArrayList<>(elements);   //Make a copy, else list.remove reflects on titan.getProperty()
                 for (String elementEdgeId : elements) {
                     AtlasEdge<?,?> elementEdge = graphHelper.getEdgeById(elementEdgeId);
-                    if (elementEdge == null) {
+                    if (! GraphHelper.elementExists(elementEdge)) {
                         continue;
                     }
 
@@ -347,7 +346,7 @@ public abstract class DeleteHandler {
                     + string(inVertex) + " with attribute name " + attributeName + " which is not class/array/map attribute");
         }
 
-        if (edge != null) {
+        if (GraphHelper.elementExists(edge)) {
             deleteEdge(edge);
             GraphHelper.setProperty(outVertex, Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY,
                     RequestContext.get().getRequestTime());

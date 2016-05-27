@@ -148,7 +148,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
     private void createFullTextIndex(AtlasGraphManagement management, Collection<String> createdIndexNames) {
         
          AtlasPropertyKey fullText =
-                management.makePropertyKey(Constants.ENTITY_TEXT_PROPERTY_KEY, String.class, null);
+                management.makePropertyKey(Constants.ENTITY_TEXT_PROPERTY_KEY, String.class, Multiplicity.OPTIONAL);
 
         management.createFullTextIndex(Constants.FULLTEXT_INDEX, fullText, Constants.BACKING_INDEX);
         createdIndexNames.add(Constants.FULLTEXT_INDEX);

@@ -111,7 +111,7 @@ trait GraphPersistenceStrategies {
             //traversed in the loop to be selected.  The logic here handles that
             //case by converting the result to a list and just selecting the
             //last item from it.
-            "(((it as Vertex[]) as List<Vertex>).last())"
+            "((it as Vertex[]) as List<Vertex>).last()"
         }
         else {
             "it"

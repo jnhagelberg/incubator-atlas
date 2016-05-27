@@ -11,19 +11,31 @@ import org.apache.atlas.repository.graphdb.titan1.graphson.AtlasGraphSONMode;
 import org.apache.atlas.repository.graphdb.titan1.graphson.AtlasGraphSONUtility;
 import org.apache.tinkerpop.gremlin.structure.Element;
 import org.apache.tinkerpop.gremlin.structure.Property;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import com.thinkaurelius.titan.core.SchemaViolationException;
+import com.thinkaurelius.titan.core.TitanGraph;
 
 
 public class Titan1Element<T extends Element> implements AtlasElement {
 
     
-    protected T element_;
+    private T element_;
+    protected Object id_;
+    private TitanGraph graph_;
+    
+    
+    public Titan1Element(TitanGraph graph, String id) {
+        id_ = id;
+        graph_ = graph;
+    }
+    
     
     public Titan1Element(T element) {
         element_ = element;
+        id_ = element.id();
     }
     
     @Override
@@ -33,7 +45,7 @@ public class Titan1Element<T extends Element> implements AtlasElement {
         //add explicit logic to return null if the property does not exist
         //This is the behavior Atlas expects.  Titan 1 throws an exception
         //in this scenario.       
-        Property p = element_.property(propertyName);
+        Property p = getWrappedElement().property(propertyName);
         if(p.isPresent()) {
             return (T)p.value();
         }
@@ -42,12 +54,12 @@ public class Titan1Element<T extends Element> implements AtlasElement {
     
     @Override
     public Set<String> getPropertyKeys() {
-        return element_.keys();
+        return getWrappedElement().keys();
     }
     
     @Override
     public void removeProperty(String propertyName) {  
-        Iterator<? extends Property<String>> it = element_.properties(propertyName);
+        Iterator<? extends Property<String>> it = getWrappedElement().properties(propertyName);
         while(it.hasNext()) {
             Property<String> property = it.next();
             property.remove();
@@ -57,7 +69,7 @@ public class Titan1Element<T extends Element> implements AtlasElement {
     @Override
     public void setProperty(String propertyName, Object value) {
         try {
-            element_.property(propertyName, value);
+            getWrappedElement().property(propertyName, value);
         }
         catch(SchemaViolationException e) {
             throw new AtlasSchemaViolationException(e);
@@ -66,13 +78,35 @@ public class Titan1Element<T extends Element> implements AtlasElement {
     
     @Override
     public Object getId() {
-        return element_.id();
+        return id_;
     }
     
 
     //not in interface
     public T getWrappedElement() {
-        return element_;
+        
+        T element = getElement();
+        if(element == null) {
+            throw new IllegalStateException("The vertex " + id_ + " does not exist!");
+        }
+        return element;
+    }
+
+    private T getElement() {        
+        
+        if(element_ != null) {
+            return element_;
+        }
+        
+        if(getClass() == Titan1Vertex.class) {
+            Iterator<Vertex> it = graph_.vertices(id_);
+            if(! it.hasNext()) {
+                return null;
+            }
+            element_ = (T)it.next();
+            return element_;
+        }
+        return null;
     }
     
     @Override
@@ -113,6 +147,31 @@ public class Titan1Element<T extends Element> implements AtlasElement {
     public void setListProperty(String propertyName, List<String> values) {
         setProperty(propertyName, values);
         
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.atlas.repository.graphdb.AtlasElement#exists()
+     */
+    @Override
+    public boolean exists() {
+        return getElement() != null;
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.atlas.repository.graphdb.AtlasElement#setJsonProperty(java.lang.String, java.lang.Object)
+     */
+    @Override
+    public <T> void setJsonProperty(String propertyName, T value) {
+        setProperty(propertyName, value); 
+        
+    }
+
+    /* (non-Javadoc)
+     * @see org.apache.atlas.repository.graphdb.AtlasElement#getJsonProperty(java.lang.String)
+     */
+    @Override
+    public <T> T getJsonProperty(String propertyName) {
+       return getProperty(propertyName);
     }
     
 }

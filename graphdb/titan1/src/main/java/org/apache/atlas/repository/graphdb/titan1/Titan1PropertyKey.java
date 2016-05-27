@@ -47,5 +47,22 @@ public class Titan1PropertyKey implements AtlasPropertyKey {
     public PropertyKey getWrappedPropertyKey() {
         return wrapped_;
     }
+    
+    @Override
+    public int hashCode() {
+        int result = 17;
+        result = 37*result + wrapped_.hashCode();
+        return result;
+    }
+    
+    @Override
+    public boolean equals(Object other) {
+        if(!(other instanceof Titan1PropertyKey)) {
+            return false;
+        }
+        Titan1PropertyKey otherKey = (Titan1PropertyKey)other;
+        return otherKey.getWrappedPropertyKey().equals(getWrappedPropertyKey());
+        
+    }
 
 }

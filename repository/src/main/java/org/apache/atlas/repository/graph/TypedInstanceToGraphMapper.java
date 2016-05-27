@@ -262,7 +262,7 @@ public final class TypedInstanceToGraphMapper {
                     instanceVertex = graphHelper.getVertexForInstanceByUniqueAttribute(classType, instance);
 
                     //no entity with the given unique attribute, create new
-                    if (instanceVertex == null) {
+                    if (! GraphHelper.elementExists(instanceVertex)) {
                         LOG.debug("Creating new vertex for instance {}", instance.toShortString());
                         newInstance = classType.convert(instance, Multiplicity.REQUIRED);
                         instanceVertex = graphHelper.createVertexWithIdentity(newInstance, classType.getAllSuperTypeNames());
@@ -404,7 +404,9 @@ public final class TypedInstanceToGraphMapper {
         for (String edgeId : edgeIds) {
             if (!edgeMap.containsKey(edgeId)) {
                 AtlasEdge<V,E> edge = graphHelper.getEdgeById(edgeId);
-                edgeMap.put(edgeId, edge);
+                if(edge.exists()) {
+                    edgeMap.put(edgeId, edge);
+                }
             }
         }
     }
@@ -507,11 +509,11 @@ public final class TypedInstanceToGraphMapper {
                                      ITypedStruct newAttributeValue, AtlasEdge<V,E> currentEdge,
                                      String edgeLabel, Operation operation) throws AtlasException {
         String newEdgeId = null;
-        if (currentEdge != null && newAttributeValue != null) {
+        if (GraphHelper.elementExists(currentEdge) && newAttributeValue != null) {
             //update
             updateStructVertex(newAttributeValue, currentEdge, operation);
             newEdgeId = currentEdge.getId().toString();
-        } else if (currentEdge == null && newAttributeValue != null) {
+        } else if (! GraphHelper.elementExists(currentEdge) && newAttributeValue != null) {
             //add
             AtlasEdge<V,E> newEdge = addStructVertex(newAttributeValue, instanceVertex, attributeInfo, edgeLabel);
             newEdgeId = newEdge.getId().toString();
@@ -562,16 +564,16 @@ public final class TypedInstanceToGraphMapper {
                                           ITypedReferenceableInstance newAttributeValue, AttributeInfo attributeInfo,
                                           String edgeLabel) throws AtlasException {
         AtlasVertex<V,E> newReferenceVertex = getClassVertex(newAttributeValue);
-        if(newReferenceVertex == null && newAttributeValue != null) {
+        if( ! GraphHelper.elementExists(newReferenceVertex) && newAttributeValue != null) {
             LOG.error("Could not find vertex for Class Reference " + newAttributeValue);
             throw new EntityNotFoundException("Could not find vertex for Class Reference " + newAttributeValue);
         }
 
         String newEdgeId = null;
-        if (currentEdge != null && newAttributeValue != null) {
+        if (GraphHelper.elementExists(currentEdge) && newAttributeValue != null) {
             newEdgeId = updateClassEdge(instanceVertex, currentEdge, newAttributeValue, newReferenceVertex,
                     attributeInfo, edgeLabel);
-        } else if (currentEdge == null && newAttributeValue != null){
+        } else if (! GraphHelper.elementExists(currentEdge)&& newAttributeValue != null){
             AtlasEdge<V,E> newEdge = addClassEdge(instanceVertex, newReferenceVertex, edgeLabel);
             newEdgeId = newEdge.getId().toString();
         }

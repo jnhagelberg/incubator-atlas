@@ -338,7 +338,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
                 {"View is JdbcAccess", 2},
                 {"View is JdbcAccess limit 1", 1},
                 {"View is JdbcAccess limit 2 offset 1", 1},
-                {"hive_db as db1, hive_table where db1.name = \"Reporting\"", 0}, //Not working - ATLAS-145
+                {"hive_db as db1, hive_table where db1.name = \"Reporting\"", isGremlin3() ? 2 : 0}, //Not working - ATLAS-145
                 
                 
                 {"from hive_table", 8},
@@ -396,7 +396,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
                 {"hive_db where hive_db has name limit 2 offset 0", 2}, //70
                 {"hive_db where hive_db has name limit 2 offset 1", 2},
                 
-                {"hive_db as db1 hive_table where (db1.name = \"Reporting\")", 0}, //Not working -> ATLAS-145
+                {"hive_db as db1 hive_table where (db1.name = \"Reporting\")", isGremlin3() ? 2 : 0}, //Not working -> ATLAS-145
                 {"hive_db where (name = \"Reporting\") select name as _col_0, (createTime + 1) as _col_1 ", 1},
                 {"hive_db where (name = \"Reporting\") select name as _col_0, (createTime + 1) as _col_1 limit 10", 1},
                 {"hive_db where (name = \"Reporting\") select name as _col_0, (createTime + 1) as _col_1 limit 10 offset 1", 0},
@@ -643,8 +643,9 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
 
         JSONArray rows = results.getJSONArray("rows");
         assertNotNull(rows);
+        System.out.println("query [" + dslQuery + "] returned [" + rows.length() + "] rows.  Expected: " + expectedNumRows.intValue() + ".  Result: " + ((rows.length() == expectedNumRows.intValue()) ? "SUCCESS" : "FAILURE"));
         assertEquals(rows.length(), expectedNumRows.intValue()); // some queries may not have any results
-        System.out.println("query [" + dslQuery + "] returned [" + rows.length() + "] rows");
+        
     }
     
     @DataProvider(name = "invalidDslQueriesProvider")

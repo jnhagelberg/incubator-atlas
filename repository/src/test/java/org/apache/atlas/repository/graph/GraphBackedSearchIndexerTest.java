@@ -80,10 +80,10 @@ public class GraphBackedSearchIndexerTest {
         verifyVertexIndexContains(managementSystem, Constants.ENTITY_TYPE_PROPERTY_KEY);
 
         verifySystemCompositeIndex(managementSystem, Constants.SUPER_TYPES_PROPERTY_KEY, false);
-        verifyVertexIndexContains(managementSystem, Constants.SUPER_TYPES_PROPERTY_KEY);
+        //not added to vertex index - mult many
 
         verifySystemCompositeIndex(managementSystem, Constants.TRAIT_NAMES_PROPERTY_KEY, false);
-        verifyVertexIndexContains(managementSystem, Constants.TRAIT_NAMES_PROPERTY_KEY);
+        //not added to vertex index - mult many
     }
 
     @Test

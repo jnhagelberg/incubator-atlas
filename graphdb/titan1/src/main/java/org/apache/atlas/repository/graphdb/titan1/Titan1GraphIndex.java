@@ -92,5 +92,23 @@ public class Titan1GraphIndex implements AtlasGraphIndex {
         }
         return result;
     }
+    
+    @Override
+    public int hashCode() {
+        int result = 17;
+        result = 37*result + wrapped_.hashCode();
+        return result;
+    }
+    
+    @Override
+    public boolean equals(Object other) {
+        if(!(other instanceof Titan1GraphIndex)) {
+            return false;
+        }
+        Titan1GraphIndex otherKey = (Titan1GraphIndex)other;
+        return otherKey.wrapped_.equals(wrapped_);
+        
+    }
+
 
 }

@@ -15,7 +15,7 @@ public class Titan1Edge extends Titan1Element<Edge> implements AtlasEdge<Titan1V
     
     @Override
     public String getLabel() {
-        return element_.label();
+        return getWrappedElement().label();
     }    
 
     @Override
@@ -26,12 +26,12 @@ public class Titan1Edge extends Titan1Element<Edge> implements AtlasEdge<Titan1V
 
     @Override
     public AtlasVertex<Titan1Vertex, Titan1Edge> getInVertex() {
-        return TitanObjectFactory.createVertex(element_.inVertex());
+        return TitanObjectFactory.createVertex(getWrappedElement().inVertex());
     }
 
     @Override
     public AtlasVertex<Titan1Vertex, Titan1Edge> getOutVertex() {
-        return TitanObjectFactory.createVertex(element_.outVertex());
+        return TitanObjectFactory.createVertex(getWrappedElement().outVertex());
     }
     
 }

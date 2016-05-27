@@ -447,14 +447,18 @@ class GremlinTranslator(expr: Expression,
     }    
 
     def genPropertyAccessExpr(e: Expression, fInfo : FieldInfo, propertyName: String, inSelect: Boolean) : String = {
-
         if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {                 
             s"${genQuery(e, inSelect)}.$propertyName"
         }
         else {
             val attrInfo : AttributeInfo = fInfo.attrInfo; 
             val attrType : IDataType[_] = attrInfo.dataType;
-            s"${genQuery(e, inSelect)}.${getPrimitiveTypeQualifier(attrType)}value($propertyName)"
+            if(inSelect) {
+                s"${genQuery(e, inSelect)}.${getPrimitiveTypeQualifier(attrType)}value($propertyName)"
+            }
+            else {
+                 s"${genQuery(e, inSelect)}.values($propertyName)"
+            }
         }
     }
     

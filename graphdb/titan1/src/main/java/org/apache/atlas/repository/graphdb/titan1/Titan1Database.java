@@ -33,15 +33,11 @@ import org.apache.atlas.repository.graphdb.titan1.serializer.TypeCategorySeriali
 import org.apache.atlas.typesystem.types.DataTypes.TypeCategory;
 import org.apache.commons.configuration.Configuration;
 import org.apache.tinkerpop.gremlin.groovy.loaders.SugarLoader;
-import org.apache.tinkerpop.gremlin.structure.Edge;
-import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.apache.tinkerpop.gremlin.structure.io.graphson.GraphSONMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.thinkaurelius.titan.core.Cardinality;
-import com.thinkaurelius.titan.core.PropertyKey;
-import com.thinkaurelius.titan.core.RelationType;
 import com.thinkaurelius.titan.core.TitanFactory;
 import com.thinkaurelius.titan.core.TitanGraph;
 import com.thinkaurelius.titan.core.schema.TitanManagement;
@@ -70,7 +66,7 @@ public class Titan1Database implements GraphDatabase<Titan1Vertex, Titan1Edge> {
     public Titan1Database() {
         
         //load the Gremlin 3 sugar plugin
-         //SugarLoader.load();
+         SugarLoader.load();
          
          //update registry
          GraphSONMapper.build().addRegistry(TitanIoRegistry.INSTANCE).create();           
@@ -102,7 +98,6 @@ public class Titan1Database implements GraphDatabase<Titan1Vertex, Titan1Edge> {
         return titanConfig;
     }
     
-
 
     public static TitanGraph getGraphInstance() {
         if (graphInstance == null) {

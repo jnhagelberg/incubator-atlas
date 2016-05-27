@@ -106,7 +106,7 @@ public interface AtlasGraphManagement {
      * @param cardinality
      * @return
      */
-    AtlasPropertyKey makePropertyKey(String propertyName, Class propertyClass, Multiplicity cardinality);
+    AtlasPropertyKey makePropertyKey(String propertyName, Class propertyClass, Multiplicity multiplicity);
 
     /**
      * @param propertyKey

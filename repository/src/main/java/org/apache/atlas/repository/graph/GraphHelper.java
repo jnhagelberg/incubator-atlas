@@ -163,7 +163,7 @@ public final class GraphHelper {
         // returning one since entityType, qualifiedName should be unique
         AtlasVertex<V,E> vertex = results.hasNext() ? results.next() : null;
 
-        if (vertex == null) {
+        if (!GraphHelper.elementExists(vertex)) {
             LOG.debug("Could not find a vertex with {}", condition.toString());
             throw new EntityNotFoundException("Could not find an entity in the repository with " + conditionStr);
         } else {
@@ -174,7 +174,7 @@ public final class GraphHelper {
     }
 
     public static <V,E> Iterable<AtlasEdge<V,E>> getOutGoingEdgesByLabel(AtlasVertex<V,E> instanceVertex, String edgeLabel) {
-        if(instanceVertex != null && edgeLabel != null) {
+        if(GraphHelper.elementExists(instanceVertex ) && edgeLabel != null) {
             return instanceVertex.getEdges(AtlasEdgeDirection.OUT, edgeLabel);
         }
 
@@ -484,5 +484,9 @@ public final class GraphHelper {
             LOG.error("Unable to deserialize json={}", entityInstanceDefinition, e);
             throw new IllegalArgumentException("Unable to deserialize json", e);
         }
+    }
+    
+    public static boolean elementExists(AtlasElement v) {
+        return v != null && v.exists();
     }
 }

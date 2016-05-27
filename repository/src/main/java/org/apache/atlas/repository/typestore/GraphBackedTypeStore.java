@@ -110,6 +110,11 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
         vertex.setProperty(propertyName, value);
     }
     
+    private void addJsonProperty(AtlasVertex<V,E> vertex, String propertyName, String value) throws AtlasException {
+        LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, vertex);
+        vertex.setJsonProperty(propertyName, value);
+    }
+    
     private void addListProperty(AtlasVertex<V,E> vertex, String propertyName, List<String> value) throws AtlasException {
         LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, vertex);
         vertex.setListProperty(propertyName, value);
@@ -146,7 +151,7 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
             for (AttributeInfo attribute : attributes) {
                 String propertyKey = getPropertyKey(typeName, attribute.name);
                 try {
-                    addProperty(vertex, propertyKey, attribute.toJson());
+                    addJsonProperty(vertex, propertyKey, attribute.toJson());
                 } catch (JSONException e) {
                     throw new StorageException(typeName, e);
                 }
@@ -313,7 +318,7 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
             for (String attrName : attrNames) {
                 try {
                     String propertyKey = getPropertyKey(typeName, attrName);
-                    attributes.add(AttributeInfo.fromJson((String) vertex.getProperty(propertyKey)));
+                    attributes.add(AttributeInfo.fromJson((String) vertex.getJsonProperty(propertyKey)));
                 } catch (JSONException e) {
                     throw new AtlasException(e);
                 }
@@ -346,7 +351,7 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
 
     private AtlasVertex<V,E> createVertex(DataTypes.TypeCategory category, String typeName, String typeDescription) throws AtlasException {
         AtlasVertex<V,E> vertex = findVertex(category, typeName);
-        if (vertex == null) {
+        if (! GraphHelper.elementExists(vertex)) {
             LOG.debug("Adding vertex {}{}", PROPERTY_PREFIX, typeName);
             vertex = graph.addVertex();
             addProperty(vertex, Constants.VERTEX_TYPE_PROPERTY_KEY, VERTEX_TYPE); // Mark as type vertex

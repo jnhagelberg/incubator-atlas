@@ -15,21 +15,21 @@ import com.google.inject.Provides;
 public class AtlasGraphProvider implements GraphProvider<AtlasGraph> {
 
     private static final String IMPL_PROPERTY = "atlas.graphdb.backend";
-    private static volatile GraphDatabase<?,?> plugin_;
+    private static volatile GraphDatabase<?,?> graphDb_;
     private static volatile AtlasGraph<?,?> graph_;
         
     public static <V,E> AtlasGraph<V,E> getGraphInstance() {
         
         if(graph_ == null) {
             try {
-                if(plugin_ == null) {
+                if(graphDb_ == null) {
                     String implClassName = getPluginImplClass();
                     
                     Class implClass = Thread.currentThread().getContextClassLoader().loadClass(implClassName);
-                    plugin_ = (GraphDatabase<V, E>)implClass.newInstance();
+                    graphDb_ = (GraphDatabase<V, E>)implClass.newInstance();
                     
             }
-                graph_ = plugin_.getGraph();
+                graph_ = graphDb_.getGraph();
             }
             catch (ClassNotFoundException e) {
                 throw new RuntimeException("Error initializing graph database provider", e);
@@ -71,8 +71,8 @@ public class AtlasGraphProvider implements GraphProvider<AtlasGraph> {
     }
     
     public static void unloadGraph() {
-        if(plugin_ != null) {
-            plugin_.unloadGraph();
+        if(graphDb_ != null) {
+            graphDb_.unloadGraph();
         }
         graph_ = null;
     }
