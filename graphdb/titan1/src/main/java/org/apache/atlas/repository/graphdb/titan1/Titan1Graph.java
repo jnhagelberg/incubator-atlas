@@ -180,15 +180,9 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
     
     @Override
     public AtlasVertex<Titan1Vertex, Titan1Edge> getVertex(String vertexId) {
-        if(false) {
-            Iterator<Vertex> it = getGraph().vertices(vertexId);
-            Vertex v = getSingleElement(it, vertexId);
-            return TitanObjectFactory.createVertex(v);
-        }
-        else {
-            return new Titan1Vertex(getGraph(), vertexId);
-        }
-
+      
+        //use lazy vertex retrieval (mostly to test this feature)
+        return new Titan1Vertex(getGraph(), vertexId);
     }
 
     public static <T> T getSingleElement(Iterator<T> it, String id) {
