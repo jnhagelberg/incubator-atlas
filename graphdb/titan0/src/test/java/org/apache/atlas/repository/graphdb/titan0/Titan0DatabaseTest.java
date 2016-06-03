@@ -68,13 +68,7 @@ public class Titan0DatabaseTest {
                     mgmt.createCompositeIndex(propertyName, propertyKey, false);
                 }
             }
-            mgmt.commit();
-            try {
-                mgmt.waitForIndexAvailibility(AtlasGraphManagement.MULTIPLICITY_MANY_PROPERTY_KEYS);
-            }
-            catch(AtlasException e) {
-                e.printStackTrace();
-            }
+            mgmt.commit();           
         }
         return (AtlasGraph<V,E>)graph;
     }
@@ -169,21 +163,21 @@ public class Titan0DatabaseTest {
         assertTrue(vertexCopy.getPropertyKeys().contains("name"));
         assertTrue(vertexCopy.getPropertyKeys().contains("location"));
 
-        assertTrue(vertexCopy.getPropertyValues("name").contains("Jeff"));
-        assertTrue(vertexCopy.getPropertyValues("location").contains("Littleton"));
-        assertTrue(vertexCopy.getPropertyValues("test").isEmpty());
+        assertTrue(vertexCopy.getPropertyValues("name", String.class).contains("Jeff"));
+        assertTrue(vertexCopy.getPropertyValues("location", String.class).contains("Littleton"));
+        assertTrue(vertexCopy.getPropertyValues("test", String.class).isEmpty());
         assertNull(vertexCopy.getProperty("test"));
 
         vertex.removeProperty("name");
         assertFalse(vertex.getPropertyKeys().contains("name"));
         assertNull(vertex.getProperty("name"));
-        assertTrue(vertex.getPropertyValues("name").isEmpty());
+        assertTrue(vertex.getPropertyValues("name", String.class).isEmpty());
 
 
         vertexCopy = graph.getVertex(vertex.getId().toString());
         assertFalse(vertexCopy.getPropertyKeys().contains("name"));
         assertNull(vertexCopy.getProperty("name"));
-        assertTrue(vertexCopy.getPropertyValues("name").isEmpty());
+        assertTrue(vertexCopy.getPropertyValues("name", String.class).isEmpty());
 
     }
 
@@ -313,13 +307,13 @@ public class Titan0DatabaseTest {
             vertexId = vertex.getId().toString();
             vertex.setProperty(Constants.TRAIT_NAMES_PROPERTY_KEY, "trait1");
             vertex.setProperty(Constants.TRAIT_NAMES_PROPERTY_KEY, "trait2");
-            assertEquals(vertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY).size(), 2);
+            assertEquals(vertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY, String.class).size(), 2);
             vertex.addProperty(Constants.TRAIT_NAMES_PROPERTY_KEY, "trait3");
             vertex.addProperty(Constants.TRAIT_NAMES_PROPERTY_KEY, "trait4");
 
             assertTrue(vertex.getPropertyKeys().contains(Constants.TRAIT_NAMES_PROPERTY_KEY));
 
-            Collection<String> traitNames = vertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY);
+            Collection<String> traitNames = vertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY, String.class);
             assertTrue(traitNames.contains("trait1"));
             assertTrue(traitNames.contains("trait2"));
             assertTrue(traitNames.contains("trait3"));
@@ -337,7 +331,7 @@ public class Titan0DatabaseTest {
         {
             AtlasVertex<V,E> vertexCopy = graph.getVertex(vertexId);
             assertTrue(vertexCopy.getPropertyKeys().contains(Constants.TRAIT_NAMES_PROPERTY_KEY));
-            Collection<String> traitNames = vertexCopy.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY);
+            Collection<String> traitNames = vertexCopy.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY, String.class);
             assertTrue(traitNames.contains("trait1"));
             assertTrue(traitNames.contains("trait2"));
             assertTrue(traitNames.contains("trait3"));
@@ -483,9 +477,9 @@ public class Titan0DatabaseTest {
             vertex.setProperty(Constants.TRAIT_NAMES_PROPERTY_KEY, "trait1");
             vertex.addProperty(Constants.TRAIT_NAMES_PROPERTY_KEY, "trait2");
             vertex.addProperty(Constants.TRAIT_NAMES_PROPERTY_KEY, "trait2");
-            assertEquals(2, vertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY).size());
+            assertEquals(2, vertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY, String.class).size());
             assertTrue(vertex.getPropertyKeys().contains(Constants.TRAIT_NAMES_PROPERTY_KEY));
-            Collection<String> traitNames = vertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY);
+            Collection<String> traitNames = vertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY, String.class);
             assertTrue(traitNames.contains("trait1"));
             assertTrue(traitNames.contains("trait2"));
 
@@ -494,7 +488,7 @@ public class Titan0DatabaseTest {
         {
             AtlasVertex<V,E> vertexCopy = graph.getVertex(vertexId);
             assertTrue(vertexCopy.getPropertyKeys().contains(Constants.TRAIT_NAMES_PROPERTY_KEY));
-            Collection<String> traitNames = vertexCopy.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY);
+            Collection<String> traitNames = vertexCopy.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY, String.class);
             assertTrue(traitNames.contains("trait1"));
             assertTrue(traitNames.contains("trait2"));
         }

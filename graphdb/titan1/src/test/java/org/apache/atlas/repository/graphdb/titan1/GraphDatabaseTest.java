@@ -101,20 +101,20 @@ public class GraphDatabaseTest {
         assertTrue(vertexCopy.getPropertyKeys().contains("name"));
         assertTrue(vertexCopy.getPropertyKeys().contains("location"));
 
-        assertTrue(vertexCopy.getPropertyValues("name").contains("Jeff"));
-        assertTrue(vertexCopy.getPropertyValues("location").contains("Littleton"));
-        assertTrue(vertexCopy.getPropertyValues("test").isEmpty());
+        assertTrue(vertexCopy.getPropertyValues("name", String.class).contains("Jeff"));
+        assertTrue(vertexCopy.getPropertyValues("location", String.class).contains("Littleton"));
+        assertTrue(vertexCopy.getPropertyValues("test", String.class).isEmpty());
         assertNull(vertexCopy.getProperty("test"));
 
         vertex.removeProperty("name");
         assertFalse(vertex.getPropertyKeys().contains("name"));
         assertNull(vertex.getProperty("name"));
-        assertTrue(vertex.getPropertyValues("name").isEmpty());
+        assertTrue(vertex.getPropertyValues("name", String.class).isEmpty());
 
         vertexCopy = graph.getVertex(vertex.getId().toString());
         assertFalse(vertexCopy.getPropertyKeys().contains("name"));
         assertNull(vertexCopy.getProperty("name"));
-        assertTrue(vertexCopy.getPropertyValues("name").isEmpty());
+        assertTrue(vertexCopy.getPropertyValues("name", String.class).isEmpty());
 
     }
 
@@ -243,11 +243,11 @@ public class GraphDatabaseTest {
             vertexId = vertex.getId().toString();
             vertex.setProperty(TRAIT_NAMES, "trait1");
             vertex.setProperty(TRAIT_NAMES, "trait2");
-            assertEquals(2, vertex.getPropertyValues(TRAIT_NAMES).size());
+            assertEquals(2, vertex.getPropertyValues(TRAIT_NAMES, String.class).size());
             vertex.addProperty(TRAIT_NAMES, "trait3");
             vertex.addProperty(TRAIT_NAMES, "trait4");
             assertTrue(vertex.getPropertyKeys().contains(TRAIT_NAMES));
-            Collection<String> traitNames = vertex.getPropertyValues(TRAIT_NAMES);
+            Collection<String> traitNames = vertex.getPropertyValues(TRAIT_NAMES, String.class);
             assertTrue(traitNames.contains("trait1"));
             assertTrue(traitNames.contains("trait2"));
             assertTrue(traitNames.contains("trait3"));
@@ -263,7 +263,7 @@ public class GraphDatabaseTest {
         {
             AtlasVertex<V,E> vertexCopy = graph.getVertex(vertexId);
             assertTrue(vertexCopy.getPropertyKeys().contains(TRAIT_NAMES));
-            Collection<String> traitNames = vertexCopy.getPropertyValues(TRAIT_NAMES);
+            Collection<String> traitNames = vertexCopy.getPropertyValues(TRAIT_NAMES, String.class);
             assertTrue(traitNames.contains("trait1"));
             assertTrue(traitNames.contains("trait2"));
             assertTrue(traitNames.contains("trait3"));
@@ -289,9 +289,9 @@ public class GraphDatabaseTest {
             vertex.setProperty(TRAIT_NAMES, "trait1");
             vertex.addProperty(TRAIT_NAMES, "trait2");
             vertex.addProperty(TRAIT_NAMES, "trait2");
-            assertEquals(2, vertex.getPropertyValues(TRAIT_NAMES).size());
+            assertEquals(2, vertex.getPropertyValues(TRAIT_NAMES, String.class).size());
             assertTrue(vertex.getPropertyKeys().contains(TRAIT_NAMES));
-            Collection<String> traitNames = vertex.getPropertyValues(TRAIT_NAMES);
+            Collection<String> traitNames = vertex.getPropertyValues(TRAIT_NAMES, String.class);
             assertTrue(traitNames.contains("trait1"));
             assertTrue(traitNames.contains("trait2"));
 
@@ -300,7 +300,7 @@ public class GraphDatabaseTest {
         {
             AtlasVertex<V,E> vertexCopy = graph.getVertex(vertexId);
             assertTrue(vertexCopy.getPropertyKeys().contains(TRAIT_NAMES));
-            Collection<String> traitNames = vertexCopy.getPropertyValues(TRAIT_NAMES);
+            Collection<String> traitNames = vertexCopy.getPropertyValues(TRAIT_NAMES, String.class);
             assertTrue(traitNames.contains("trait1"));
             assertTrue(traitNames.contains("trait2"));
         }

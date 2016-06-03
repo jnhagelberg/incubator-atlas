@@ -96,7 +96,7 @@ public class Titan0Vertex extends Titan0Element<Vertex> implements AtlasVertex<T
             getAsTitanVertex().addProperty(propertyName, value);
         }
         catch(SchemaViolationException e) {
-            if(getPropertyValues(propertyName).contains(value)) {
+            if(getPropertyValues(propertyName, value.getClass()).contains(value)) {
                 //follow java set semantics, don't throw an exception if
                 //value is already there.
                 return;
@@ -106,7 +106,7 @@ public class Titan0Vertex extends Titan0Element<Vertex> implements AtlasVertex<T
     }
 
     @Override
-    public <T> Collection<T> getPropertyValues(String key) {
+    public <T> Collection<T> getPropertyValues(String key, Class<T> clazz) {
 
         TitanVertex tv = getAsTitanVertex();
         Collection<T> result = new ArrayList<T>();

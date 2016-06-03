@@ -104,39 +104,37 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
             createdIndexNames.add(Constants.EDGE_INDEX);
 
             // create a composite index for guid as its unique
-            createIndexes(management, createdIndexNames, Constants.GUID_PROPERTY_KEY, String.class, true,
+            createIndexes(management, Constants.GUID_PROPERTY_KEY, String.class, true,
                    Multiplicity.OPTIONAL, true);
 
             // create a composite index for entity creation timestamp
-            createIndexes(management, createdIndexNames, Constants.TIMESTAMP_PROPERTY_KEY, Long.class, false, Multiplicity.OPTIONAL, true);
+            createIndexes(management, Constants.TIMESTAMP_PROPERTY_KEY, Long.class, false, Multiplicity.OPTIONAL, true);
 
             // create a composite index for entity modification timestamp
-            createIndexes(management, createdIndexNames, Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY, Long.class, false,
+            createIndexes(management, Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY, Long.class, false,
                     Multiplicity.OPTIONAL, true);
 
 
             // create a composite and mixed index for type since it can be combined with other keys
-            createIndexes(management, createdIndexNames, Constants.ENTITY_TYPE_PROPERTY_KEY, String.class, false, Multiplicity.OPTIONAL,
+            createIndexes(management, Constants.ENTITY_TYPE_PROPERTY_KEY, String.class, false, Multiplicity.OPTIONAL,
                     true);
 
             // create a composite and mixed index for type since it can be combined with other keys
-            createIndexes(management, createdIndexNames, Constants.SUPER_TYPES_PROPERTY_KEY, String.class, false, Multiplicity.SET,
+            createIndexes(management, Constants.SUPER_TYPES_PROPERTY_KEY, String.class, false, Multiplicity.SET,
                     true);
 
             // create a composite and mixed index for traitNames since it can be combined with other
             // keys. Traits must be a set and not a list.
-            createIndexes(management, createdIndexNames, Constants.TRAIT_NAMES_PROPERTY_KEY, String.class, false, Multiplicity.SET,
+            createIndexes(management, Constants.TRAIT_NAMES_PROPERTY_KEY, String.class, false, Multiplicity.SET,
                     true);
 
             // Index for full text search
-            createFullTextIndex(management, createdIndexNames);
+            createFullTextIndex(management);
 
             //Indexes for graph backed type system store
-            createTypeStoreIndexes(management, createdIndexNames);
+            createTypeStoreIndexes(management);
 
             commit(management);
-
-            management.waitForIndexAvailibility(createdIndexNames);
             LOG.info("Index creation for global keys complete.");
 
         } catch (Throwable t) {
@@ -145,24 +143,23 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         }
     }
 
-    private void createFullTextIndex(AtlasGraphManagement management, Collection<String> createdIndexNames) {
+    private void createFullTextIndex(AtlasGraphManagement management) {
 
          AtlasPropertyKey fullText =
                 management.makePropertyKey(Constants.ENTITY_TEXT_PROPERTY_KEY, String.class, Multiplicity.OPTIONAL);
 
-        management.createFullTextIndex(Constants.FULLTEXT_INDEX, fullText, Constants.BACKING_INDEX);
-        createdIndexNames.add(Constants.FULLTEXT_INDEX);
+        management.createFullTextIndex(Constants.FULLTEXT_INDEX, fullText, Constants.BACKING_INDEX);        
 
         LOG.info("Created mixed index for {}", Constants.ENTITY_TEXT_PROPERTY_KEY);
     }
 
-    private void createTypeStoreIndexes(AtlasGraphManagement management, Collection<String> createdIndexNames) {
+    private void createTypeStoreIndexes(AtlasGraphManagement management) {
         //Create unique index on typeName
-        createIndexes(management, createdIndexNames, Constants.TYPENAME_PROPERTY_KEY, String.class, true, Multiplicity.OPTIONAL, true);
+        createIndexes(management, Constants.TYPENAME_PROPERTY_KEY, String.class, true, Multiplicity.OPTIONAL, true);
 
 
         //create index on vertex type
-        createIndexes(management, createdIndexNames, Constants.VERTEX_TYPE_PROPERTY_KEY, String.class, false, Multiplicity.OPTIONAL, true);
+        createIndexes(management, Constants.VERTEX_TYPE_PROPERTY_KEY, String.class, false, Multiplicity.OPTIONAL, true);
     }
 
     /**
@@ -178,7 +175,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         for (IDataType dataType : dataTypes) {
             LOG.info("Creating indexes for type name={}, definition={}", dataType.getName(), dataType.getClass());
             try {
-                addIndexForType(management, createdIndexNames, dataType);
+                addIndexForType(management, dataType);
                 LOG.info("Index creation for type {} complete", dataType.getName());
             } catch (Throwable throwable) {
                 LOG.error("Error creating index for type {}", dataType, throwable);
@@ -191,7 +188,6 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         //Commit indexes
         commit(management);
 
-        management.waitForIndexAvailibility(createdIndexNames);
     }
 
     @Override
@@ -199,7 +195,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         onAdd(dataTypes);
     }
 
-    private void addIndexForType(AtlasGraphManagement management, Collection<String> createdIndexNames, IDataType dataType) {
+    private void addIndexForType(AtlasGraphManagement management, IDataType dataType) {
         switch (dataType.getTypeCategory()) {
         case PRIMITIVE:
         case ENUM:
@@ -211,17 +207,17 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
 
         case STRUCT:
             StructType structType = (StructType) dataType;
-            createIndexForFields(management, createdIndexNames, structType, structType.fieldMapping().fields);
+            createIndexForFields(management, structType, structType.fieldMapping().fields);
             break;
 
         case TRAIT:
             TraitType traitType = (TraitType) dataType;
-            createIndexForFields(management, createdIndexNames, traitType, traitType.fieldMapping().fields);
+            createIndexForFields(management, traitType, traitType.fieldMapping().fields);
             break;
 
         case CLASS:
             ClassType classType = (ClassType) dataType;
-            createIndexForFields(management, createdIndexNames, classType, classType.fieldMapping().fields);
+            createIndexForFields(management, classType, classType.fieldMapping().fields);
             break;
 
         default:
@@ -229,24 +225,24 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
         }
     }
 
-    private void createIndexForFields(AtlasGraphManagement management, Collection<String> createdIndexNames, IDataType dataType, Map<String, AttributeInfo> fields) {
+    private void createIndexForFields(AtlasGraphManagement management, IDataType dataType, Map<String, AttributeInfo> fields) {
         for (AttributeInfo field : fields.values()) {
             if (field.isIndexable) {
-                createIndexForAttribute(management, createdIndexNames, dataType.getName(), field);
+                createIndexForAttribute(management, dataType.getName(), field);
             }
         }
     }
 
-    private void createIndexForAttribute(AtlasGraphManagement management, Collection<String> createdIndexNames, String typeName, AttributeInfo field) {
+    private void createIndexForAttribute(AtlasGraphManagement management, String typeName, AttributeInfo field) {
         final String propertyName = typeName + "." + field.name;
         switch (field.dataType().getTypeCategory()) {
         case PRIMITIVE:
-            createIndexes(management, createdIndexNames, propertyName, getPrimitiveClass(field.dataType()), field.isUnique,
+            createIndexes(management, propertyName, getPrimitiveClass(field.dataType()), field.isUnique,
                     field.multiplicity, false);
             break;
 
         case ENUM:
-            createIndexes(management, createdIndexNames, propertyName, String.class, field.isUnique, field.multiplicity, false);
+            createIndexes(management, propertyName, String.class, field.isUnique, field.multiplicity, false);
             break;
 
         case ARRAY:
@@ -257,7 +253,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
 
         case STRUCT:
             StructType structType = (StructType) field.dataType();
-            createIndexForFields(management, createdIndexNames, structType, structType.fieldMapping().fields);
+            createIndexForFields(management, structType, structType.fieldMapping().fields);
             break;
 
         case TRAIT:
@@ -306,7 +302,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
     }
 
 
-    private AtlasPropertyKey createIndexes(AtlasGraphManagement management, Collection<String> createdIndexNames, String propertyName, Class propertyClass,
+    private AtlasPropertyKey createIndexes(AtlasGraphManagement management, String propertyName, Class propertyClass,
             boolean isUnique, Multiplicity cardinality, boolean isSystemProperty) {
 
 	    AtlasPropertyKey propertyKey = management.getPropertyKey(propertyName);
@@ -319,7 +315,6 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
  	         	LOG.debug("Creating composite index for property {} of type {} ", propertyName,
                 	propertyClass.getName());
             	    management.createCompositeIndex(propertyName, propertyKey, isUnique);
-        	    	createdIndexNames.add(propertyName);
 
         	}
         	else if(isUnique) {
@@ -329,7 +324,6 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
                 	propertyClass.getName());
 
         	     management.createCompositeIndex(propertyName, propertyKey, false);
-        	     createdIndexNames.add(propertyName);
         	}
 
 	    }

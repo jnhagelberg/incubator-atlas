@@ -144,7 +144,7 @@ public abstract class DeleteHandler {
 
                 if (valueTypeCategory == DataTypes.TypeCategory.STRUCT ||
                         valueTypeCategory == DataTypes.TypeCategory.CLASS) {
-                    List<String> keys = instanceVertex.getProperty(propertyName);
+                    List<String> keys = instanceVertex.getListProperty(propertyName);
                     if (keys != null) {
                         for (String key : keys) {
                             String mapEdgeLabel = GraphHelper.getQualifiedNameForMapKey(edgeLabel, key);
@@ -216,7 +216,7 @@ public abstract class DeleteHandler {
         Iterable<AtlasEdge<V,E>> edges = instanceVertex.getEdges(AtlasEdgeDirection.IN);
 
         for(AtlasEdge<V,E> edge : edges) {
-            String edgeState = edge.getProperty(Constants.STATE_PROPERTY_KEY);
+            String edgeState = edge.getProperty(Constants.STATE_PROPERTY_KEY, String.class);
             if (Id.EntityState.ACTIVE.name().equals(edgeState)) {
                 //Delete only the active edge references
                 AttributeInfo attribute = getAttributeForEdge(edge.getLabel());
@@ -267,7 +267,7 @@ public abstract class DeleteHandler {
 
         case ARRAY:
             //If its array attribute, find the right edge between the two vertices and update array property
-            List<String> elements = outVertex.getProperty(propertyName);
+            List<String> elements = outVertex.getListProperty(propertyName);
             if (elements != null) {
                 elements = new ArrayList<>(elements);   //Make a copy, else list.remove reflects on titan.getProperty()
                 for (String elementEdgeId : elements) {
@@ -304,12 +304,12 @@ public abstract class DeleteHandler {
 
         case MAP:
             //If its map attribute, find the right edge between two vertices and update map property
-            List<String> keys = outVertex.getProperty(propertyName);
+            List<String> keys = outVertex.getListProperty(propertyName);
             if (keys != null) {
                 keys = new ArrayList<>(keys);   //Make a copy, else list.remove reflects on titan.getProperty()
                 for (String key : keys) {
                     String keyPropertyName = propertyName + "." + key;
-                    String mapEdgeId = outVertex.getProperty(keyPropertyName);
+                    String mapEdgeId = outVertex.getProperty(keyPropertyName, String.class);
                     AtlasEdge<?,?> mapEdge = graphHelper.getEdgeById(mapEdgeId);
                     AtlasVertex<?,?> mapVertex = mapEdge.getInVertex();
                     if (mapVertex.getId().toString().equals(inVertex.getId().toString())) {

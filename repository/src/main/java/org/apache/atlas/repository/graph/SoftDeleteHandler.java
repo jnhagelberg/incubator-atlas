@@ -38,7 +38,7 @@ public class SoftDeleteHandler extends DeleteHandler {
 
     @Override
     protected void _deleteVertex(AtlasVertex<?,?> instanceVertex) {
-        Id.EntityState state = Id.EntityState.valueOf((String) instanceVertex.getProperty(STATE_PROPERTY_KEY));
+        Id.EntityState state = Id.EntityState.valueOf(instanceVertex.getProperty(STATE_PROPERTY_KEY, String.class));
         if (state != Id.EntityState.DELETED) {
             GraphHelper.setProperty(instanceVertex, STATE_PROPERTY_KEY, Id.EntityState.DELETED.name());
             GraphHelper.setProperty(instanceVertex, MODIFICATION_TIMESTAMP_PROPERTY_KEY, RequestContext.get().getRequestTime());
@@ -47,7 +47,7 @@ public class SoftDeleteHandler extends DeleteHandler {
 
     @Override
     protected void deleteEdge(AtlasEdge<?,?> edge) throws AtlasException {
-        Id.EntityState state = Id.EntityState.valueOf((String) edge.getProperty(STATE_PROPERTY_KEY));
+        Id.EntityState state = Id.EntityState.valueOf(edge.getProperty(STATE_PROPERTY_KEY, String.class));
         if (state != Id.EntityState.DELETED) {
             GraphHelper.setProperty(edge, STATE_PROPERTY_KEY, Id.EntityState.DELETED.name());
             GraphHelper.setProperty(edge, MODIFICATION_TIMESTAMP_PROPERTY_KEY, RequestContext.get().getRequestTime());

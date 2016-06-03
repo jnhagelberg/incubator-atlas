@@ -53,7 +53,19 @@ public interface AtlasElement {
      */
     <T> T getProperty(String propertyName);
 
-
+    /**
+     * Gets the value of the element property with the given name.  The value
+     * returned is guaranteed to be an instance of the specified class (or
+     * an exception will be thrown).
+     *
+     * @param propertyName
+     * @return
+     * @throws IllegalStateException if the property is multi-valued in the graph schema.
+     */
+    <T> T getProperty(String propertyName, Class<T> clazz);
+    
+    
+    
     /**
      * Gets the value of a multiplicity one property whose value is a String list.
      * The lists of super types and traits are stored this way.  A separate method

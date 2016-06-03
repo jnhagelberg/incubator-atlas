@@ -87,20 +87,6 @@ public interface AtlasGraphManagement {
     void commit();
 
     /**
-     * Blocks until the indices with the given names are fully enabled.  This always
-     * looks at the latest committed changes to the graph.  It is independent of
-     * the state of the graph management transaction and can be called
-     * at any time.
-     *
-     *
-     * @param indexNames the names of the indices to wait for.
-     *
-     * @throws AtlasException if the timeout is exceeded while waiting for the indices to
-     *  be enabled.  The timeout is currently hard-coded to 10 minutes.
-     */
-    void waitForIndexAvailibility(Collection<String> indexNames) throws AtlasException;
-
-    /**
      * @param propertyName
      * @param propertyClass
      * @param cardinality

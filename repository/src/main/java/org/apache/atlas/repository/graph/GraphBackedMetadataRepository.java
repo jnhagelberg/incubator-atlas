@@ -162,7 +162,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         String propertyKey = getFieldNameInVertex(type, attribute);
         AtlasVertex<?,?> instanceVertex = graphHelper.getVertexForProperty(propertyKey, value);
 
-        String guid = instanceVertex.getProperty(Constants.GUID_PROPERTY_KEY);
+        String guid = instanceVertex.getProperty(Constants.GUID_PROPERTY_KEY, String.class);
         return graphToInstanceMapper.mapGraphToTypedInstance(guid, instanceVertex);
     }
 
@@ -180,7 +180,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         ArrayList<String> entityList = new ArrayList<>();
         while (results.hasNext()) {
             AtlasVertex<V,E> vertex = results.next();
-            entityList.add(vertex.<String>getProperty(Constants.GUID_PROPERTY_KEY));
+            entityList.add(vertex.getProperty(Constants.GUID_PROPERTY_KEY, String.class));
         }
 
         return entityList;

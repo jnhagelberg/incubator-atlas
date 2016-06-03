@@ -64,7 +64,13 @@ public interface AtlasGraph<V,E> {
     void removeVertex(AtlasVertex<V,E> vertex);
 
     /**
-     * Retrieves the edge with the specified id
+     * Retrieves the edge with the specified id.    As an optimization, a non-null Edge may be
+     * returned by some implementations if the Edge does not exist.  In that case,
+     * you can call {@link AtlasElement#exists()} to determine whether the vertex
+     * exists.  This allows the retrieval of the Edge information to be deferred
+     * or in come cases avoided altogether in implementations where that might
+     * be an expensive operation.
+     * 
      * @param edgeId
      * @return
      */
@@ -83,7 +89,12 @@ public interface AtlasGraph<V,E> {
     Iterable<AtlasVertex<V,E>> getVertices();
 
     /**
-     * Gets the vertex with the specified id
+     * Gets the vertex with the specified id.  As an optimization, a non-null vertex may be
+     * returned by some implementations if the Vertex does not exist.  In that case,
+     * you can call {@link AtlasElement#exists()} to determine whether the vertex
+     * exists.  This allows the retrieval of the Vertex information to be deferred
+     * or in come cases avoided altogether in implementations where that might
+     * be an expensive operation.
      *
      * @param vertexId
      * @return

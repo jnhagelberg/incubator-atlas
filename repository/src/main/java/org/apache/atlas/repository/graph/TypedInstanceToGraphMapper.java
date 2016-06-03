@@ -324,7 +324,7 @@ public final class TypedInstanceToGraphMapper {
         }
 
         String propertyName = GraphHelper.getQualifiedFieldName(typedInstance, attributeInfo);
-        List<String> currentElements = instanceVertex.getProperty(propertyName);
+        List<String> currentElements = instanceVertex.getListProperty(propertyName);
         IDataType elementType = ((DataTypes.ArrayType) attributeInfo.dataType()).getElemType();
         List<String> newElementsCreated = new ArrayList<>();
 
@@ -437,7 +437,7 @@ public final class TypedInstanceToGraphMapper {
                 String propertyNameForKey = GraphHelper.getQualifiedNameForMapKey(propertyName, entry.getKey().toString());
                 newKeysCreated.add(entry.getKey().toString());
 
-                String currentEntry = instanceVertex.getProperty(propertyNameForKey);
+                String currentEntry = instanceVertex.getProperty(propertyNameForKey, String.class);
                 if (currentEntry != null) {
                     currentElements.add(currentEntry);
                 }
@@ -548,7 +548,7 @@ public final class TypedInstanceToGraphMapper {
         // Update attributes
         final MessageDigest digester = MD5Utils.getDigester();
         String newSignature = newAttributeValue.getSignatureHash(digester);
-        String curSignature = structInstanceVertex.getProperty(SIGNATURE_HASH_PROPERTY_KEY);
+        String curSignature = structInstanceVertex.getProperty(SIGNATURE_HASH_PROPERTY_KEY, String.class);
 
         if (!newSignature.equals(curSignature)) {
             //Update struct vertex instance only if there is a change
@@ -609,7 +609,7 @@ public final class TypedInstanceToGraphMapper {
 
         if (id.isUnassigned()) {
             AtlasVertex<?,?> classVertex = idToVertexMap.get(id);
-            String guid = classVertex.getProperty(Constants.GUID_PROPERTY_KEY);
+            String guid = classVertex.getProperty(Constants.GUID_PROPERTY_KEY, String.class);
             id = new Id(guid, 0, typedReference.getTypeName());
         }
         return id;

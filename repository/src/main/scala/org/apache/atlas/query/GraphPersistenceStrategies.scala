@@ -269,7 +269,7 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
         new Id(v.getId.toString, 0, dataTypeNm)
 
     def traitNames[V,E](v: AtlasVertex[V,E]): java.util.List[String] = {
-        val s = v.getProperty[String]("traitNames")
+        val s = v.getProperty("traitNames", classOf[String])
         if (s != null) {
             Seq[String](s.split(","): _*)
         } else {
@@ -288,9 +288,9 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
               val sInstance = sType.createInstance()
               val tV = v.asInstanceOf[AtlasVertex[V,E]]
               sInstance.set(TypeSystem.getInstance().getIdType.typeNameAttrName,
-                tV.getProperty[java.lang.String](typeAttributeName))
+                tV.getProperty(typeAttributeName, classOf[java.lang.String]))
               sInstance.set(TypeSystem.getInstance().getIdType.idAttrName,
-                tV.getProperty[java.lang.String](idAttributeName))
+                tV.getProperty(idAttributeName, classOf[java.lang.String]))
               dataType.convert(sInstance, Multiplicity.OPTIONAL)
             }
             case DataTypes.TypeCategory.STRUCT => {
@@ -364,23 +364,23 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
     private def loadEnumAttribute[V,E](dataType: IDataType[_], aInfo: AttributeInfo, i: ITypedInstance, v: AtlasVertex[V,E])
     : Unit = {
         val fName = fieldNameInVertex(dataType, aInfo)
-        i.setInt(aInfo.name, v.getProperty[java.lang.Integer](fName))
+        i.setInt(aInfo.name, v.getProperty(fName, classOf[java.lang.Integer]))
     }
 
     private def loadPrimitiveAttribute[V,E](dataType: IDataType[_], aInfo: AttributeInfo,
                                        i: ITypedInstance, v: AtlasVertex[V,E]): Unit = {
         val fName = fieldNameInVertex(dataType, aInfo)
         aInfo.dataType() match {
-            case x: BooleanType => i.setBoolean(aInfo.name, v.getProperty[java.lang.Boolean](fName))
-            case x: ByteType => i.setByte(aInfo.name, v.getProperty[java.lang.Byte](fName))
-            case x: ShortType => i.setShort(aInfo.name, v.getProperty[java.lang.Short](fName))
-            case x: IntType => i.setInt(aInfo.name, v.getProperty[java.lang.Integer](fName))
-            case x: LongType => i.setLong(aInfo.name, v.getProperty[java.lang.Long](fName))
-            case x: FloatType => i.setFloat(aInfo.name, v.getProperty[java.lang.Float](fName))
-            case x: DoubleType => i.setDouble(aInfo.name, v.getProperty[java.lang.Double](fName))
-            case x: StringType => i.setString(aInfo.name, v.getProperty[java.lang.String](fName))
+            case x: BooleanType => i.setBoolean(aInfo.name, v.getProperty(fName, classOf[java.lang.Boolean]))
+            case x: ByteType => i.setByte(aInfo.name, v.getProperty(fName, classOf[java.lang.Byte]))
+            case x: ShortType => i.setShort(aInfo.name, v.getProperty(fName, classOf[java.lang.Short]))
+            case x: IntType => i.setInt(aInfo.name, v.getProperty(fName, classOf[java.lang.Integer]))
+            case x: LongType => i.setLong(aInfo.name, v.getProperty(fName, classOf[java.lang.Long]))
+            case x: FloatType => i.setFloat(aInfo.name, v.getProperty(fName, classOf[java.lang.Float]))
+            case x: DoubleType => i.setDouble(aInfo.name, v.getProperty(fName, classOf[java.lang.Double]))
+            case x: StringType => i.setString(aInfo.name, v.getProperty(fName, classOf[java.lang.String]))
             case x: DateType => {
-                                  val dateVal = v.getProperty[java.lang.Long](fName)
+                                  val dateVal = v.getProperty(fName, classOf[java.lang.Long])
                                   i.setDate(aInfo.name, new Date(dateVal))
                                 }
             case _ => throw new UnsupportedOperationException(s"load for ${aInfo.dataType()} not supported")
@@ -391,7 +391,7 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
     private def loadArrayAttribute[T,V,E](dataType: IDataType[_], aInfo: AttributeInfo,
                                     i: ITypedInstance, v: AtlasVertex[V,E]): Unit = {
         import scala.collection.JavaConversions._
-        val list: java.util.List[_] = v.getProperty(aInfo.name)
+        val list: java.util.List[_] = v.getListProperty(aInfo.name)
         val arrayType: DataTypes.ArrayType = aInfo.dataType.asInstanceOf[ArrayType]
 
         var values = new util.ArrayList[Any]

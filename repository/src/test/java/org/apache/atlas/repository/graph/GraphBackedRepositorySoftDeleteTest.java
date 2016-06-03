@@ -72,7 +72,7 @@ public class GraphBackedRepositorySoftDeleteTest extends GraphBackedMetadataRepo
     @Override
     protected void assertVerticesDeleted(List<AtlasVertex> vertices) {
         for (AtlasVertex vertex : vertices) {
-            assertEquals(vertex.getProperty(Constants.STATE_PROPERTY_KEY), Id.EntityState.DELETED.name());
+            assertEquals(vertex.getProperty(Constants.STATE_PROPERTY_KEY, String.class), Id.EntityState.DELETED.name());
         }
     }
 

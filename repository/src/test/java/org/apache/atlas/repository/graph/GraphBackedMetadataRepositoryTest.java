@@ -206,7 +206,7 @@ public class GraphBackedMetadataRepositoryTest {
     String getGUID() {
         AtlasVertex tableVertex = getTableEntityVertex();
 
-        String guid = tableVertex.getProperty(Constants.GUID_PROPERTY_KEY);
+        String guid = tableVertex.getProperty(Constants.GUID_PROPERTY_KEY, String.class);
         if (guid == null) {
             Assert.fail();
         }
@@ -250,7 +250,7 @@ public class GraphBackedMetadataRepositoryTest {
     public void testAddTrait() throws Exception {
         final String aGUID = getGUID();
         AtlasVertex vertex = GraphHelper.getInstance().getVertexForGUID(aGUID);
-        Long modificationTimestampPreUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY);
+        Long modificationTimestampPreUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY, Long.class);
         Assert.assertNotNull(modificationTimestampPreUpdate);
 
         List<String> traitNames = repositoryService.getTraitNames(aGUID);
@@ -272,7 +272,7 @@ public class GraphBackedMetadataRepositoryTest {
 
         // Verify modification timestamp was updated.
         GraphHelper.getInstance().getVertexForGUID(aGUID);
-        Long modificationTimestampPostUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY);
+        Long modificationTimestampPostUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY, Long.class);
         Assert.assertNotNull(modificationTimestampPostUpdate);
     }
 
@@ -322,7 +322,7 @@ public class GraphBackedMetadataRepositoryTest {
     public void testDeleteTrait() throws Exception {
         final String aGUID = getGUID();
         AtlasVertex<?,?> vertex = GraphHelper.getInstance().getVertexForGUID(aGUID);
-        Long modificationTimestampPreUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY);
+        Long modificationTimestampPreUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY, Long.class);
         Assert.assertNotNull(modificationTimestampPreUpdate);
 
         List<String> traitNames = repositoryService.getTraitNames(aGUID);
@@ -341,7 +341,7 @@ public class GraphBackedMetadataRepositoryTest {
 
         // Verify modification timestamp was updated.
         GraphHelper.getInstance().getVertexForGUID(aGUID);
-        Long modificationTimestampPostUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY);
+        Long modificationTimestampPostUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY, Long.class);
         Assert.assertNotNull(modificationTimestampPostUpdate);
         Assert.assertTrue(modificationTimestampPostUpdate > modificationTimestampPreUpdate);
     }
@@ -363,12 +363,12 @@ public class GraphBackedMetadataRepositoryTest {
     public void testGetIdFromVertex() throws Exception {
         AtlasVertex<?,?> tableVertex = getTableEntityVertex();
 
-        String guid = tableVertex.getProperty(Constants.GUID_PROPERTY_KEY);
+        String guid = tableVertex.getProperty(Constants.GUID_PROPERTY_KEY, String.class);
         if (guid == null) {
             Assert.fail();
         }
 
-        Id expected = new Id(guid, tableVertex.<Integer>getProperty(Constants.VERSION_PROPERTY_KEY), TestUtils.TABLE_TYPE);
+        Id expected = new Id(guid, tableVertex.getProperty(Constants.VERSION_PROPERTY_KEY, Integer.class), TestUtils.TABLE_TYPE);
         Assert.assertEquals(GraphHelper.getIdFromVertex(TestUtils.TABLE_TYPE, tableVertex), expected);
     }
 

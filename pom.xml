@@ -457,9 +457,11 @@
 	<profile>
 	  <id>titan0</id>
 	  <activation>
+	    <!--
 	    <property>
 	          <name>!titan1</name>
             </property>
+	    -->
 	  </activation>
 	  <modules>
 	     <module>catalog</module>

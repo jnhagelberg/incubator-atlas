@@ -65,6 +65,11 @@ public class Titan0Element<T extends Element> implements AtlasElement {
     public <T> T getProperty(String propertyName) {
         return element_.getProperty(propertyName);
     }
+    
+    @Override
+    public <T> T getProperty(String propertyName, Class<T> clazz) {
+        return element_.getProperty(propertyName);
+    }
 
     @Override
     public void removeProperty(String propertyName) {

@@ -92,11 +92,11 @@ public class GraphBackedDiscoveryService implements DiscoveryService {
             AtlasVertex<?,?> vertex = result.getVertex();
 
             JSONObject row = new JSONObject();
-            String guid = vertex.getProperty(Constants.GUID_PROPERTY_KEY);
+            String guid = vertex.getProperty(Constants.GUID_PROPERTY_KEY, String.class);
             if (guid != null) { //Filter non-class entities
                 try {
                     row.put("guid", guid);
-                    row.put(AtlasClient.TYPENAME, vertex.<String>getProperty(Constants.ENTITY_TYPE_PROPERTY_KEY));
+                    row.put(AtlasClient.TYPENAME, vertex.getProperty(Constants.ENTITY_TYPE_PROPERTY_KEY, String.class));
                     row.put(SCORE, result.getScore());
                 } catch (JSONException e) {
                     LOG.error("Unable to create response", e);

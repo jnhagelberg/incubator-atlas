@@ -175,21 +175,23 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
 
     @InterfaceAudience.Private
     private void createSuperTypes() throws AtlasException {
+    	
+    	//create all the indices up front so that the graph database can group the
+    	//index initializations together for efficiency
         HierarchicalTypeDefinition<ClassType> infraType = TypesUtil
                 .createClassTypeDef(AtlasClient.INFRASTRUCTURE_SUPER_TYPE, ImmutableSet.<String>of(), NAME_ATTRIBUTE,
                         DESCRIPTION_ATTRIBUTE);
-        createType(infraType);
 
         HierarchicalTypeDefinition<ClassType> datasetType = TypesUtil
                 .createClassTypeDef(AtlasClient.DATA_SET_SUPER_TYPE, ImmutableSet.<String>of(), NAME_ATTRIBUTE,
                         DESCRIPTION_ATTRIBUTE);
-        createType(datasetType);
+        
 
         HierarchicalTypeDefinition<ClassType> referenceableType = TypesUtil
                 .createClassTypeDef(AtlasClient.REFERENCEABLE_SUPER_TYPE, ImmutableSet.<String>of(),
                         TypesUtil.createUniqueRequiredAttrDef(AtlasClient.REFERENCEABLE_ATTRIBUTE_NAME,
                                 DataTypes.STRING_TYPE));
-        createType(referenceableType);
+        
 
         HierarchicalTypeDefinition<ClassType> processType = TypesUtil
             .createClassTypeDef(AtlasClient.PROCESS_SUPER_TYPE, ImmutableSet.<String>of(AtlasClient.REFERENCEABLE_SUPER_TYPE),
@@ -199,6 +201,10 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
                     Multiplicity.OPTIONAL, false, null),
                 new AttributeDefinition("outputs", DataTypes.arrayTypeName(AtlasClient.DATA_SET_SUPER_TYPE),
                     Multiplicity.OPTIONAL, false, null));
+        
+        createType(infraType);
+        createType(datasetType);
+        createType(referenceableType);
         createType(processType);
     }
 

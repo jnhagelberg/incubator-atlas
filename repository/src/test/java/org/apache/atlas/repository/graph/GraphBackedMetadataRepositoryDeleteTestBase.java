@@ -338,7 +338,7 @@ public abstract class GraphBackedMetadataRepositoryDeleteTestBase {
         String mapEntryLabel = edgeLabel + "." + "value1";
         AtlasEdgeLabel atlasEdgeLabel = new AtlasEdgeLabel(mapEntryLabel);
         AtlasVertex<?,?> mapOwnerVertex = GraphHelper.getInstance().getVertexForGUID(mapOwnerGuid);
-        object = mapOwnerVertex.getProperty(atlasEdgeLabel.getQualifiedMapKey());
+        object = mapOwnerVertex.getProperty(atlasEdgeLabel.getQualifiedMapKey(), Object.class);
         Assert.assertNotNull(object);
 
         List<String> deletedEntities = deleteEntities(mapOwnerGuid);
@@ -366,10 +366,10 @@ public abstract class GraphBackedMetadataRepositoryDeleteTestBase {
         ITypedReferenceableInstance max = repositoryService.getEntityDefinition(nameGuidMap.get("Max"));
         String maxGuid = max.getId()._getId();
         AtlasVertex<?,?> vertex = GraphHelper.getInstance().getVertexForGUID(maxGuid);
-        Long creationTimestamp = vertex.getProperty(Constants.TIMESTAMP_PROPERTY_KEY);
+        Long creationTimestamp = vertex.getProperty(Constants.TIMESTAMP_PROPERTY_KEY, Long.class);
         Assert.assertNotNull(creationTimestamp);
 
-        Long modificationTimestampPreUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY);
+        Long modificationTimestampPreUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY, Long.class);
         Assert.assertNotNull(modificationTimestampPreUpdate);
 
         ITypedReferenceableInstance jane = repositoryService.getEntityDefinition(nameGuidMap.get("Jane"));
@@ -388,7 +388,7 @@ public abstract class GraphBackedMetadataRepositoryDeleteTestBase {
 
         // Verify modification timestamp was updated.
         vertex = GraphHelper.getInstance().getVertexForGUID(maxGuid);
-        Long modificationTimestampPostUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY);
+        Long modificationTimestampPostUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY, Long.class);
         Assert.assertNotNull(modificationTimestampPostUpdate);
         Assert.assertTrue(creationTimestamp < modificationTimestampPostUpdate);
 
@@ -403,7 +403,7 @@ public abstract class GraphBackedMetadataRepositoryDeleteTestBase {
 
         // Verify modification timestamp was updated.
         vertex = GraphHelper.getInstance().getVertexForGUID(maxGuid);
-        Long modificationTimestampPost2ndUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY);
+        Long modificationTimestampPost2ndUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY, Long.class);
         Assert.assertNotNull(modificationTimestampPost2ndUpdate);
         Assert.assertTrue(modificationTimestampPostUpdate < modificationTimestampPost2ndUpdate);
 
@@ -707,7 +707,7 @@ public abstract class GraphBackedMetadataRepositoryDeleteTestBase {
             Assert.assertNotNull(mapValueInstance);
             mapValueGuid = mapValueInstance.getId()._getId();
             mapOwnerVertex = GraphHelper.getInstance().getVertexForGUID(mapOwnerGuid);
-            object = mapOwnerVertex.getProperty(atlasEdgeLabel.getQualifiedMapKey());
+            object = mapOwnerVertex.getProperty(atlasEdgeLabel.getQualifiedMapKey(), Object.class);
             Assert.assertNotNull(object);
         }
 
@@ -816,7 +816,7 @@ public abstract class GraphBackedMetadataRepositoryDeleteTestBase {
         String mapEntryLabel = edgeLabel + "." + "value1";
         AtlasEdgeLabel atlasEdgeLabel = new AtlasEdgeLabel(mapEntryLabel);
         AtlasVertex<?,?> mapOwnerVertex = GraphHelper.getInstance().getVertexForGUID(mapOwnerGuid);
-        object = mapOwnerVertex.getProperty(atlasEdgeLabel.getQualifiedMapKey());
+        object = mapOwnerVertex.getProperty(atlasEdgeLabel.getQualifiedMapKey(), Object.class);
         Assert.assertNotNull(object);
 
         // Verify deleting the target of required map attribute throws a NullRequiredAttributeException.

@@ -115,9 +115,9 @@ public class GraphBackedRepositoryHardDeleteTest extends GraphBackedMetadataRepo
         assertNull(mapOwnerInstance.get("biMap"));
 
         AtlasVertex mapOwnerVertex = GraphHelper.getInstance().getVertexForGUID(mapOwnerGuid);
-        Object object = mapOwnerVertex.getProperty("MapOwner.map.value1");
+        Object object = mapOwnerVertex.getProperty("MapOwner.map.value1", String.class);
         assertNull(object);
-        object = mapOwnerVertex.getProperty("MapOwner.biMap.value1");
+        object = mapOwnerVertex.getProperty("MapOwner.biMap.value1", String.class);
         assertNull(object);
     }
 

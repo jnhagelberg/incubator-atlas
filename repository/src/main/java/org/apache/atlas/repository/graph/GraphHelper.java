@@ -189,7 +189,7 @@ public final class GraphHelper {
      * @return
      */
     public static <V,E> AtlasEdge<V,E> getEdgeForLabel(AtlasVertex<V,E> vertex, String edgeLabel) {
-        String vertexState = vertex.getProperty(Constants.STATE_PROPERTY_KEY);
+        String vertexState = vertex.getProperty(Constants.STATE_PROPERTY_KEY, String.class);
 
         Iterable<AtlasEdge<V,E>> edges = GraphHelper.getOutGoingEdgesByLabel(vertex, edgeLabel);
         AtlasEdge<V,E> latestDeletedEdge = null;
@@ -197,12 +197,12 @@ public final class GraphHelper {
 
             long latestDeletedEdgeTime = Long.MIN_VALUE;
             for(AtlasEdge<V,E> edge : edges) {
-                String edgeState = edge.getProperty(Constants.STATE_PROPERTY_KEY);
+                String edgeState = edge.getProperty(Constants.STATE_PROPERTY_KEY, String.class);
                 if (edgeState == null || Id.EntityState.ACTIVE.name().equals(edgeState)) {
                     LOG.debug("Found {}", string(edge));
                     return edge;
                 } else {
-                    Long modificationTime = edge.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY);
+                    Long modificationTime = edge.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY, Long.class);
                     if (modificationTime != null && modificationTime >= latestDeletedEdgeTime) {
                         latestDeletedEdgeTime = modificationTime;
                         latestDeletedEdge = edge;
@@ -231,7 +231,7 @@ public final class GraphHelper {
     public static String vertexString(final AtlasVertex<?,?> vertex) {
         StringBuilder properties = new StringBuilder();
         for (String propertyKey : vertex.getPropertyKeys()) {
-            Collection<?> propertyValues = vertex.getPropertyValues(propertyKey);
+            Collection<?> propertyValues = vertex.getPropertyValues(propertyKey, Object.class);
             properties.append(propertyKey).append("=").append(propertyValues.toString()).append(", ");
         }
 
@@ -246,7 +246,7 @@ public final class GraphHelper {
     public static <T extends AtlasElement> void setProperty(T element, String propertyName, Object value) {
         String elementStr = string(element);
         LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, elementStr);
-        Object existValue = element.getProperty(propertyName);
+        Object existValue = element.getProperty(propertyName, Object.class);
         if(value == null || (value instanceof Collection && ((Collection) value).isEmpty())) {
             if(existValue != null) {
                 LOG.info("Removing property - {} value from {}", propertyName, elementStr);
@@ -335,16 +335,16 @@ public final class GraphHelper {
         //generalize this.
         if(propertyName.equals(Constants.TRAIT_NAMES_PROPERTY_KEY) ||
            propertyName.equals(Constants.SUPER_TYPES_PROPERTY_KEY)) {
-            return entityVertex.getPropertyValues(propertyName);
+            return entityVertex.getPropertyValues(propertyName, String.class);
         }
         else {
-            return entityVertex.getProperty(propertyName);
+            return entityVertex.getProperty(propertyName, Object.class);
         }
     }
 
     public static List<String> getTraitNames(AtlasVertex<?,?> entityVertex) {
         ArrayList<String> traits = new ArrayList<>();
-        Collection<String> propertyValues = entityVertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY);
+        Collection<String> propertyValues = entityVertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY, String.class);
         for(String value : propertyValues) {
             traits.add(value);
         }
@@ -361,16 +361,16 @@ public final class GraphHelper {
     }
 
     public static Id getIdFromVertex(String dataTypeName, AtlasVertex<?,?> vertex) {
-        return new Id(vertex.<String>getProperty(Constants.GUID_PROPERTY_KEY),
-            vertex.<Integer>getProperty(Constants.VERSION_PROPERTY_KEY), dataTypeName);
+        return new Id(vertex.getProperty(Constants.GUID_PROPERTY_KEY, String.class),
+            vertex.getProperty(Constants.VERSION_PROPERTY_KEY, Integer.class), dataTypeName);
     }
 
     public static String getIdFromVertex(AtlasVertex<?,?> vertex) {
-        return vertex.<String>getProperty(Constants.GUID_PROPERTY_KEY);
+        return vertex.getProperty(Constants.GUID_PROPERTY_KEY, String.class);
     }
 
     public static String getTypeName(AtlasVertex<?,?> instanceVertex) {
-        return instanceVertex.getProperty(Constants.ENTITY_TYPE_PROPERTY_KEY);
+        return instanceVertex.getProperty(Constants.ENTITY_TYPE_PROPERTY_KEY, String.class);
     }
 
     /**

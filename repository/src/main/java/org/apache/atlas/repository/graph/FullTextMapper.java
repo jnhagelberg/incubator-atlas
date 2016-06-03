@@ -51,7 +51,7 @@ public class FullTextMapper {
     }
 
     public <V,E> String mapRecursive(AtlasVertex<V,E> instanceVertex, boolean followReferences) throws AtlasException {
-        String guid = instanceVertex.getProperty(Constants.GUID_PROPERTY_KEY);
+        String guid = instanceVertex.getProperty(Constants.GUID_PROPERTY_KEY, String.class);
         ITypedReferenceableInstance typedReference;
         if (instanceCache.containsKey(guid)) {
             typedReference = instanceCache.get(guid);

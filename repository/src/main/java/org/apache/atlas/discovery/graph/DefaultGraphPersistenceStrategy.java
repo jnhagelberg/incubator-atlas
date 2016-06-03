@@ -147,8 +147,8 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
                 TypeSystem.IdType idType = TypeSystem.getInstance().getIdType();
 
                 if (dataType.getName().equals(idType.getName())) {
-                    structInstance.set(idType.typeNameAttrName(), structVertex.getProperty(typeAttributeName()));
-                    structInstance.set(idType.idAttrName(), structVertex.getProperty(idAttributeName()));
+                    structInstance.set(idType.typeNameAttrName(), structVertex.getProperty(typeAttributeName(), String.class));
+                    structInstance.set(idType.idAttrName(), structVertex.getProperty(idAttributeName(), String.class));
 
                 } else {
                     metadataRepository.getGraphToInstanceMapper()
@@ -171,7 +171,7 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
             case CLASS:
                 AtlasVertex<V,E> classVertex = (AtlasVertex<V,E>) value;
                 ITypedReferenceableInstance classInstance = metadataRepository.getGraphToInstanceMapper()
-                    .mapGraphToTypedInstance(classVertex.<String>getProperty(Constants.GUID_PROPERTY_KEY),
+                    .mapGraphToTypedInstance(classVertex.getProperty(Constants.GUID_PROPERTY_KEY, String.class),
                         classVertex);
                 return dataType.convert(classInstance, Multiplicity.OPTIONAL);
 
