@@ -180,21 +180,21 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
     @Test
     public void testRawSearch1() throws Exception {
         // Query for all Vertices in Graph
-        Object r = discoveryService.searchByGremlin("g.V.toList()");
+        Object r = discoveryService.searchByGremlin("g.V().toList()");
         Assert.assertTrue(r instanceof List);
         List<Map<String, Object>> resultList = (List<Map<String, Object>>) r;
         Assert.assertTrue(resultList.size() > 0);
         System.out.println("search result = " + r);
 
         // Query for all Vertices of a Type
-        r = discoveryService.searchByGremlin("g.V.filter{" + getPropertySyntax("it", Constants.ENTITY_TYPE_PROPERTY_KEY) + " == 'Department'}.toList()");
+        r = discoveryService.searchByGremlin("g.V().filter{" + getPropertySyntax("it", Constants.ENTITY_TYPE_PROPERTY_KEY) + " == 'Department'}.toList()");
         Assert.assertTrue(r instanceof List);
         resultList = (List<Map<String, Object>>) r;
         Assert.assertTrue(resultList.size() > 0);
         System.out.println("search result = " + r);
 
         // Property Query: list all Person names
-        r = discoveryService.searchByGremlin("g.V.filter{" + getPropertySyntax("it", Constants.ENTITY_TYPE_PROPERTY_KEY) + " == 'Person'}.'Person.name'.toList()");
+        r = discoveryService.searchByGremlin("g.V().filter{" + getPropertySyntax("it", Constants.ENTITY_TYPE_PROPERTY_KEY) + " == 'Person'}.'Person.name'.toList()");
         Assert.assertTrue(r instanceof List);
         resultList = (List<Map<String, Object>>) r;
         Assert.assertTrue(resultList.size() > 0);
@@ -208,7 +208,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
         }
 
         // Query for all Vertices modified after 01/01/2015 00:00:00 GMT
-        r = discoveryService.searchByGremlin("g.V.filter{" + getPropertySyntax("it", Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY) + " > 1420070400000}.toList()");
+        r = discoveryService.searchByGremlin("g.V().filter{" + getPropertySyntax("it", Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY) + " > 1420070400000}.toList()");
         Assert.assertTrue(r instanceof List);
         resultList = (List<Map<String, Object>>) r;
         Assert.assertTrue(resultList.size() > 0);

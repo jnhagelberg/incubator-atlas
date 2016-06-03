@@ -106,6 +106,9 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
             // create a composite index for guid as its unique
             createIndexes(management, Constants.GUID_PROPERTY_KEY, String.class, true,
                    Multiplicity.OPTIONAL, true);
+            
+            createIndexes(management, Constants.STATE_PROPERTY_KEY, String.class, false,
+                    Multiplicity.OPTIONAL, true);
 
             // create a composite index for entity creation timestamp
             createIndexes(management, Constants.TIMESTAMP_PROPERTY_KEY, Long.class, false, Multiplicity.OPTIONAL, true);
@@ -171,7 +174,6 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
     @Override
     public void onAdd(Collection<? extends IDataType> dataTypes) throws AtlasException {
         AtlasGraphManagement management = graph.getManagementSystem();
-        Collection<String> createdIndexNames = new HashSet<String>();
         for (IDataType dataType : dataTypes) {
             LOG.info("Creating indexes for type name={}, definition={}", dataType.getName(), dataType.getClass());
             try {

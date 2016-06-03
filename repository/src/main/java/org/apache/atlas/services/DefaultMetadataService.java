@@ -202,20 +202,15 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
                 new AttributeDefinition("outputs", DataTypes.arrayTypeName(AtlasClient.DATA_SET_SUPER_TYPE),
                     Multiplicity.OPTIONAL, false, null));
         
-        createType(infraType);
-        createType(datasetType);
-        createType(referenceableType);
-        createType(processType);
+        
+        TypeRegistrationContext context = new TypeRegistrationContext(false);
+        context.addClassType(infraType);
+        context.addClassType(datasetType);
+        context.addClassType(referenceableType);
+        context.addClassType(processType);
+        context.createTypes();
     }
-
-    private void createType(HierarchicalTypeDefinition<ClassType> type) throws AtlasException {
-        if (!typeSystem.isRegistered(type.typeName)) {
-            TypesDef typesDef = TypesUtil.getTypesDef(ImmutableList.<EnumTypeDefinition>of(), ImmutableList.<StructTypeDefinition>of(),
-                            ImmutableList.<HierarchicalTypeDefinition<TraitType>>of(),
-                            ImmutableList.of(type));
-            createType(TypesSerialization.toJson(typesDef));
-        }
-    }
+    
 
     /**
      * Creates a new type based on the type system to enable adding
@@ -226,38 +221,13 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
      */
     @Override
     public JSONObject createType(String typeDefinition) throws AtlasException {
-        return createOrUpdateTypes(typeDefinition, false);
-    }
-
+    	return createOrUpdateTypes(typeDefinition, false);
+    }    
+    
     private JSONObject createOrUpdateTypes(String typeDefinition, boolean isUpdate) throws AtlasException {
-        ParamChecker.notEmpty(typeDefinition, "type definition");
-        TypesDef typesDef = validateTypeDefinition(typeDefinition);
-
-        try {
-            final TypeSystem.TransientTypeSystem transientTypeSystem = typeSystem.createTransientTypeSystem(typesDef, isUpdate);
-            final Map<String, IDataType> typesAdded = transientTypeSystem.getTypesAdded();
-            try {
-                /* Create indexes first so that if index creation fails then we rollback
-                   the typesystem and also do not persist the graph
-                 */
-                if (isUpdate) {
-                    onTypesUpdated(typesAdded);
-                } else {
-                    onTypesAdded(typesAdded);
-                }
-                typeStore.store(transientTypeSystem, ImmutableList.copyOf(typesAdded.keySet()));
-                typeSystem.commitTypes(typesAdded);
-            } catch (Throwable t) {
-                throw new AtlasException("Unable to persist types ", t);
-            }
-
-            return new JSONObject() {{
-                put(AtlasClient.TYPES, typesAdded.keySet());
-            }};
-        } catch (JSONException e) {
-            LOG.error("Unable to create response for types={}", typeDefinition, e);
-            throw new AtlasException("Unable to create response ", e);
-        }
+    	TypeRegistrationContext ctx = new TypeRegistrationContext(isUpdate);
+    	ctx.addType(typeDefinition);
+    	return ctx.createTypes();
     }
 
     @Override
@@ -786,4 +756,70 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
     public void instanceIsPassive() {
         LOG.info("Reacting to passive state: no action right now");
     }
+
+	private class TypeRegistrationContext {
+		
+		private final boolean isUpdate_;
+		private TypesDef combinedTypeDef_;
+		
+		public TypeRegistrationContext(boolean isUpdate) {    		 	         
+	         isUpdate_ = isUpdate; 	         
+		}
+		
+		public void addClassType(HierarchicalTypeDefinition<ClassType> type) throws AtlasException {
+			
+	        if (typeSystem.isRegistered(type.typeName)) {
+	        	return;
+	        }
+	        
+	        TypesDef typesDef = TypesUtil.getTypesDef(
+	        		ImmutableList.<EnumTypeDefinition>of(), 
+	        		ImmutableList.<StructTypeDefinition>of(),
+	                ImmutableList.<HierarchicalTypeDefinition<TraitType>>of(),
+	                ImmutableList.of(type));
+	        addType(TypesSerialization.toJson(typesDef));
+		}
+		
+		public void addType(String typeDefinition) {
+			
+			ParamChecker.notEmpty(typeDefinition, "type definition");
+			TypesDef typesDef = validateTypeDefinition(typeDefinition);
+	        if(combinedTypeDef_ == null) {
+	        	 combinedTypeDef_ = typesDef;
+	        }
+	        else {
+	        	 combinedTypeDef_ = TypesUtil.combineTypesDefs(combinedTypeDef_, typesDef);
+	         }
+		}			
+		
+		public JSONObject createTypes() throws AtlasException {
+			
+			 try {
+		            final TypeSystem.TransientTypeSystem transientTypeSystem = typeSystem.createTransientTypeSystem(combinedTypeDef_, isUpdate_);
+		            final Map<String, IDataType> typesAdded = transientTypeSystem.getTypesAdded();
+		            try {
+		                /* Create indexes first so that if index creation fails then we rollback
+		                   the typesystem and also do not persist the graph
+		                 */
+		                if (isUpdate_) {
+		                    onTypesUpdated(typesAdded);
+		                } else {
+		                    onTypesAdded(typesAdded);
+		                }
+		                typeStore.store(transientTypeSystem, ImmutableList.copyOf(typesAdded.keySet()));
+		                typeSystem.commitTypes(typesAdded);
+		            } catch (Throwable t) {
+		                throw new AtlasException("Unable to persist types ", t);
+		            }
+
+		            return new JSONObject() {{
+		                put(AtlasClient.TYPES, typesAdded.keySet());
+		            }};
+		        } catch (JSONException e) {
+		            LOG.error("Unable to create response for types={}", combinedTypeDef_, e);
+		            throw new AtlasException("Unable to create response ", e);
+		        }
+		}
+				 
+	}
 }
