@@ -166,7 +166,7 @@ public class RexsterGraphResource {
     private Map<String, String> getVertexProperties(AtlasVertex<?,?> vertex) {
         Map<String, String> vertexProperties = new HashMap<>();
         for (String key : vertex.getPropertyKeys()) {
-            vertexProperties.put(key, vertex.<String>getProperty(key));
+            vertexProperties.put(key, vertex.getProperty(key, String.class));
         }
 
         // todo: get the properties from relationships
