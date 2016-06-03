@@ -75,9 +75,9 @@ public class GraphDatabaseTest {
 
         AtlasVertex<V,E> vertex = graph.addVertex();
         vertex.setProperty(name, value);
-        assertEquals(value, vertex.getProperty(name));
+        assertEquals(value, vertex.getProperty(name, value.getClass()));
         AtlasVertex<V,E> loaded = graph.getVertex(vertex.getId().toString());
-        assertEquals(value, loaded.getProperty(name));
+        assertEquals(value, loaded.getProperty(name, value.getClass()));
 
 
     }
@@ -90,13 +90,13 @@ public class GraphDatabaseTest {
         AtlasVertex<V, E> vertex = graph.addVertex();
         vertex.setProperty("name", "Jeff");
         vertex.setProperty("location", "Littleton");
-        assertEquals("Jeff", vertex.getProperty("name"));
-        assertEquals("Littleton", vertex.getProperty("location"));
+        assertEquals("Jeff", vertex.getProperty("name", String.class));
+        assertEquals("Littleton", vertex.getProperty("location", String.class));
 
         AtlasVertex<V, E> vertexCopy = graph.getVertex(vertex.getId().toString());
 
-        assertEquals("Jeff", vertexCopy.getProperty("name"));
-        assertEquals("Littleton", vertexCopy.getProperty("location"));
+        assertEquals("Jeff", vertexCopy.getProperty("name", String.class));
+        assertEquals("Littleton", vertexCopy.getProperty("location", String.class));
 
         assertTrue(vertexCopy.getPropertyKeys().contains("name"));
         assertTrue(vertexCopy.getPropertyKeys().contains("location"));
@@ -104,16 +104,16 @@ public class GraphDatabaseTest {
         assertTrue(vertexCopy.getPropertyValues("name", String.class).contains("Jeff"));
         assertTrue(vertexCopy.getPropertyValues("location", String.class).contains("Littleton"));
         assertTrue(vertexCopy.getPropertyValues("test", String.class).isEmpty());
-        assertNull(vertexCopy.getProperty("test"));
+        assertNull(vertexCopy.getProperty("test", String.class));
 
         vertex.removeProperty("name");
         assertFalse(vertex.getPropertyKeys().contains("name"));
-        assertNull(vertex.getProperty("name"));
+        assertNull(vertex.getProperty("name", String.class));
         assertTrue(vertex.getPropertyValues("name", String.class).isEmpty());
 
         vertexCopy = graph.getVertex(vertex.getId().toString());
         assertFalse(vertexCopy.getPropertyKeys().contains("name"));
-        assertNull(vertexCopy.getProperty("name"));
+        assertNull(vertexCopy.getProperty("name", String.class));
         assertTrue(vertexCopy.getPropertyValues("name", String.class).isEmpty());
 
     }
@@ -254,7 +254,8 @@ public class GraphDatabaseTest {
             assertTrue(traitNames.contains("trait4"));
 
             try {
-                vertex.getProperty(TRAIT_NAMES);        }
+                vertex.getProperty(TRAIT_NAMES, String.class);
+            }
             catch(IllegalStateException expected) {
                 //multiple property values exist
             }
@@ -270,7 +271,7 @@ public class GraphDatabaseTest {
             assertTrue(traitNames.contains("trait4"));
 
             try {
-                vertexCopy.getProperty(TRAIT_NAMES);        }
+                vertexCopy.getProperty(TRAIT_NAMES, String.class);        }
             catch(IllegalStateException expected) {
                 //multiple property values exist
             }

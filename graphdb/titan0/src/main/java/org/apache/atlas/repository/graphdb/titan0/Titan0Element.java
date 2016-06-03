@@ -60,11 +60,6 @@ public class Titan0Element<T extends Element> implements AtlasElement {
             throw new AtlasSchemaViolationException(e);
         }
     }
-
-    @Override
-    public <T> T getProperty(String propertyName) {
-        return element_.getProperty(propertyName);
-    }
     
     @Override
     public <T> T getProperty(String propertyName, Class<T> clazz) {
@@ -87,7 +82,7 @@ public class Titan0Element<T extends Element> implements AtlasElement {
      */
     @Override
     public List<String> getListProperty(String propertyName) {
-        return getProperty(propertyName);
+        return getProperty(propertyName, List.class);
     }
 
     /* (non-Javadoc)
@@ -143,6 +138,6 @@ public class Titan0Element<T extends Element> implements AtlasElement {
      */
     @Override
     public <T> T getJsonProperty(String propertyName) {
-       return getProperty(propertyName);
+       return (T)getProperty(propertyName, String.class);
     }
 }

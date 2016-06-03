@@ -37,20 +37,6 @@ public class Titan1Element<T extends Element> implements AtlasElement {
         element_ = element;
         id_ = element.id();
     }
-
-    @Override
-    public <T> T getProperty(String propertyName) {
-
-
-        //add explicit logic to return null if the property does not exist
-        //This is the behavior Atlas expects.  Titan 1 throws an exception
-        //in this scenario.
-        Property p = getWrappedElement().property(propertyName);
-        if(p.isPresent()) {
-            return (T)p.value();
-        }
-        return null;
-    }
     
     @Override
     public <T> T getProperty(String propertyName, Class<T> clazz) {
@@ -151,7 +137,7 @@ public class Titan1Element<T extends Element> implements AtlasElement {
      */
     @Override
     public List<String> getListProperty(String propertyName) {
-        return getProperty(propertyName);
+        return getProperty(propertyName, List.class);
     }
 
     /* (non-Javadoc)
@@ -185,7 +171,7 @@ public class Titan1Element<T extends Element> implements AtlasElement {
      */
     @Override
     public <T> T getJsonProperty(String propertyName) {
-       return getProperty(propertyName);
+       return (T)getProperty(propertyName, String.class);
     }
 
 }

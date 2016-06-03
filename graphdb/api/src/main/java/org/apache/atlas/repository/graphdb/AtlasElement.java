@@ -45,15 +45,6 @@ public interface AtlasElement {
     Collection<? extends String> getPropertyKeys();
 
     /**
-     * Gets the value of the element property with the given name.
-     *
-     * @param propertyName
-     * @return
-     * @throws IllegalStateException if the property is multi-valued in the graph schema.
-     */
-    <T> T getProperty(String propertyName);
-
-    /**
      * Gets the value of the element property with the given name.  The value
      * returned is guaranteed to be an instance of the specified class (or
      * an exception will be thrown).

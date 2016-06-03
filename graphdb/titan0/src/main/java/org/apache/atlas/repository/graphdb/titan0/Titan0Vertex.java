@@ -62,13 +62,13 @@ public class Titan0Vertex extends Titan0Element<Vertex> implements AtlasVertex<T
     }
 
     @Override
-    public <T> T getProperty(String propertyName) {
+    public <T> T getProperty(String propertyName, Class<T> clazz) {
 
         if(AtlasGraphManagement.MULTIPLICITY_MANY_PROPERTY_KEYS.contains(propertyName)) {
             //throw exception in this case to be consistent with Titan 1.0.0 behavior.
             throw new IllegalStateException();
         }
-        return super.getProperty(propertyName);
+        return super.getProperty(propertyName, clazz);
     }
 
     public <T> void setProperty(String propertyName, T value) {

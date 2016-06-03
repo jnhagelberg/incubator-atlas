@@ -311,7 +311,7 @@ public class AtlasGraphSONUtility {
 
         if (propertyKeys == null) {
             for (String key : propertyKeyList) {
-                final Object valToPutInMap = element.getProperty(key);
+                final Object valToPutInMap = element.getProperty(key, Object.class);
                 if (valToPutInMap != null) {
                     map.put(key, valToPutInMap);
                 }
@@ -319,7 +319,7 @@ public class AtlasGraphSONUtility {
         } else {
             if (rule == ElementPropertiesRule.INCLUDE) {
                 for (String key : propertyKeys) {
-                    final Object valToPutInMap = element.getProperty(key);
+                    final Object valToPutInMap = element.getProperty(key, Object.class);
                     if (valToPutInMap != null) {
                         map.put(key, valToPutInMap);
                     }
@@ -327,7 +327,7 @@ public class AtlasGraphSONUtility {
             } else {
                 for (String key : propertyKeyList) {
                     if (!propertyKeys.contains(key)) {
-                        final Object valToPutInMap = element.getProperty(key);
+                        final Object valToPutInMap = element.getProperty(key, Object.class);
                         if (valToPutInMap != null) {
                             map.put(key, valToPutInMap);
                         }
