@@ -447,6 +447,7 @@ class GremlinTranslator(expr: Expression,
     }
 
     def genPropertyAccessExpr(e: Expression, fInfo : FieldInfo, propertyName: String, inSelect: Boolean) : String = {
+        
         if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
             s"${genQuery(e, inSelect)}.$propertyName"
         }
@@ -454,7 +455,9 @@ class GremlinTranslator(expr: Expression,
             val attrInfo : AttributeInfo = fInfo.attrInfo;
             val attrType : IDataType[_] = attrInfo.dataType;
             if(inSelect) {
-                s"${genQuery(e, inSelect)}.${getPrimitiveTypeQualifier(attrType)}value($propertyName)"
+                val expr = s"${genQuery(e, inSelect)}.value($propertyName)";
+                return gPersistenceBehavior.convertPersistentToActualValue(expr, attrType);
+                
             }
             else {
                  s"${genQuery(e, inSelect)}.values($propertyName)"
@@ -471,21 +474,7 @@ class GremlinTranslator(expr: Expression,
                 return s"""has("${fieldGremlinExpr}", ${gPersistenceBehavior.gremlinCompOp(c)}($expr2))""";
             }
     }
-
-    def getPrimitiveTypeQualifier : PartialFunction[IDataType[_],String]  = {
-
-        case t:BooleanType => "<Boolean>";
-        case t:ByteType => "<Byte>";
-        case t:DateType => "<Long>"; //dates are stored numerically
-        case t:DoubleType => "<Double>";
-        case t:FloatType => "<Float>";
-        case t:IntType => "<Integer>";
-        case t:LongType => "<Long>";
-        case t:ShortType => "<Short>";
-        case t:StringType => "<String>";
-        case default => "";
-    }
-
+    
     def genFullQuery(expr: Expression): String = {
         var q = genQuery(expr, false)
         if(gPersistenceBehavior.addGraphVertexPrefix(preStatements)) {

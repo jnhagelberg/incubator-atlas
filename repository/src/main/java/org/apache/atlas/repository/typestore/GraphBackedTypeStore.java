@@ -70,6 +70,8 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
 
     private final AtlasGraph<V,E> graph;
 
+    private GraphHelper graphHelper = GraphHelper.getInstance();
+
     @Inject
     public GraphBackedTypeStore(AtlasGraphProvider graphProvider) {
         graph = (AtlasGraph<V,E>)graphProvider.get();
@@ -166,7 +168,7 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
             for (String superTypeName : superTypes) {
                 HierarchicalType superType = typeSystem.getDataType(HierarchicalType.class, superTypeName);
                 AtlasVertex<V,E> superVertex = createVertex(superType.getTypeCategory(), superTypeName, superType.getDescription());
-                addEdge(vertex, superVertex, SUPERTYPE_EDGE_LABEL);
+                graphHelper.getOrCreateEdge(vertex, superVertex, SUPERTYPE_EDGE_LABEL);
             }
         }
     }
@@ -211,25 +213,9 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
             if (!coreTypes.contains(attrType.getName())) {
                 AtlasVertex<V,E> attrVertex = createVertex(attrType.getTypeCategory(), attrType.getName(), attrType.getDescription());
                 String label = getEdgeLabel(vertexTypeName, attribute.name);
-                addEdge(vertex, attrVertex, label);
+                graphHelper.getOrCreateEdge(vertex, attrVertex, label);
             }
         }
-    }
-
-    private void addEdge(AtlasVertex<V,E> fromVertex, AtlasVertex<V,E> toVertex, String label) {
-
-        Iterable<AtlasEdge<V,E>> edges = GraphHelper.getOutGoingEdgesByLabel(fromVertex, label);
-        // ATLAS-474: Check if this type system edge already exists, to avoid duplicates.
-        for(AtlasEdge<V,E> edge : edges) {
-
-            if (edge.getInVertex().equals(toVertex)) {
-                LOG.debug("Edge from {} to {} with label {} already exists",
-                    toString(fromVertex), toString(toVertex), label);
-                return;
-            }
-        }
-        LOG.debug("Adding edge from {} to {} with label {}", toString(fromVertex), toString(toVertex), label);
-        graph.addEdge(fromVertex, toVertex, label);
     }
 
     @Override

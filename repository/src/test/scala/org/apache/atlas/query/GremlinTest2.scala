@@ -159,12 +159,6 @@ class GremlinTest2 extends BaseGremlinTest {
   }
 
   private def getPersistenceStrategy(g: AtlasGraph[_,_]) : GraphPersistenceStrategies = {
-       if(g.getSupportedGremlinVersion == GremlinVersion.TWO) {
-           Gremlin2GraphPersistenceStrategy1
-       }
-       else {
-           Gremlin3GraphPersistenceStrategy1
-       }
-   }
-
+      return GraphPersistenceStrategy1(g);
+  }
 }

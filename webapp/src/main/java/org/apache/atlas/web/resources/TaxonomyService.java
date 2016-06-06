@@ -41,15 +41,14 @@ import java.util.Map;
 @Singleton
 public class TaxonomyService extends BaseService {
 
-    private final TaxonomyResourceProvider taxonomyResourceProvider;
-    private static TermResourceProvider termResourceProvider;
-    private static JsonSerializer serializer = new JsonSerializer();
+    private ResourceProvider taxonomyResourceProvider;
+    private ResourceProvider termResourceProvider;
 
     @Inject
-    public TaxonomyService(MetadataService metadataService) {
+    public void setMetadataService(MetadataService metadataService) {
         DefaultTypeSystem typeSystem = new DefaultTypeSystem(metadataService);
-        taxonomyResourceProvider = new TaxonomyResourceProvider(typeSystem);
-        termResourceProvider = new TermResourceProvider(typeSystem);
+        taxonomyResourceProvider = createTaxonomyResourceProvider(typeSystem);
+        termResourceProvider = createTermResourceProvider(typeSystem);
     }
 
     @GET
@@ -62,7 +61,7 @@ public class TaxonomyService extends BaseService {
         Map<String, Object> properties = new HashMap<>();
         properties.put("name", taxonomyName);
         Result result = getResource(taxonomyResourceProvider, new InstanceRequest(properties));
-        return Response.status(Response.Status.OK).entity(serializer.serialize(result, ui)).build();
+        return Response.status(Response.Status.OK).entity(getSerializer().serialize(result, ui)).build();
     }
 
     @GET
@@ -71,7 +70,7 @@ public class TaxonomyService extends BaseService {
         String queryString = decode(getQueryString(ui));
         Request request = new CollectionRequest(Collections.<String, Object>emptyMap(), queryString);
         Result result = getResources(taxonomyResourceProvider, request);
-        return Response.status(Response.Status.OK).entity(serializer.serialize(result, ui)).build();
+        return Response.status(Response.Status.OK).entity(getSerializer().serialize(result, ui)).build();
     }
 
     @POST
@@ -91,6 +90,22 @@ public class TaxonomyService extends BaseService {
                 new Results(ui.getRequestUri().toString(), 201)).build();
     }
 
+    @DELETE
+    @Path("{taxonomyName}")
+    @Produces(Servlets.JSON_MEDIA_TYPE)
+    public Response deleteTaxonomy(@Context HttpHeaders headers,
+                                   @Context UriInfo ui,
+                                   @PathParam("taxonomyName") String taxonomyName) throws CatalogException {
+
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("name", taxonomyName);
+
+        deleteResource(taxonomyResourceProvider, new InstanceRequest(properties));
+
+        return Response.status(Response.Status.OK).entity(
+                new Results(ui.getRequestUri().toString(), 200)).build();
+    }
+
     @GET
     @Path("{taxonomyName}/terms/{termName}")
     @Produces(Servlets.JSON_MEDIA_TYPE)
@@ -104,7 +119,7 @@ public class TaxonomyService extends BaseService {
         properties.put("termPath", termPath);
         Result result = getResource(termResourceProvider, new InstanceRequest(properties));
 
-        return Response.status(Response.Status.OK).entity(serializer.serialize(result, ui)).build();
+        return Response.status(Response.Status.OK).entity(getSerializer().serialize(result, ui)).build();
     }
 
     @GET
@@ -120,7 +135,7 @@ public class TaxonomyService extends BaseService {
                 Collections.<String, Object>singletonMap("termPath", termPath), queryString);
         Result result = getResources(termResourceProvider, request);
 
-        return Response.status(Response.Status.OK).entity(serializer.serialize(result, ui)).build();
+        return Response.status(Response.Status.OK).entity(getSerializer().serialize(result, ui)).build();
     }
 
     @GET
@@ -133,11 +148,6 @@ public class TaxonomyService extends BaseService {
                             @PathParam("remainder") String remainder) throws CatalogException {
 
         Result result;
-
-        List<PathSegment> pathSegments = ui.getPathSegments();
-
-        int lastIndex = pathSegments.size() - 1;
-        String lastSegment = pathSegments.get(lastIndex).getPath();
         String termName = String.format("%s%s", rootTerm,
                 remainder.replaceAll("/?terms/?([.]*)", "$1."));
         String queryString = decode(getQueryString(ui));
@@ -145,13 +155,17 @@ public class TaxonomyService extends BaseService {
 
         Map<String, Object> properties = new HashMap<>();
         properties.put("termPath", termPath);
+
+        List<PathSegment> pathSegments = ui.getPathSegments();
+        int lastIndex = pathSegments.size() - 1;
+        String lastSegment = pathSegments.get(lastIndex).getPath();
         if (lastSegment.equals("terms") || (lastSegment.isEmpty() && pathSegments.get(lastIndex - 1).getPath().equals("terms"))) {
             result = getResources(termResourceProvider, new CollectionRequest(properties, queryString));
         } else {
             result = getResource(termResourceProvider, new InstanceRequest(properties));
         }
 
-        return Response.status(Response.Status.OK).entity(serializer.serialize(result, ui)).build();
+        return Response.status(Response.Status.OK).entity(getSerializer().serialize(result, ui)).build();
     }
 
     @POST
@@ -175,12 +189,12 @@ public class TaxonomyService extends BaseService {
     @POST
     @Path("{taxonomyName}/terms/{termName}/{remainder:.*}")
     @Produces(Servlets.JSON_MEDIA_TYPE)
-    public Response createSubTerms(String body,
-                                   @Context HttpHeaders headers,
-                                   @Context UriInfo ui,
-                                   @PathParam("taxonomyName") String taxonomyName,
-                                   @PathParam("termName") String termName,
-                                   @PathParam("remainder") String remainder) throws CatalogException {
+    public Response createSubTerm(String body,
+                                  @Context HttpHeaders headers,
+                                  @Context UriInfo ui,
+                                  @PathParam("taxonomyName") String taxonomyName,
+                                  @PathParam("termName") String termName,
+                                  @PathParam("remainder") String remainder) throws CatalogException {
 
         Map<String, Object> properties = parsePayload(body);
         String[] pathTokens = remainder.split("/");
@@ -191,6 +205,48 @@ public class TaxonomyService extends BaseService {
 
         return Response.status(Response.Status.CREATED).entity(
                 new Results(ui.getRequestUri().toString(), 201)).build();
+    }
+
+    @DELETE
+    @Path("{taxonomyName}/terms/{termName}")
+    @Produces(Servlets.JSON_MEDIA_TYPE)
+    public Response deleteTerm(@Context HttpHeaders headers,
+                               @Context UriInfo ui,
+                               @PathParam("taxonomyName") String taxonomyName,
+                               @PathParam("termName") String termName) throws CatalogException {
+
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("termPath", new TermPath(taxonomyName, termName));
+        deleteResource(termResourceProvider, new InstanceRequest(properties));
+
+        return Response.status(Response.Status.OK).entity(
+                new Results(ui.getRequestUri().toString(), 200)).build();
+    }
+
+    @DELETE
+    @Path("{taxonomyName}/terms/{termName}/{remainder:.*}")
+    @Produces(Servlets.JSON_MEDIA_TYPE)
+    public Response deleteSubTerm(@Context HttpHeaders headers,
+                                  @Context UriInfo ui,
+                                  @PathParam("taxonomyName") String taxonomyName,
+                                  @PathParam("termName") String termName,
+                                  @PathParam("remainder") String remainder) throws CatalogException {
+
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("termPath", new TermPath(taxonomyName, String.format("%s%s", termName,
+                remainder.replaceAll("/?terms/?([.]*)", "$1."))));
+        deleteResource(termResourceProvider, new InstanceRequest(properties));
+
+        return Response.status(Response.Status.OK).entity(
+                new Results(ui.getRequestUri().toString(), 200)).build();
+    }
+
+    protected ResourceProvider createTaxonomyResourceProvider(AtlasTypeSystem typeSystem) {
+        return new TaxonomyResourceProvider(typeSystem);
+    }
+
+    protected ResourceProvider createTermResourceProvider(AtlasTypeSystem typeSystem) {
+        return new TermResourceProvider(typeSystem);
     }
 
     private void validateName(String name) throws InvalidPayloadException {

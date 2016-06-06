@@ -43,20 +43,20 @@ public class GraphDatabaseTest {
      *
      */
     private static final String TRAIT_NAMES = "__traitNames";
-    private AtlasGraph<?,?> graph;
+    private AtlasGraph<?, ?> graph;
 
-    private <V,E> AtlasGraph<V, E> getGraph() {
+    private <V, E> AtlasGraph<V, E> getGraph() {
         if(graph == null) {
             Titan1Database db = new Titan1Database();
             graph = db.getGraph();
         }
-        return (AtlasGraph<V,E>)graph;
+        return (AtlasGraph<V, E>)graph;
     }
 
      @Test
-    public <V,E> void testPropertyDataTypes() {
+    public <V, E> void testPropertyDataTypes() {
 
-        AtlasGraph<V,E> graph = getGraph();
+        AtlasGraph<V, E> graph = getGraph();
         testProperty(graph, "booleanProperty", Boolean.TRUE);
         testProperty(graph, "booleanProperty", Boolean.FALSE);
 
@@ -71,12 +71,12 @@ public class GraphDatabaseTest {
 
     }
 
-    private <V,E> void testProperty(AtlasGraph<V,E> graph, String name, Object value) {
+    private <V, E> void testProperty(AtlasGraph<V, E> graph, String name, Object value) {
 
-        AtlasVertex<V,E> vertex = graph.addVertex();
+        AtlasVertex<V, E> vertex = graph.addVertex();
         vertex.setProperty(name, value);
         assertEquals(value, vertex.getProperty(name, value.getClass()));
-        AtlasVertex<V,E> loaded = graph.getVertex(vertex.getId().toString());
+        AtlasVertex<V, E> loaded = graph.getVertex(vertex.getId().toString());
         assertEquals(value, loaded.getProperty(name, value.getClass()));
 
 
@@ -119,13 +119,13 @@ public class GraphDatabaseTest {
     }
 
     @Test
-    public <V,E> void testRemoveEdge() {
+    public <V, E> void testRemoveEdge() {
 
-        AtlasGraph<V,E> graph = (AtlasGraph<V,E>)getGraph();
-        AtlasVertex<V,E> v1 = graph.addVertex();
-        AtlasVertex<V,E> v2 = graph.addVertex();
+        AtlasGraph<V, E> graph = (AtlasGraph<V, E>)getGraph();
+        AtlasVertex<V, E> v1 = graph.addVertex();
+        AtlasVertex<V, E> v2 = graph.addVertex();
 
-        AtlasEdge<V,E> edge = graph.addEdge(v1, v2, "knows");
+        AtlasEdge<V, E> edge = graph.addEdge(v1, v2, "knows");
 
         //make sure the edge exists
         AtlasEdge<V, E> edgeCopy = graph.getEdge(edge.getId().toString());
@@ -142,11 +142,11 @@ public class GraphDatabaseTest {
     }
 
     @Test
-    public <V,E> void testRemoveVertex() {
+    public <V, E> void testRemoveVertex() {
 
-        AtlasGraph<V,E> graph = (AtlasGraph<V,E>)getGraph();
+        AtlasGraph<V, E> graph = (AtlasGraph<V, E>)getGraph();
 
-        AtlasVertex<V,E> v1 = graph.addVertex();
+        AtlasVertex<V, E> v1 = graph.addVertex();
 
         assertNotNull(graph.getVertex(v1.getId().toString()));
 
@@ -157,67 +157,67 @@ public class GraphDatabaseTest {
 
 
      @Test
-    public <V,E> void testGetEdges() {
+    public <V, E> void testGetEdges() {
 
 
-        AtlasGraph<V,E> graph = (AtlasGraph<V,E>)getGraph();
-        AtlasVertex<V,E> v1 = graph.addVertex();
-        AtlasVertex<V,E> v2 = graph.addVertex();
-        AtlasVertex<V,E> v3 = graph.addVertex();
+        AtlasGraph<V, E> graph = (AtlasGraph<V, E>)getGraph();
+        AtlasVertex<V, E> v1 = graph.addVertex();
+        AtlasVertex<V, E> v2 = graph.addVertex();
+        AtlasVertex<V, E> v3 = graph.addVertex();
 
-        AtlasEdge<V,E> knows = graph.addEdge(v2, v1, "knows");
-        AtlasEdge<V,E> eats =  graph.addEdge(v3, v1, "eats");
-        AtlasEdge<V,E> drives = graph.addEdge(v3, v2, "drives");
-        AtlasEdge<V,E> sleeps = graph.addEdge(v2, v3, "sleeps");
+        AtlasEdge<V, E> knows = graph.addEdge(v2, v1, "knows");
+        AtlasEdge<V, E> eats =  graph.addEdge(v3, v1, "eats");
+        AtlasEdge<V, E> drives = graph.addEdge(v3, v2, "drives");
+        AtlasEdge<V, E> sleeps = graph.addEdge(v2, v3, "sleeps");
 
 
         {
-            List<AtlasEdge<V,E>> edges =  IteratorUtils.asList(v1.getEdges(AtlasEdgeDirection.IN));
+            List<AtlasEdge<V, E>> edges =  IteratorUtils.asList(v1.getEdges(AtlasEdgeDirection.IN));
             assertEquals(2, edges.size());
             assertTrue(edges.contains(knows));
             assertTrue(edges.contains(eats));
         }
 
         {
-            List<AtlasEdge<V,E>> edges =  IteratorUtils.asList(v1.getEdges(AtlasEdgeDirection.OUT));
+            List<AtlasEdge<V, E>> edges =  IteratorUtils.asList(v1.getEdges(AtlasEdgeDirection.OUT));
             assertTrue(edges.isEmpty());
         }
 
         {
-            List<AtlasEdge<V,E>> edges =  IteratorUtils.asList(v1.getEdges(AtlasEdgeDirection.BOTH));
+            List<AtlasEdge<V, E>> edges =  IteratorUtils.asList(v1.getEdges(AtlasEdgeDirection.BOTH));
             assertEquals(2, edges.size());
             assertTrue(edges.contains(knows));
             assertTrue(edges.contains(eats));
         }
 
         {
-            List<AtlasEdge<V,E>> edges =  IteratorUtils.asList(v1.getEdges(AtlasEdgeDirection.IN, "knows"));
+            List<AtlasEdge<V, E>> edges =  IteratorUtils.asList(v1.getEdges(AtlasEdgeDirection.IN, "knows"));
             assertEquals(1, edges.size());
             assertTrue(edges.contains(knows));
         }
 
         {
-            List<AtlasEdge<V,E>> edges =  IteratorUtils.asList(v1.getEdges(AtlasEdgeDirection.BOTH, "knows"));
+            List<AtlasEdge<V, E>> edges =  IteratorUtils.asList(v1.getEdges(AtlasEdgeDirection.BOTH, "knows"));
             assertEquals(1, edges.size());
             assertTrue(edges.contains(knows));
         }
 
         {
-            List<AtlasEdge<V,E>> edges =  IteratorUtils.asList(v2.getEdges(AtlasEdgeDirection.IN));
+            List<AtlasEdge<V, E>> edges =  IteratorUtils.asList(v2.getEdges(AtlasEdgeDirection.IN));
             assertEquals(1, edges.size());
             assertTrue(edges.contains(drives));
         }
 
 
         {
-            List<AtlasEdge<V,E>> edges =  IteratorUtils.asList(v2.getEdges(AtlasEdgeDirection.OUT));
+            List<AtlasEdge<V, E>> edges =  IteratorUtils.asList(v2.getEdges(AtlasEdgeDirection.OUT));
             assertEquals(2, edges.size());
             assertTrue(edges.contains(knows));
             assertTrue(edges.contains(sleeps));
         }
 
         {
-            List<AtlasEdge<V,E>> edges =  IteratorUtils.asList(v2.getEdges(AtlasEdgeDirection.BOTH));
+            List<AtlasEdge<V, E>> edges =  IteratorUtils.asList(v2.getEdges(AtlasEdgeDirection.BOTH));
             assertEquals(3, edges.size());
             assertTrue(edges.contains(knows));
             assertTrue(edges.contains(sleeps));
@@ -225,7 +225,7 @@ public class GraphDatabaseTest {
         }
 
         {
-            List<AtlasEdge<V,E>> edges =  IteratorUtils.asList(v2.getEdges(AtlasEdgeDirection.BOTH,"delivers"));
+            List<AtlasEdge<V, E>> edges =  IteratorUtils.asList(v2.getEdges(AtlasEdgeDirection.BOTH, "delivers"));
             assertEquals(0, edges.size());
         }
 
@@ -234,9 +234,9 @@ public class GraphDatabaseTest {
 
 
     @Test
-    public <V,E >void testMultiplictyManyPropertySupport() {
+    public <V, E >void testMultiplictyManyPropertySupport() {
 
-        AtlasGraph<V,E> graph = getGraph();
+        AtlasGraph<V, E> graph = getGraph();
         String vertexId;
         {
             AtlasVertex<V, E> vertex = graph.addVertex();
@@ -262,7 +262,7 @@ public class GraphDatabaseTest {
         }
 
         {
-            AtlasVertex<V,E> vertexCopy = graph.getVertex(vertexId);
+            AtlasVertex<V, E> vertexCopy = graph.getVertex(vertexId);
             assertTrue(vertexCopy.getPropertyKeys().contains(TRAIT_NAMES));
             Collection<String> traitNames = vertexCopy.getPropertyValues(TRAIT_NAMES, String.class);
             assertTrue(traitNames.contains("trait1"));
@@ -279,9 +279,9 @@ public class GraphDatabaseTest {
     }
 
     @Test
-    public <V,E >void testAddMultManyPropertyValueTwice() {
+    public <V, E >void testAddMultManyPropertyValueTwice() {
 
-        AtlasGraph<V,E> graph = getGraph();
+        AtlasGraph<V, E> graph = getGraph();
         String vertexId;
         {
             AtlasVertex<V, E> vertex = graph.addVertex();
@@ -299,7 +299,7 @@ public class GraphDatabaseTest {
         }
 
         {
-            AtlasVertex<V,E> vertexCopy = graph.getVertex(vertexId);
+            AtlasVertex<V, E> vertexCopy = graph.getVertex(vertexId);
             assertTrue(vertexCopy.getPropertyKeys().contains(TRAIT_NAMES));
             Collection<String> traitNames = vertexCopy.getPropertyValues(TRAIT_NAMES, String.class);
             assertTrue(traitNames.contains("trait1"));

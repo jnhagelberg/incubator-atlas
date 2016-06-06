@@ -23,7 +23,12 @@ define(['require', 'utils/Utils', 'modules/Modal'], function(require, Utils, Mod
     CommonViewFunction.deleteTagModel = function(tagName) {
         var msg = "<b>Tag:</b>";
         if (tagName) {
-            msg = "<b>Tag: " + tagName + "</b>";
+            var tagOrTerm = Utils.checkTagOrTerm(tagName);
+            if (tagOrTerm.term) {
+                msg = "<b>Term: " + tagName + "</b>";
+            } else {
+                msg = "<b>Tag: " + tagName + "</b>";
+            }
         }
         var modal = new Modal({
             title: 'Are you sure you want to delete ?',
@@ -39,12 +44,29 @@ define(['require', 'utils/Utils', 'modules/Modal'], function(require, Utils, Mod
     CommonViewFunction.deleteTag = function(options) {
         require(['models/VTag'], function(VTag) {
             var tagModel = new VTag();
-            if (options && options.guid && options.tagName)
+            if (options && options.guid && options.tagName) {
+
                 tagModel.deleteTag(options.guid, options.tagName, {
                     beforeSend: function() {},
                     success: function(data) {
+                        var msg = "Tag " + name.name + " has been deleted successfully";
+                        if (data.traitName) {
+                            var tagOrTerm = Utils.checkTagOrTerm(data.traitName);
+                            if (tagOrTerm.term) {
+                                msg = "Term " + data.traitName + " has been deleted successfully";
+                            } else {
+                                msg = "Tag " + data.traitName + " has been deleted successfully";
+                            }
+                        } else {
+                            var tagOrTerm = Utils.checkTagOrTerm(options.tagName);
+                            if (tagOrTerm.term) {
+                                msg = "Term " + data.traitName + " has been deleted successfully";
+                            } else {
+                                msg = "Tag " + data.traitName + " has been deleted successfully";
+                            }
+                        }
                         Utils.notifySuccess({
-                            content: "Tag " + options.tagName + " has been deleted successfully"
+                            content: msg
                         });
                         if (options.callback) {
                             options.callback();
@@ -55,7 +77,7 @@ define(['require', 'utils/Utils', 'modules/Modal'], function(require, Utils, Mod
 
                     },
                     error: function(error, data, status) {
-                        var message = "Tag " + options.tagName + " could not be deleted";
+                        var message = options.tagName + " could not be deleted";
                         if (data.error) {
                             message = data.error;
                         }
@@ -65,7 +87,88 @@ define(['require', 'utils/Utils', 'modules/Modal'], function(require, Utils, Mod
                     },
                     complete: function() {}
                 });
+            }
         });
     };
+    CommonViewFunction.propertyTable = function(valueObject, scope) {
+        var table = "",
+            fetchInputOutputValue = function(id) {
+                var that = this;
+                scope.model.getEntity(id, {
+                    beforeSend: function() {},
+                    success: function(data) {
+                        var value = "";
+                        if (data.definition.values.name) {
+                            value = data.definition.values.name;
+                        } else {
+                            value = data.GUID;
+                        }
+
+                        scope.$('td div[data-id="' + data.GUID + '"]').html('<a href="#!/detailPage/' + data.GUID + '">' + value + '</a>');
+                    },
+                    error: function(error, data, status) {},
+                    complete: function() {}
+                });
+            }
+        _.keys(valueObject).map(function(key) {
+            var keyValue = valueObject[key];
+            if (_.isArray(keyValue)) {
+                var subLink = "";
+                for (var i = 0; i < keyValue.length; i++) {
+                    var inputOutputField = keyValue[i],
+                        id = undefined;
+                    if (_.isObject(inputOutputField.id)) {
+                        id = inputOutputField.id.id;
+                    } else {
+                        id = inputOutputField.id;
+                    }
+                    if (id) {
+                        fetchInputOutputValue(id);
+                        subLink += '<div data-id="' + id + '"></div>';
+                    } else {
+                        subLink += '<div></div>';
+                    }
+                }
+                table += '<tr><td>' + key + '</td><td>' + subLink + '</td></tr>';
+            } else if (_.isObject(keyValue)) {
+                var id = undefined;
+                if (_.isObject(keyValue.id)) {
+                    id = keyValue.id.id;
+                } else {
+                    id = keyValue.id;
+                }
+                if (id) {
+                    fetchInputOutputValue(id);
+                    table += '<tr><td>' + key + '</td><td><div data-id="' + id + '"></div></td></tr>';
+                } else {
+                    var stringArr = [];
+                    _.each(keyValue, function(val, key) {
+                        var value = "";
+                        if (_.isObject(val)) {
+                            value = JSON.stringify(val);
+                        } else {
+                            value = val;
+                        }
+                        var attrName = "<span>" + key + " : " + value + "</span>";
+                        stringArr.push(attrName);
+                    });
+                    var jointValues = stringArr.join(", ");
+                    if (jointValues.length) {
+                        table += '<tr><td>' + key + '</td><td><div>' + jointValues + '</div></td></tr>';
+                    } else {
+                        table += '<tr><td>' + key + '</td><td></td></tr>';
+                    }
+                }
+            } else {
+                if (key == "createTime" || key == "lastAccessTime" || key == "retention") {
+                    table += '<tr><td>' + key + '</td><td>' + new Date(valueObject[key]) + '</td></tr>';
+                } else {
+                    table += '<tr><td>' + key + '</td><td>' + valueObject[key] + '</td></tr>';
+                }
+
+            }
+        });
+        return table;
+    }
     return CommonViewFunction;
 });

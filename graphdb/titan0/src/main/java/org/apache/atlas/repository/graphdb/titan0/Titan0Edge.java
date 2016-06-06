@@ -24,7 +24,7 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 
 /**
- * Titan 0.5.4 implementation of AtlasEdge
+ * Titan 0.5.4 implementation of AtlasEdge.
  */
 public class Titan0Edge extends Titan0Element<Edge> implements AtlasEdge<Titan0Vertex, Titan0Edge> {
 
@@ -35,7 +35,7 @@ public class Titan0Edge extends Titan0Element<Edge> implements AtlasEdge<Titan0V
 
     @Override
     public String getLabel() {
-        return element_.getLabel();
+        return wrappedElement.getLabel();
     }
 
     @Override
@@ -45,13 +45,13 @@ public class Titan0Edge extends Titan0Element<Edge> implements AtlasEdge<Titan0V
 
     @Override
     public AtlasVertex<Titan0Vertex, Titan0Edge> getInVertex() {
-        Vertex v = element_.getVertex(Direction.IN);
+        Vertex v = wrappedElement.getVertex(Direction.IN);
         return GraphDbObjectFactory.createVertex(v);
     }
 
     @Override
     public AtlasVertex<Titan0Vertex, Titan0Edge> getOutVertex() {
-        Vertex v = element_.getVertex(Direction.OUT);
+        Vertex v = wrappedElement.getVertex(Direction.OUT);
         return GraphDbObjectFactory.createVertex(v);
     }
 

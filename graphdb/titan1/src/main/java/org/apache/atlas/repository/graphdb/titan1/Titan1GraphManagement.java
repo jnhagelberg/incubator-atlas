@@ -98,7 +98,7 @@ public class Titan1GraphManagement implements AtlasGraphManagement {
             Preconditions.checkArgument(name.indexOf(c) < 0, "Name can not contains reserved character %s: %s", c, name);
 
     }
-  
+
     /* (non-Javadoc)
      * @see org.apache.atlas.repository.graphdb.AtlasGraphManagement#makePropertyKey(java.lang.String, java.lang.Class, org.apache.atlas.typesystem.types.Multiplicity)
      */

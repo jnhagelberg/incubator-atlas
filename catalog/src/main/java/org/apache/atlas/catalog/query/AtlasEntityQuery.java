@@ -19,6 +19,7 @@
 package org.apache.atlas.catalog.query;
 
 import com.tinkerpop.gremlin.java.GremlinPipeline;
+import com.tinkerpop.pipes.Pipe;
 import org.apache.atlas.catalog.Request;
 import org.apache.atlas.catalog.definition.ResourceDefinition;
 import org.apache.atlas.repository.Constants;
@@ -31,10 +32,10 @@ public class AtlasEntityQuery extends BaseQuery {
         super(queryExpression, resourceDefinition, request);
     }
 
-    protected GremlinPipeline getInitialPipeline() {
+    protected Pipe getQueryPipe() {
         //todo: the property 'entityText' isn't currently indexed
         //todo: we could use Constants.ENTITY_TYPE_PROPERTY_KEY initially but trait instances also contain this property
-        return new GremlinPipeline(getGraph()).V().has(Constants.ENTITY_TEXT_PROPERTY_KEY).
+        return new GremlinPipeline().has(Constants.ENTITY_TEXT_PROPERTY_KEY).
                 hasNot(Constants.ENTITY_TYPE_PROPERTY_KEY, "Taxonomy");
     }
 }

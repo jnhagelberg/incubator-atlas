@@ -27,9 +27,9 @@ import com.google.common.base.Function;
 import com.tinkerpop.blueprints.Vertex;
 
 /**
- * Google Guava function that converts a Vertex to an AtlasVertex
+ * Google Guava function that converts a Vertex to an AtlasVertex.
  */
-public class VertexToAtlasVertexFunction implements Function<Vertex, AtlasVertex<Titan0Vertex, Titan0Edge>> {
+public final class VertexToAtlasVertexFunction implements Function<Vertex, AtlasVertex<Titan0Vertex, Titan0Edge>> {
 
     public static final VertexToAtlasVertexFunction INSTANCE = new VertexToAtlasVertexFunction();
 

@@ -30,14 +30,14 @@ import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 
 /**
- *
+ * Titan 0.5.4 implementation of AtlasGraphIndex.
  */
 public class Titan0GraphIndex implements AtlasGraphIndex {
 
-    public TitanGraphIndex wrapped_;
+    private TitanGraphIndex wrappedIndex;
 
     public Titan0GraphIndex(TitanGraphIndex toWrap) {
-        wrapped_ = toWrap;
+        wrappedIndex = toWrap;
     }
 
     /* (non-Javadoc)
@@ -45,7 +45,7 @@ public class Titan0GraphIndex implements AtlasGraphIndex {
      */
     @Override
     public boolean isMixedIndex() {
-        return wrapped_.isMixedIndex();
+        return wrappedIndex.isMixedIndex();
     }
 
     /* (non-Javadoc)
@@ -53,7 +53,7 @@ public class Titan0GraphIndex implements AtlasGraphIndex {
      */
     @Override
     public boolean isEdgeIndex() {
-        return Edge.class.isAssignableFrom(wrapped_.getIndexedElement());
+        return Edge.class.isAssignableFrom(wrappedIndex.getIndexedElement());
     }
 
     /* (non-Javadoc)
@@ -61,7 +61,7 @@ public class Titan0GraphIndex implements AtlasGraphIndex {
      */
     @Override
     public boolean isVertexIndex() {
-        return Vertex.class.isAssignableFrom(wrapped_.getIndexedElement());
+        return Vertex.class.isAssignableFrom(wrappedIndex.getIndexedElement());
     }
 
     /* (non-Javadoc)
@@ -69,7 +69,7 @@ public class Titan0GraphIndex implements AtlasGraphIndex {
      */
     @Override
     public boolean isCompositeIndex() {
-        return wrapped_.isCompositeIndex();
+        return wrappedIndex.isCompositeIndex();
     }
 
     /* (non-Javadoc)
@@ -77,7 +77,7 @@ public class Titan0GraphIndex implements AtlasGraphIndex {
      */
     @Override
     public boolean isUnique() {
-        return wrapped_.isUnique();
+        return wrappedIndex.isUnique();
     }
 
     /* (non-Javadoc)
@@ -85,7 +85,7 @@ public class Titan0GraphIndex implements AtlasGraphIndex {
      */
     @Override
     public Set<AtlasPropertyKey> getFieldKeys() {
-        PropertyKey[] keys = wrapped_.getFieldKeys();
+        PropertyKey[] keys = wrappedIndex.getFieldKeys();
         Set<AtlasPropertyKey> result = new HashSet<AtlasPropertyKey>();
         for(PropertyKey key  : keys) {
             result.add(GraphDbObjectFactory.createPropertyKey(key));

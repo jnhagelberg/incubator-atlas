@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 package org.apache.atlas.repository.graphdb.titan0;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
@@ -34,6 +35,7 @@ import org.apache.atlas.repository.graphdb.AtlasIndexQuery;
 import org.apache.atlas.repository.graphdb.AtlasSchemaViolationException;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.repository.graphdb.GremlinVersion;
+import org.apache.atlas.typesystem.types.IDataType;
 import org.apache.atlas.utils.EdgeToAtlasEdgeFunction;
 import org.apache.atlas.utils.VertexToAtlasVertexFunction;
 
@@ -48,8 +50,9 @@ import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONWriter;
 import com.tinkerpop.pipes.util.structures.Row;
+
 /**
- * Titan 0.5.4 implementation of AtlasGraph
+ * Titan 0.5.4 implementation of AtlasGraph.
  */
 public class Titan0Graph implements AtlasGraph<Titan0Vertex, Titan0Edge> {
 
@@ -58,15 +61,13 @@ public class Titan0Graph implements AtlasGraph<Titan0Vertex, Titan0Edge> {
     }
 
     @Override
-    public AtlasEdge<Titan0Vertex, Titan0Edge> addEdge(AtlasVertex<Titan0Vertex, Titan0Edge> outVertex, AtlasVertex<Titan0Vertex, Titan0Edge> inVertex, String edgeLabel) {
+    public AtlasEdge<Titan0Vertex, Titan0Edge> addEdge(AtlasVertex<Titan0Vertex, Titan0Edge> outVertex,
+            AtlasVertex<Titan0Vertex, Titan0Edge> inVertex, String edgeLabel) {
         try {
-            Edge edge = getGraph().addEdge(null,
-                    outVertex.getV().getWrappedElement(),
-                    inVertex.getV().getWrappedElement(),
-                    edgeLabel);
+            Edge edge = getGraph().addEdge(null, outVertex.getV().getWrappedElement(),
+                    inVertex.getV().getWrappedElement(), edgeLabel);
             return GraphDbObjectFactory.createEdge(edge);
-        }
-        catch(SchemaViolationException e) {
+        } catch (SchemaViolationException e) {
             throw new AtlasSchemaViolationException(e);
         }
     }
@@ -131,12 +132,12 @@ public class Titan0Graph implements AtlasGraph<Titan0Vertex, Titan0Edge> {
 
     @Override
     public AtlasGraphManagement getManagementSystem() {
-        return new Titan0DatabaseManager(getGraph(), getGraph().getManagementSystem());
+        return new Titan0DatabaseManager(getGraph().getManagementSystem());
     }
 
     @Override
     public void shutdown() {
-       getGraph().shutdown();
+        getGraph().shutdown();
     }
 
     @Override
@@ -151,7 +152,7 @@ public class Titan0Graph implements AtlasGraph<Titan0Vertex, Titan0Edge> {
 
     private Set<String> getIndexKeys(Class<? extends Element> titanClass) {
 
-       return getGraph().getIndexedKeys(titanClass);
+        return getGraph().getIndexedKeys(titanClass);
     }
 
     @Override
@@ -167,21 +168,20 @@ public class Titan0Graph implements AtlasGraph<Titan0Vertex, Titan0Edge> {
         return Iterables.transform(result, VertexToAtlasVertexFunction.INSTANCE);
     }
 
-
     @Override
     public Object getGremlinColumnValue(Object rowValue, String colName, int idx) {
-        Row<List> rV = (Row<List>)rowValue;
+        Row<List> rV = (Row<List>) rowValue;
         Object value = rV.getColumn(colName).get(idx);
         return convertGremlinValue(value);
     }
 
     @Override
     public Object convertGremlinValue(Object rawValue) {
-        if(rawValue instanceof Vertex) {
-            return GraphDbObjectFactory.createVertex((Vertex)rawValue);
+        if (rawValue instanceof Vertex) {
+            return GraphDbObjectFactory.createVertex((Vertex) rawValue);
         }
-        if(rawValue instanceof Edge) {
-            return GraphDbObjectFactory.createEdge((Edge)rawValue);
+        if (rawValue instanceof Edge) {
+            return GraphDbObjectFactory.createEdge((Edge) rawValue);
         }
         return rawValue;
     }
@@ -194,21 +194,21 @@ public class Titan0Graph implements AtlasGraph<Titan0Vertex, Titan0Edge> {
 
     @Override
     public List<Object> convertPathQueryResultToList(Object rawValue) {
-        return (List<Object>)rawValue;
+        return (List<Object>) rawValue;
     }
 
     @Override
     public void clear() {
         TitanGraph graph = getGraph();
-        if(graph.isOpen()) {
-            //only a shut down graph can be cleared
+        if (graph.isOpen()) {
+            // only a shut down graph can be cleared
             graph.shutdown();
         }
         TitanCleanup.clear(graph);
     }
 
     private TitanGraph getGraph() {
-        //return the singleton instance of the graph in the plugin
+        // return the singleton instance of the graph in the plugin
         return Titan0Database.getGraphInstance();
     }
 
@@ -217,8 +217,12 @@ public class Titan0Graph implements AtlasGraph<Titan0Vertex, Titan0Edge> {
         GraphSONWriter.outputGraph(getGraph(), os);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.atlas.repository.graphdb.AtlasGraph#executeGremlinScript(java.lang.String)
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.apache.atlas.repository.graphdb.AtlasGraph#executeGremlinScript(java.
+     * lang.String)
      */
     @Override
     public Object executeGremlinScript(String gremlinQuery) throws ScriptException {
@@ -229,5 +233,12 @@ public class Titan0Graph implements AtlasGraph<Titan0Vertex, Titan0Edge> {
         bindings.put("g", getGraph());
         Object result = engine.eval(gremlinQuery, bindings);
         return result;
+    }
+
+    @Override
+    public String convertPersistentToActualValue(String expr, IDataType<?> type) {
+        // nothing special needed for titan 0, value is stored as persistent
+        // value
+        return expr;
     }
 }

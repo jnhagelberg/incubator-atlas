@@ -54,9 +54,9 @@ public interface AtlasElement {
      * @throws IllegalStateException if the property is multi-valued in the graph schema.
      */
     <T> T getProperty(String propertyName, Class<T> clazz);
-    
-    
-    
+
+
+
     /**
      * Gets the value of a multiplicity one property whose value is a String list.
      * The lists of super types and traits are stored this way.  A separate method

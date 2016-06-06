@@ -29,7 +29,7 @@ import com.tinkerpop.blueprints.Direction;
  * Factory that serves up instances of Titan/Tinkerpop classes that correspond to
  * graph database abstraction layer/Atlas classes.
  */
-public class TitanObjectFactory {
+public final class TitanObjectFactory {
 
     private TitanObjectFactory() {
 
@@ -37,7 +37,7 @@ public class TitanObjectFactory {
 
     /**
      * Retrieves the titan direction corresponding to the given
-     * AtlasEdgeDirection
+     * AtlasEdgeDirection.
      *
      * @param dir
      * @return
@@ -54,7 +54,7 @@ public class TitanObjectFactory {
         default:
             throw new RuntimeException("Unrecognized direction: " + dir);
         }
-     }
+    }
 
 
     /**

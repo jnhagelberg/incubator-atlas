@@ -34,6 +34,7 @@ import org.apache.atlas.typesystem.persistence.Id
 import org.apache.atlas.typesystem.types._
 import org.apache.atlas.typesystem.types.DataTypes._
 import org.apache.atlas.repository.graphdb.GremlinVersion
+import org.apache.atlas.repository.graphdb.AtlasGraph
 
 /**
  * Represents the Bridge between the QueryProcessor and the Graph Persistence scheme used.
@@ -47,6 +48,7 @@ import org.apache.atlas.repository.graphdb.GremlinVersion
 trait GraphPersistenceStrategies {
 
     def getSupportedGremlinVersion() : GremlinVersion
+    def convertPersistentToActualValue(expr: String, t: IDataType[_]) : String
 
     /**
      * Name of attribute used to store typeName in vertex
@@ -251,12 +253,21 @@ trait GraphPersistenceStrategies {
     }
 }
 
-abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
+case class GraphPersistenceStrategy1[V,E](g: AtlasGraph[V,E]) extends GraphPersistenceStrategies {
 
     val typeAttributeName = "typeName"
     val superTypeAttributeName = "superTypeNames"
     val idAttributeName = "guid"
 
+    override def getSupportedGremlinVersion() : GremlinVersion =  {
+        return g.getSupportedGremlinVersion();
+    }
+    
+    override def convertPersistentToActualValue(expr: String, t: IDataType[_]) : String = {
+        return g.convertPersistentToActualValue(expr, t);
+    }  
+
+    
     def edgeLabel(dataType: IDataType[_], aInfo: AttributeInfo) = s"__${dataType.getName}.${aInfo.name}"
 
     def edgeLabel(propertyName: String) = s"__${propertyName}"
@@ -435,20 +446,6 @@ abstract class GraphPersistenceStrategy1 extends GraphPersistenceStrategies {
             case _ =>
                 throw new UnsupportedOperationException(s"load for ${attributeInfo.dataType()} not supported")
         }
-    }
-}
-
-object Gremlin2GraphPersistenceStrategy1 extends GraphPersistenceStrategy1 {
-
-    override def getSupportedGremlinVersion() : GremlinVersion =  {
-        return GremlinVersion.TWO;
-    }
-}
-
-object Gremlin3GraphPersistenceStrategy1 extends GraphPersistenceStrategy1 {
-
-    override def getSupportedGremlinVersion() : GremlinVersion =  {
-        return GremlinVersion.THREE;
     }
 }
 

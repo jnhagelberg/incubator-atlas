@@ -19,8 +19,10 @@
 define(['require',
     'backbone',
     'hbs!tmpl/tag/TagDetailTableLayoutView_tmpl',
-    'utils/CommonViewFunction'
-], function(require, Backbone, TagDetailTableLayoutView_tmpl, CommonViewFunction) {
+    'utils/CommonViewFunction',
+    'utils/Utils',
+    'collection/VTagList'
+], function(require, Backbone, TagDetailTableLayoutView_tmpl, CommonViewFunction, Utils, VTagList) {
     'use strict';
 
     var TagDetailTableLayoutView = Backbone.Marionette.LayoutView.extend(
@@ -31,7 +33,9 @@ define(['require',
             template: TagDetailTableLayoutView_tmpl,
 
             /** Layout sub regions */
-            regions: {},
+            regions: {
+                RTagTermTableLayoutView: "#r_tagTermTableLayoutView"
+            },
 
             /** ui selector cache */
             ui: {
@@ -51,46 +55,110 @@ define(['require',
                 return events;
             },
             /**
-             * intialize a new EntityDetailTableLayoutView Layout
+             * intialize a new TagDetailTableLayoutView Layout
              * @constructs
              */
             initialize: function(options) {
-                _.extend(this, _.pick(options, 'globalVent', 'collection', 'guid'));
+                _.extend(this, _.pick(options, 'globalVent', 'collection', 'guid', 'term'));
                 this.collectionObject = this.collection.toJSON();
-
+                this.tagTermCollection = new VTagList();
+                var tagorterm = _.toArray(this.collectionObject[0].traits),
+                    tagTermList = [],
+                    that = this;
+                _.each(tagorterm, function(object) {
+                    if (that.term) {
+                        var checkTagOrTerm = Utils.checkTagOrTerm(object.typeName);
+                        if (checkTagOrTerm.term) {
+                            tagTermList.push(object);
+                        }
+                    } else {
+                        var checkTagOrTerm = Utils.checkTagOrTerm(object.typeName);
+                        if (!checkTagOrTerm.term) {
+                            tagTermList.push(object);
+                        }
+                    }
+                });
+                this.tagTermCollection.set(tagTermList);
+                this.commonTableOptions = {
+                    collection: this.tagTermCollection,
+                    includeFilter: false,
+                    includePagination: true,
+                    includePageSize: false,
+                    includeFooterRecords: true,
+                    gridOpts: {
+                        className: "table table-hover backgrid table-quickMenu",
+                        emptyText: 'No records found!'
+                    },
+                    filterOpts: {},
+                    paginatorOpts: {}
+                };
             },
             bindEvents: function() {},
             onRender: function() {
-                this.tagTableGenerate();
+                this.renderTableLayoutView();
             },
-            tagTableGenerate: function() {
-                var that = this,
-                    table = "",
-                    valueObject = this.collectionObject[0].traits;
-                if (_.isEmpty(valueObject)) {
-                    this.$(".noTags").show();
-                } else {
-                    this.$(".noTags").hide();
-                    _.keys(valueObject).map(function(key) {
-                        var keyValue = valueObject[key];
-                        var tagValue = 'NA';
-                        if (_.isObject(keyValue)) {
-                            //tagValue = "";
-                            if (!_.isEmpty(keyValue.values)) {
-                                var stringArr = [];
-                                tagValue = "";
-                                _.each(keyValue.values, function(val, key) {
+            renderTableLayoutView: function() {
+                var that = this;
+                require(['utils/TableLayout'], function(TableLayout) {
+                    var cols = new Backgrid.Columns(that.getSchemaTableColumns());
+                    that.RTagTermTableLayoutView.show(new TableLayout(_.extend({}, that.commonTableOptions, {
+                        globalVent: that.globalVent,
+                        columns: cols
+                    })));
+                });
+            },
+            getSchemaTableColumns: function() {
+                var that = this;
+                var col = {};
 
-                                    var attrName = "<span>" + key + ":" + val + "</span>";
-                                    stringArr.push(attrName);
-                                });
-                                tagValue += stringArr.join(", ");
-                            }
-                            table += '<tr><td>' + keyValue.typeName + '</td><td>' + tagValue + '</td><td>' + '<a href="javascript:void(0)"><i class="fa fa-trash" data-id="delete" data-name="' + keyValue.typeName + '"></i></a></tr>';
-                        } else {}
-                    });
-                    that.ui.detailValue.append(table);
-                }
+                return this.tagTermCollection.constructor.getTableCols({
+                        TagorTerm: {
+                            label: (this.term) ? "Terms" : "Tags",
+                            cell: "String",
+                            editable: false,
+                            sortable: false,
+                            formatter: _.extend({}, Backgrid.CellFormatter.prototype, {
+                                fromRaw: function(rawValue, model) {
+                                    return model.get('typeName');
+                                }
+                            })
+                        },
+                        Attributes: {
+                            label: "Attributes",
+                            cell: "html",
+                            editable: false,
+                            sortable: false,
+                            formatter: _.extend({}, Backgrid.CellFormatter.prototype, {
+                                fromRaw: function(rawValue, model) {
+                                    var values = model.get('values'),
+                                        tagValue = 'NA';
+                                    if (!_.isEmpty(values)) {
+                                        var stringArr = [];
+                                        tagValue = "";
+                                        _.each(values, function(val, key) {
+                                            var attrName = "<span>" + key + ":" + val + "</span>";
+                                            stringArr.push(attrName);
+                                        });
+                                        tagValue += stringArr.join(", ");
+                                    }
+                                    return tagValue;
+                                }
+                            })
+                        },
+                        tool: {
+                            label: "Tool",
+                            cell: "html",
+                            editable: false,
+                            sortable: false,
+                            formatter: _.extend({}, Backgrid.CellFormatter.prototype, {
+                                fromRaw: function(rawValue, model) {
+                                    return '<a href="javascript:void(0)"><i class="fa fa-trash" data-id="delete" data-name="' + model.get('typeName') + '"></i></a>'
+                                }
+                            })
+                        },
+
+                    },
+                    this.tagTermCollection);
             },
             addModalView: function(e) {
                 var that = this;

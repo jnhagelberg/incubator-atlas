@@ -30,7 +30,7 @@ object QueryProcessor {
     GremlinQueryResult = {
         var strategy = gP;
         if(strategy == null) {
-            strategy = if (g.getSupportedGremlinVersion() == GremlinVersion.TWO) Gremlin2GraphPersistenceStrategy1 else Gremlin3GraphPersistenceStrategy1;
+            strategy = GraphPersistenceStrategy1(g);
         }
         val e1 = validate(e)
         val q = new GremlinTranslator(e1, strategy).translate()

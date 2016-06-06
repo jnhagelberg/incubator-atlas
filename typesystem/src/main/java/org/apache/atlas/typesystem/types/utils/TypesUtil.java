@@ -104,6 +104,35 @@ public class TypesUtil {
                 JavaConversions.asScalaBuffer(traits), JavaConversions.asScalaBuffer(classes));
     }
 
+    public static TypesDef combineTypesDefs(TypesDef first, TypesDef second) {
+
+    	 ImmutableList<EnumTypeDefinition> enumTypes =
+    			 ImmutableList.<EnumTypeDefinition>builder()
+    			 .addAll(first.enumTypesAsJavaList())
+    			 .addAll(second.enumTypesAsJavaList())
+    			 .build();
+
+    	 ImmutableList<HierarchicalTypeDefinition<TraitType>> traitTypes =
+    			 ImmutableList.<HierarchicalTypeDefinition<TraitType>>builder()
+    			 .addAll(first.traitTypesAsJavaList())
+    			 .addAll(second.traitTypesAsJavaList())
+    			 .build();
+
+    	 ImmutableList<StructTypeDefinition> structTypes =
+    			 ImmutableList.<StructTypeDefinition>builder()
+    			 .addAll(first.structTypesAsJavaList())
+    			 .addAll(second.structTypesAsJavaList())
+    			 .build();
+
+    	 ImmutableList<HierarchicalTypeDefinition<ClassType>> classTypes =
+    			 ImmutableList.<HierarchicalTypeDefinition<ClassType>>builder()
+    			 .addAll(first.classTypesAsJavaList())
+    			 .addAll(second.classTypesAsJavaList())
+    			 .build();
+
+    	 return getTypesDef(enumTypes, structTypes, traitTypes, classTypes);
+    }
+
     private static final TypeSystem ts = TypeSystem.getInstance();
 
     public static AttributeInfo newAttributeInfo(String attribute, IDataType type) {

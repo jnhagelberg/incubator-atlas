@@ -32,7 +32,7 @@ import org.testng.annotations.Test;
 public class TitanGraphProviderTest {
 
    private Configuration configuration;
-   private AtlasGraph<?,?> graph;
+   private AtlasGraph<?, ?> graph;
 
    @BeforeTest
    public void setUp() throws AtlasException {

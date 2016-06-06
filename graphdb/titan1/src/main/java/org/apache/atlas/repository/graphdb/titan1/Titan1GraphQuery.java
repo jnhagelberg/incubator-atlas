@@ -39,14 +39,14 @@ public class Titan1GraphQuery implements AtlasGraphQuery<Titan1Vertex, Titan1Edg
     public Iterable<AtlasVertex<Titan1Vertex, Titan1Edge>> vertices() {
         Iterable it = wrapped_.vertices();
         Iterable<Vertex> result = (Iterable<Vertex>)it;
-        return new IterableAdapter<Vertex,AtlasVertex<Titan1Vertex, Titan1Edge>>(result, VertexMapper.INSTANCE);
+        return new IterableAdapter<Vertex, AtlasVertex<Titan1Vertex, Titan1Edge>>(result, VertexMapper.INSTANCE);
     }
 
     @Override
     public Iterable<AtlasEdge<Titan1Vertex, Titan1Edge>> edges() {
         Iterable it = wrapped_.edges();
         Iterable<Edge> result = (Iterable<Edge>)it;
-        return new IterableAdapter<Edge,AtlasEdge<Titan1Vertex, Titan1Edge>>(result, EdgeMapper.INSTANCE);
+        return new IterableAdapter<Edge, AtlasEdge<Titan1Vertex, Titan1Edge>>(result, EdgeMapper.INSTANCE);
     }
 
 

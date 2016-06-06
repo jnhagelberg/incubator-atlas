@@ -18,6 +18,10 @@
 
 package org.apache.atlas.repository;
 
+/**
+ * Repository constants used througout Atlas.
+ *
+ */
 public final class Constants {
 
     /**
@@ -40,11 +44,10 @@ public final class Constants {
     /**
      * Full-text for the entity for enabling full-text search.
      */
-    //weird issue in TitanDB if __ added to this property key. Not adding it for now
     public static final String ENTITY_TEXT_PROPERTY_KEY = "entityText";
 
     /**
-     * Properties for type store graph
+     * Properties for type store graph.
      */
     public static final String TYPE_CATEGORY_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "type.category";
     public static final String VERTEX_TYPE_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "type";
@@ -60,7 +63,8 @@ public final class Constants {
     public static final String STATE_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "state";
 
     public static final String TIMESTAMP_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "timestamp";
-    public static final String MODIFICATION_TIMESTAMP_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "modificationTimestamp";
+    public static final String MODIFICATION_TIMESTAMP_PROPERTY_KEY =
+            INTERNAL_PROPERTY_KEY_PREFIX + "modificationTimestamp";
 
     /**
      * search backing index name.

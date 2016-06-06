@@ -266,11 +266,11 @@ public class GraphBackedTypeStoreTest {
             Arrays.asList("Division", superTypeDef2.typeName)));
    }
 
-    private int countOutgoingEdges(AtlasVertex typeVertex, String edgeLabel) {
+    private <V,E > int countOutgoingEdges(AtlasVertex<V,E> typeVertex, String edgeLabel) {
 
-        Iterable<AtlasEdge> outGoingEdgesByLabel = GraphHelper.getOutGoingEdgesByLabel(typeVertex, edgeLabel);
+        Iterable<AtlasEdge<V,E>> outGoingEdgesByLabel = GraphHelper.getOutGoingEdgesByLabel(typeVertex, edgeLabel);
         int edgeCount = 0;
-        for (AtlasEdge edge : outGoingEdgesByLabel) {
+        for (AtlasEdge<V,E> edge : outGoingEdgesByLabel) {
             edgeCount++;
         }
         return edgeCount;

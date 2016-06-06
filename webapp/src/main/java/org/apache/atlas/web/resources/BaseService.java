@@ -18,20 +18,30 @@
 
 package org.apache.atlas.web.resources;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-import org.apache.atlas.catalog.*;
-import org.apache.atlas.catalog.exception.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.ws.rs.core.Context;
-import javax.ws.rs.core.UriInfo;
-import javax.xml.bind.annotation.XmlRootElement;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.Collection;
 import java.util.Map;
+
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.annotation.XmlRootElement;
+
+import org.apache.atlas.catalog.JsonSerializer;
+import org.apache.atlas.catalog.Request;
+import org.apache.atlas.catalog.ResourceProvider;
+import org.apache.atlas.catalog.Result;
+import org.apache.atlas.catalog.exception.CatalogException;
+import org.apache.atlas.catalog.exception.CatalogRuntimeException;
+import org.apache.atlas.catalog.exception.InvalidPayloadException;
+import org.apache.atlas.catalog.exception.InvalidQueryException;
+import org.apache.atlas.catalog.exception.ResourceNotFoundException;
+import org.apache.atlas.repository.graph.AtlasGraphProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 /**
  * Base class for all v1 API services.
@@ -39,10 +49,12 @@ import java.util.Map;
 public abstract class BaseService {
     private static final Gson gson = new Gson();
     private final Logger LOG = LoggerFactory.getLogger(getClass());
+    private final static JsonSerializer serializer = new JsonSerializer();
 
     protected Result getResource(ResourceProvider provider, Request request)
             throws ResourceNotFoundException {
 
+        initializeGraphTransaction();
         try {
             return provider.getResourceById(request);
         } catch (RuntimeException e) {
@@ -53,6 +65,7 @@ public abstract class BaseService {
     protected Result getResources(ResourceProvider provider, Request request)
             throws ResourceNotFoundException, InvalidQueryException {
 
+        initializeGraphTransaction();
         try {
             return provider.getResources(request);
         } catch (RuntimeException e) {
@@ -61,6 +74,7 @@ public abstract class BaseService {
     }
 
     protected void createResource(ResourceProvider provider, Request request) throws CatalogException {
+        initializeGraphTransaction();
         try {
             provider.createResource(request);
         } catch (RuntimeException e) {
@@ -68,8 +82,18 @@ public abstract class BaseService {
         }
     }
 
-    protected Collection<String> createResources(ResourceProvider provider, Request request) throws CatalogException {
+    protected void deleteResource(ResourceProvider provider, Request request) throws CatalogException {
+        initializeGraphTransaction();
+        try {
+            provider.deleteResourceById(request);
 
+        } catch (RuntimeException e) {
+            throw wrapRuntimeException(e);
+        }
+    }
+
+    protected Collection<String> createResources(ResourceProvider provider, Request request) throws CatalogException {
+        initializeGraphTransaction();
         try {
             return provider.createResources(request);
         } catch (RuntimeException e) {
@@ -96,16 +120,26 @@ public abstract class BaseService {
         return properties;
     }
 
-    private RuntimeException wrapRuntimeException(RuntimeException e) {
-        return e instanceof CatalogRuntimeException ? e : new CatalogRuntimeException(e);
-    }
-
     protected String decode(String s) throws CatalogException {
         try {
             return s == null ? null : URLDecoder.decode(s, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             throw new CatalogException("Unable to decode URL: " + e.getMessage(), 500);
         }
+    }
+
+    protected JsonSerializer getSerializer() {
+        return serializer;
+    }
+
+    //todo: abstract via AtlasTypeSystem
+    // ensure that the thread wasn't re-pooled with an existing transaction
+    protected void initializeGraphTransaction() {
+        AtlasGraphProvider.getGraphInstance().rollback();
+    }
+
+    private RuntimeException wrapRuntimeException(RuntimeException e) {
+        return e instanceof CatalogRuntimeException ? e : new CatalogRuntimeException(e);
     }
 
     @XmlRootElement

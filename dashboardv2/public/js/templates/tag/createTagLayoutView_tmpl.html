@@ -17,11 +17,12 @@
 <form name="tagDefinitionform" class="css-form">
     <!-- <h4 style="margin-bottom:30px"></h4> -->
     <div class="form-group">
-        <input class="form-control row-margin-bottom" data-id="tagName" placeholder="Create tag">
+        <input class="form-control row-margin-bottom" data-id="tagName" placeholder="Name(required)" autofocus>
         </input>
-          <input class="form-control row-margin-bottom" data-id="description" placeholder="Description">
+        <input class="form-control row-margin-bottom" data-id="description" placeholder="Description">
         </input>
-        <span class="row-margin-bottom">Parent Tag</span>
-        <select class="form-control tagList" data-id="parentTag"  multiple="multiple"></select>
+        <span class="row-margin-bottom">Select tags to inherit attributes(optional)</span>
+        <p class="attributeText">Attributes define additional properties for the tag</p>
+        <select class="form-control tagList" data-id="parentTag" multiple="multiple"></select>
     </div>
 </form>
