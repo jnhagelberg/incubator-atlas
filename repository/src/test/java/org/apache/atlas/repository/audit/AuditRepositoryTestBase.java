@@ -19,6 +19,7 @@
 package org.apache.atlas.repository.audit;
 
 import org.apache.atlas.EntityAuditEvent;
+import org.apache.atlas.typesystem.Referenceable;
 import org.apache.commons.lang.RandomStringUtils;
 import org.testng.annotations.Test;
 
@@ -43,7 +44,7 @@ public class AuditRepositoryTestBase {
         }
 
         EntityAuditEvent event = new EntityAuditEvent(rand(), System.currentTimeMillis(), "u1",
-                EntityAuditEvent.EntityAuditAction.ENTITY_CREATE, "d1");
+                EntityAuditEvent.EntityAuditAction.ENTITY_CREATE, "d1", new Referenceable(rand()));
 
         eventRepository.putEvents(event);
 
@@ -63,17 +64,18 @@ public class AuditRepositoryTestBase {
         String id2 = "id2" + rand();
         String id3 = "id3" + rand();
         long ts = System.currentTimeMillis();
+        Referenceable entity = new Referenceable(rand());
         List<EntityAuditEvent> expectedEvents = new ArrayList<>(3);
         for (int i = 0; i < 3; i++) {
             //Add events for both ids
             EntityAuditEvent event = new EntityAuditEvent(id2, ts - i, "user" + i,
-                            EntityAuditEvent.EntityAuditAction.ENTITY_UPDATE, "details" + i);
+                            EntityAuditEvent.EntityAuditAction.ENTITY_UPDATE, "details" + i, entity);
             eventRepository.putEvents(event);
             expectedEvents.add(event);
             eventRepository.putEvents(new EntityAuditEvent(id1, ts - i, "user" + i,
-                    EntityAuditEvent.EntityAuditAction.TAG_DELETE, "details" + i));
+                    EntityAuditEvent.EntityAuditAction.TAG_DELETE, "details" + i, entity));
             eventRepository.putEvents(new EntityAuditEvent(id3, ts - i, "user" + i,
-                    EntityAuditEvent.EntityAuditAction.TAG_ADD, "details" + i));
+                    EntityAuditEvent.EntityAuditAction.TAG_ADD, "details" + i, entity));
         }
 
         //Use ts for which there is no event - ts + 2

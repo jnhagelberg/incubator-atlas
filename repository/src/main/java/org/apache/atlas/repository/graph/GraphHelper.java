@@ -114,6 +114,8 @@ public final class GraphHelper {
 
         // add timestamp information
         setProperty(vertexWithoutIdentity, Constants.TIMESTAMP_PROPERTY_KEY, RequestContext.get().getRequestTime());
+        setProperty(vertexWithoutIdentity, Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY,
+                RequestContext.get().getRequestTime());
 
         return vertexWithoutIdentity;
     }
@@ -135,10 +137,32 @@ public final class GraphHelper {
         Iterable<AtlasEdge<V,E>> edges = inVertex.getEdges(AtlasEdgeDirection.IN, edgeLabel);
         for (AtlasEdge<V,E> edge : edges) {
             if (edge.getOutVertex().getId().toString().equals(outVertex.getId().toString())) {
+                Id.EntityState edgeState = getState(edge);
+                if (edgeState == null || edgeState == Id.EntityState.ACTIVE) {
                 return edge;
             }
         }
+        }
         return addEdge(outVertex, inVertex, edgeLabel);
+    }
+
+
+    public AtlasEdge getEdgeByEdgeId(AtlasVertex outVertex, String edgeLabel, String edgeId) {
+        if (edgeId == null) {
+            return null;
+        }
+        return graph.getEdge(edgeId);
+
+        //TODO get edge id is expensive. Use this logic. But doesn't work for now
+        /**
+        Iterable<Edge> edges = outVertex.getEdges(Direction.OUT, edgeLabel);
+        for (Edge edge : edges) {
+            if (edge.getId().toString().equals(edgeId)) {
+                return edge;
+            }
+        }
+        return null;
+         **/
     }
 
      /**
@@ -189,16 +213,14 @@ public final class GraphHelper {
      * @return
      */
     public static <V,E> AtlasEdge<V,E> getEdgeForLabel(AtlasVertex<V,E> vertex, String edgeLabel) {
-        String vertexState = vertex.getProperty(Constants.STATE_PROPERTY_KEY, String.class);
-
         Iterable<AtlasEdge<V,E>> edges = GraphHelper.getOutGoingEdgesByLabel(vertex, edgeLabel);
         AtlasEdge<V,E> latestDeletedEdge = null;
         if(edges != null) {
 
             long latestDeletedEdgeTime = Long.MIN_VALUE;
             for(AtlasEdge<V,E> edge : edges) {
-                String edgeState = edge.getProperty(Constants.STATE_PROPERTY_KEY, String.class);
-                if (edgeState == null || Id.EntityState.ACTIVE.name().equals(edgeState)) {
+                Id.EntityState edgeState = getState(edge);
+                if (edgeState == null || edgeState == Id.EntityState.ACTIVE) {
                     LOG.debug("Found {}", string(edge));
                     return edge;
                 } else {
@@ -212,21 +234,10 @@ public final class GraphHelper {
         }
 
         //If the vertex is deleted, return latest deleted edge
-        if (Id.EntityState.DELETED.equals(vertexState)) {
-            LOG.debug("Found {}", string(latestDeletedEdge));
-            return latestDeletedEdge;
-        }
-
-        return null;
+        LOG.debug("Found {}", latestDeletedEdge == null ? "null" : string(latestDeletedEdge));
+        return latestDeletedEdge;
     }
 
-    public <V,E> AtlasEdge<V,E> getEdgeById(String edgeId) {
-        if(edgeId != null) {
-            AtlasGraph<V,E> graph = getGraph();
-            return graph.getEdge(edgeId);
-        }
-        return null;
-    }
 
     public static String vertexString(final AtlasVertex<?,?> vertex) {
         StringBuilder properties = new StringBuilder();
@@ -371,6 +382,15 @@ public final class GraphHelper {
 
     public static String getTypeName(AtlasVertex<?,?> instanceVertex) {
         return instanceVertex.getProperty(Constants.ENTITY_TYPE_PROPERTY_KEY, String.class);
+    }
+
+    public static Id.EntityState getState(AtlasElement element) {
+        String state = getStateAsString(element);
+        return state == null ? null : Id.EntityState.valueOf(state);
+    }
+
+    public static String getStateAsString(AtlasElement element) {
+        return element.getProperty(Constants.STATE_PROPERTY_KEY, String.class);
     }
 
     /**

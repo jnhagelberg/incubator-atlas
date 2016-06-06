@@ -33,24 +33,34 @@ import com.google.inject.Inject;
 public class SoftDeleteHandler extends DeleteHandler {
     @Inject
     public SoftDeleteHandler(TypeSystem typeSystem) {
-        super(typeSystem, false);
+        super(typeSystem, false, true);
     }
 
     @Override
-    protected void _deleteVertex(AtlasVertex<?,?> instanceVertex) {
-        Id.EntityState state = Id.EntityState.valueOf(instanceVertex.getProperty(STATE_PROPERTY_KEY, String.class));
-        if (state != Id.EntityState.DELETED) {
-            GraphHelper.setProperty(instanceVertex, STATE_PROPERTY_KEY, Id.EntityState.DELETED.name());
-            GraphHelper.setProperty(instanceVertex, MODIFICATION_TIMESTAMP_PROPERTY_KEY, RequestContext.get().getRequestTime());
+    protected void _deleteVertex(AtlasVertex<?,?> instanceVertex, boolean force) {
+        if (force) {
+            graphHelper.removeVertex(instanceVertex);
+        } else {
+            Id.EntityState state = GraphHelper.getState(instanceVertex);
+            if (state != Id.EntityState.DELETED) {
+                GraphHelper.setProperty(instanceVertex, STATE_PROPERTY_KEY, Id.EntityState.DELETED.name());
+                GraphHelper.setProperty(instanceVertex, MODIFICATION_TIMESTAMP_PROPERTY_KEY,
+                        RequestContext.get().getRequestTime());
+            }
         }
     }
 
     @Override
-    protected void deleteEdge(AtlasEdge<?,?> edge) throws AtlasException {
-        Id.EntityState state = Id.EntityState.valueOf(edge.getProperty(STATE_PROPERTY_KEY, String.class));
-        if (state != Id.EntityState.DELETED) {
-            GraphHelper.setProperty(edge, STATE_PROPERTY_KEY, Id.EntityState.DELETED.name());
-            GraphHelper.setProperty(edge, MODIFICATION_TIMESTAMP_PROPERTY_KEY, RequestContext.get().getRequestTime());
+    protected void deleteEdge(AtlasEdge<?,?> edge, boolean force) throws AtlasException {
+        if (force) {
+            graphHelper.removeEdge(edge);
+        } else {
+            Id.EntityState state = GraphHelper.getState(edge);
+            if (state != Id.EntityState.DELETED) {
+                GraphHelper.setProperty(edge, STATE_PROPERTY_KEY, Id.EntityState.DELETED.name());
+                GraphHelper
+                        .setProperty(edge, MODIFICATION_TIMESTAMP_PROPERTY_KEY, RequestContext.get().getRequestTime());
+            }
         }
     }
 }

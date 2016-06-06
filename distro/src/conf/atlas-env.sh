@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
@@ -55,3 +56,9 @@
 
 # Where do you want to expand the war file. By Default it is in /server/webapp dir under the base install dir.
 #export ATLAS_EXPANDED_WEBAPP_DIR=
+
+# indicates whether or not a local instance of HBase should be started for Atlas
+export MANAGE_LOCAL_HBASE=${hbase.embedded}
+
+# indicates whether or not a local instance of Solr should be started for Atlas
+export MANAGE_LOCAL_SOLR=${solr.embedded}

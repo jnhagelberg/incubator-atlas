@@ -27,20 +27,18 @@ import com.google.inject.Inject;
 
 public class HardDeleteHandler extends DeleteHandler {
 
-    private static final GraphHelper graphHelper = GraphHelper.getInstance();
-
     @Inject
     public HardDeleteHandler(TypeSystem typeSystem) {
-        super(typeSystem, true);
+        super(typeSystem, true, false);
     }
 
     @Override
-    protected void _deleteVertex(AtlasVertex<?,?> instanceVertex) {
+    protected void _deleteVertex(AtlasVertex<?,?> instanceVertex, boolean force) {
         graphHelper.removeVertex(instanceVertex);
     }
 
     @Override
-    protected void deleteEdge(AtlasEdge<?,?> edge) throws AtlasException {
+    protected void deleteEdge(AtlasEdge<?,?> edge, boolean force) throws AtlasException {
         graphHelper.removeEdge(edge);
     }
 }

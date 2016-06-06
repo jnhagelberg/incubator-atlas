@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import org.apache.atlas.catalog.*;
 import org.apache.atlas.catalog.exception.*;
+import org.apache.atlas.repository.graph.TitanGraphProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,10 +40,12 @@ import java.util.Map;
 public abstract class BaseService {
     private static final Gson gson = new Gson();
     private final Logger LOG = LoggerFactory.getLogger(getClass());
+    private final static JsonSerializer serializer = new JsonSerializer();
 
     protected Result getResource(ResourceProvider provider, Request request)
             throws ResourceNotFoundException {
 
+        initializeGraphTransaction();
         try {
             return provider.getResourceById(request);
         } catch (RuntimeException e) {
@@ -53,6 +56,7 @@ public abstract class BaseService {
     protected Result getResources(ResourceProvider provider, Request request)
             throws ResourceNotFoundException, InvalidQueryException {
 
+        initializeGraphTransaction();
         try {
             return provider.getResources(request);
         } catch (RuntimeException e) {
@@ -61,6 +65,7 @@ public abstract class BaseService {
     }
 
     protected void createResource(ResourceProvider provider, Request request) throws CatalogException {
+        initializeGraphTransaction();
         try {
             provider.createResource(request);
         } catch (RuntimeException e) {
@@ -68,8 +73,18 @@ public abstract class BaseService {
         }
     }
 
-    protected Collection<String> createResources(ResourceProvider provider, Request request) throws CatalogException {
+    protected void deleteResource(ResourceProvider provider, Request request) throws CatalogException {
+        initializeGraphTransaction();
+        try {
+            provider.deleteResourceById(request);
 
+        } catch (RuntimeException e) {
+            throw wrapRuntimeException(e);
+        }
+    }
+
+    protected Collection<String> createResources(ResourceProvider provider, Request request) throws CatalogException {
+        initializeGraphTransaction();
         try {
             return provider.createResources(request);
         } catch (RuntimeException e) {
@@ -96,16 +111,26 @@ public abstract class BaseService {
         return properties;
     }
 
-    private RuntimeException wrapRuntimeException(RuntimeException e) {
-        return e instanceof CatalogRuntimeException ? e : new CatalogRuntimeException(e);
-    }
-
     protected String decode(String s) throws CatalogException {
         try {
             return s == null ? null : URLDecoder.decode(s, "UTF-8");
         } catch (UnsupportedEncodingException e) {
             throw new CatalogException("Unable to decode URL: " + e.getMessage(), 500);
         }
+    }
+
+    protected JsonSerializer getSerializer() {
+        return serializer;
+    }
+
+    //todo: abstract via AtlasTypeSystem
+    // ensure that the thread wasn't re-pooled with an existing transaction
+    protected void initializeGraphTransaction() {
+        TitanGraphProvider.getGraphInstance().rollback();
+    }
+
+    private RuntimeException wrapRuntimeException(RuntimeException e) {
+        return e instanceof CatalogRuntimeException ? e : new CatalogRuntimeException(e);
     }
 
     @XmlRootElement
