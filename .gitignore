@@ -19,7 +19,7 @@ target
 dependency-reduced-pom.xml
 core*.dmp
 .cache-tests
-
+*.releaseBackup
 
 # IntelliJ
 *.iml
