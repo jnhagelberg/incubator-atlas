@@ -29,15 +29,16 @@ import org.testng.annotations.Test;
 @Test
 public class Titan0DatabaseValidationTest {
 
-   private Configuration configuration;
-   private AtlasGraph<?,?> graph;
+    private Configuration configuration;
+    private AtlasGraph<?, ?> graph;
 
-   @BeforeTest
-   public void setUp() throws AtlasException {
-       //First get Instance
-       graph = new Titan0Graph();
-       configuration = ApplicationProperties.getSubsetConfiguration(ApplicationProperties.get(), Titan0Database.GRAPH_PREFIX);
-   }
+    @BeforeTest
+    public void setUp() throws AtlasException {
+        // First get Instance
+        graph = new Titan0Graph();
+        configuration = ApplicationProperties.getSubsetConfiguration(ApplicationProperties.get(),
+                Titan0Database.GRAPH_PREFIX);
+    }
 
     @AfterClass
     public void tearDown() throws Exception {
@@ -54,21 +55,23 @@ public class Titan0DatabaseValidationTest {
         }
     }
 
-   @Test
-   public void testValidate() throws AtlasException {
-       try {
-           Titan0Database.validateIndexBackend(configuration);
-       } catch(Exception e){
-           Assert.fail("Unexpected exception ", e);
-       }
+    @Test
+    public void testValidate() throws AtlasException {
+        try {
+            Titan0Database.validateIndexBackend(configuration);
+        } catch (Exception e) {
+            Assert.fail("Unexpected exception ", e);
+        }
 
-       //Change backend
-       configuration.setProperty(Titan0Database.INDEX_BACKEND_CONF, Titan0Database.INDEX_BACKEND_LUCENE);
-       try {
-           Titan0Database.validateIndexBackend(configuration);
-           Assert.fail("Expected exception");
-       } catch(Exception e){
-           Assert.assertEquals(e.getMessage(), "Configured Index Backend lucene differs from earlier configured Index Backend elasticsearch. Aborting!");
-       }
-   }
+        // Change backend
+        configuration.setProperty(Titan0Database.INDEX_BACKEND_CONF, Titan0Database.INDEX_BACKEND_LUCENE);
+        try {
+            Titan0Database.validateIndexBackend(configuration);
+            Assert.fail("Expected exception");
+        } catch (Exception e) {
+            Assert.assertEquals(e.getMessage(),
+                    "Configured Index Backend lucene differs from earlier configured "
+                    + "Index Backend elasticsearch. Aborting!");
+        }
+    }
 }

@@ -31,62 +31,69 @@ import com.tinkerpop.blueprints.util.io.graphson.GraphSONMode;
 import com.tinkerpop.blueprints.util.io.graphson.GraphSONUtility;
 
 /**
- * Titan 0.5.4 implementation of AtlasElement
+ * Titan 0.5.4 implementation of AtlasElement.
  */
 public class Titan0Element<T extends Element> implements AtlasElement {
 
-    protected T element_;
+    protected T wrappedElement;
 
     public Titan0Element(T element) {
-        element_ = element;
+        wrappedElement = element;
     }
 
     @Override
     public Object getId() {
-        return element_.getId();
+        return wrappedElement.getId();
     }
 
     @Override
     public Set<String> getPropertyKeys() {
-        return element_.getPropertyKeys();
+        return wrappedElement.getPropertyKeys();
     }
 
     @Override
-    public <T> void setProperty(String propertyName, T value) {
+    public <U> void setProperty(String propertyName, U value) {
         try {
-            element_.setProperty(propertyName, value);
-        }
-        catch(SchemaViolationException e) {
+            wrappedElement.setProperty(propertyName, value);
+        } catch (SchemaViolationException e) {
             throw new AtlasSchemaViolationException(e);
         }
     }
-    
+
     @Override
-    public <T> T getProperty(String propertyName, Class<T> clazz) {
-        return element_.getProperty(propertyName);
+    public <U> U getProperty(String propertyName, Class<U> clazz) {
+        return wrappedElement.getProperty(propertyName);
     }
 
     @Override
     public void removeProperty(String propertyName) {
-        element_.removeProperty(propertyName);
+        wrappedElement.removeProperty(propertyName);
 
     }
 
     @Override
     public JSONObject toJson(Set<String> propertyKeys) throws JSONException {
-        return GraphSONUtility.jsonFromElement(element_, propertyKeys, GraphSONMode.NORMAL);
+        return GraphSONUtility.jsonFromElement(wrappedElement, propertyKeys, GraphSONMode.NORMAL);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.atlas.repository.graphdb.AtlasElement#getListProperty(java.lang.String)
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.apache.atlas.repository.graphdb.AtlasElement#getListProperty(java.
+     * lang.String)
      */
     @Override
     public List<String> getListProperty(String propertyName) {
         return getProperty(propertyName, List.class);
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.atlas.repository.graphdb.AtlasElement#setListProperty(java.lang.String, java.util.List)
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.apache.atlas.repository.graphdb.AtlasElement#setListProperty(java.
+     * lang.String, java.util.List)
      */
     @Override
     public void setListProperty(String propertyName, List<String> values) {
@@ -94,29 +101,31 @@ public class Titan0Element<T extends Element> implements AtlasElement {
 
     }
 
-    //not in interface
+    // not in interface
     public T getWrappedElement() {
-        return element_;
+        return wrappedElement;
     }
 
     @Override
     public int hashCode() {
         int result = 37;
-        result = 17*result + getClass().hashCode();
-        result = 17*result + getWrappedElement().hashCode();
+        result = 17 * result + getClass().hashCode();
+        result = 17 * result + getWrappedElement().hashCode();
         return result;
     }
 
     @Override
     public boolean equals(Object other) {
-        if(other.getClass() != getClass()) {
+        if (other.getClass() != getClass()) {
             return false;
         }
         Titan0Element otherElement = (Titan0Element) other;
         return getWrappedElement().equals(otherElement.getWrappedElement());
     }
 
-    /* (non-Javadoc)
+    /*
+     * (non-Javadoc)
+     *
      * @see org.apache.atlas.repository.graphdb.AtlasElement#exists()
      */
     @Override
@@ -124,8 +133,12 @@ public class Titan0Element<T extends Element> implements AtlasElement {
         return true;
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.atlas.repository.graphdb.AtlasElement#setJsonProperty(java.lang.String, java.lang.Object)
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.apache.atlas.repository.graphdb.AtlasElement#setJsonProperty(java.
+     * lang.String, java.lang.Object)
      */
     @Override
     public <T> void setJsonProperty(String propertyName, T value) {
@@ -133,11 +146,15 @@ public class Titan0Element<T extends Element> implements AtlasElement {
 
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.atlas.repository.graphdb.AtlasElement#getJsonProperty(java.lang.String)
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.apache.atlas.repository.graphdb.AtlasElement#getJsonProperty(java.
+     * lang.String)
      */
     @Override
     public <T> T getJsonProperty(String propertyName) {
-       return (T)getProperty(propertyName, String.class);
+        return (T) getProperty(propertyName, String.class);
     }
 }

@@ -29,7 +29,7 @@ import java.util.Iterator;
  * objects are lazily converted to the target type using a Mapper.
  */
 
-public class IterableAdapter<S,T> implements Iterable<T> {
+public class IterableAdapter<S, T> implements Iterable<T> {
 
     private Mapper<S, T> mapper_;
     private Iterable<S> source_;
@@ -45,6 +45,6 @@ public class IterableAdapter<S,T> implements Iterable<T> {
 
     @Override
     public Iterator<T> iterator() {
-        return new IteratorAdapter<S,T>(source_.iterator(), mapper_);
+        return new IteratorAdapter<S, T>(source_.iterator(), mapper_);
     }
 }

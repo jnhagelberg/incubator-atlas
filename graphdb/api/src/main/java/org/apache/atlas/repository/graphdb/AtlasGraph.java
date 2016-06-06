@@ -24,6 +24,8 @@ import java.util.Set;
 
 import javax.script.ScriptException;
 
+import org.apache.atlas.typesystem.types.IDataType;
+
 /**
  * Represents a graph
  *
@@ -70,7 +72,7 @@ public interface AtlasGraph<V,E> {
      * exists.  This allows the retrieval of the Edge information to be deferred
      * or in come cases avoided altogether in implementations where that might
      * be an expensive operation.
-     * 
+     *
      * @param edgeId
      * @return
      */
@@ -239,6 +241,17 @@ public interface AtlasGraph<V,E> {
      * @return
      */
     List<Object> convertPathQueryResultToList(Object rawValue);
+
+    /**
+     * This method is used in the generation of queries.  It is used to
+     * convert property values from the value that is stored in the graph
+     * to the value/type that the user expects to get back.
+     *
+     * @param expr
+     * @param type
+     * @return
+     */
+    String convertPersistentToActualValue(String expr, IDataType<?> type);
 
     /**
      * Gets the version of Gremlin that this graph uses.

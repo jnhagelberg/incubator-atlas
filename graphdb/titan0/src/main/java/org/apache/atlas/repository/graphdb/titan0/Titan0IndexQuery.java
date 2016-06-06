@@ -26,21 +26,22 @@ import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.thinkaurelius.titan.core.TitanIndexQuery;
 import com.tinkerpop.blueprints.Vertex;
+
 /**
- * Titan 0.5.4 implementation of AtlasIndexQuery
+ * Titan 0.5.4 implementation of AtlasIndexQuery.
  */
 public class Titan0IndexQuery implements AtlasIndexQuery<Titan0Vertex, Titan0Edge> {
 
-    private TitanIndexQuery query_;
+    private TitanIndexQuery wrappedIndexQuery;
     private static final IndexQueryResultMapper QUERY_RESULT_MAPPER = new IndexQueryResultMapper();
 
     public Titan0IndexQuery(TitanIndexQuery query) {
-        query_ = query;
+        wrappedIndexQuery = query;
     }
 
     @Override
     public Iterator<AtlasIndexQuery.Result<Titan0Vertex, Titan0Edge>> vertices() {
-        Iterator<TitanIndexQuery.Result<Vertex>> results = query_.vertices().iterator();
+        Iterator<TitanIndexQuery.Result<Vertex>> results = wrappedIndexQuery.vertices().iterator();
 
         return Iterators.transform(results, QUERY_RESULT_MAPPER);
     }
@@ -54,20 +55,20 @@ public class Titan0IndexQuery implements AtlasIndexQuery<Titan0Vertex, Titan0Edg
     }
 
     private static class ResultImpl implements AtlasIndexQuery.Result<Titan0Vertex, Titan0Edge> {
-        TitanIndexQuery.Result<Vertex> source_;
+        private TitanIndexQuery.Result<Vertex> wrappedResult;
 
         public ResultImpl(TitanIndexQuery.Result<Vertex> source) {
-            source_ = source;
+            wrappedResult = source;
         }
 
         @Override
         public AtlasVertex<Titan0Vertex, Titan0Edge> getVertex() {
-            return GraphDbObjectFactory.createVertex(source_.getElement());
+            return GraphDbObjectFactory.createVertex(wrappedResult.getElement());
         }
 
         @Override
         public double getScore() {
-            return source_.getScore();
+            return wrappedResult.getScore();
         }
     }
 }

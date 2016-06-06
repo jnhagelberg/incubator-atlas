@@ -27,52 +27,49 @@ import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Vertex;
 
 /**
- * Factory that serves up instances of graph database abstraction
- * layer classes that correspond to Titan/Tinkerpop classes.
+ * Factory that serves up instances of graph database abstraction layer classes
+ * that correspond to Titan/Tinkerpop classes.
  */
-public class GraphDbObjectFactory {
+public final class GraphDbObjectFactory {
 
     private GraphDbObjectFactory() {
 
     }
 
     /**
-     * Creates a Titan0Edge that corresponds to the given
-     * Gremlin Edge.
+     * Creates a Titan0Edge that corresponds to the given Gremlin Edge.
      *
      * @param source
      * @return
      */
     public static Titan0Edge createEdge(Edge source) {
 
-        if(source == null) {
+        if (source == null) {
             return null;
         }
         return new Titan0Edge(source);
     }
 
     /**
-     * Creates a Titan0GraphQuery that corresponds to the given
-     * GraphQuery.
+     * Creates a Titan0GraphQuery that corresponds to the given GraphQuery.
      *
      * @param source
      * @return
      */
     public static Titan0GraphQuery createQuery(GraphQuery query) {
 
-       return new Titan0GraphQuery(query);
+        return new Titan0GraphQuery(query);
     }
 
     /**
-     * Creates a Titan0Vertex that corresponds to the given
-     * Gremlin Vertex.
+     * Creates a Titan0Vertex that corresponds to the given Gremlin Vertex.
      *
      * @param source
      * @return
      */
     public static Titan0Vertex createVertex(Vertex source) {
 
-        if(source == null) {
+        if (source == null) {
             return null;
         }
         return new Titan0Vertex(source);
@@ -83,7 +80,7 @@ public class GraphDbObjectFactory {
      * @return
      */
     public static Titan0PropertyKey createPropertyKey(PropertyKey propertyKey) {
-        if(propertyKey == null) {
+        if (propertyKey == null) {
             return null;
         }
         return new Titan0PropertyKey(propertyKey);
@@ -94,7 +91,7 @@ public class GraphDbObjectFactory {
      * @return
      */
     public static AtlasGraphIndex createGraphIndex(TitanGraphIndex index) {
-        if(index == null) {
+        if (index == null) {
             return null;
         }
         return new Titan0GraphIndex(index);

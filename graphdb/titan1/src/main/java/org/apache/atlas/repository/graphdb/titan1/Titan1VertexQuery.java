@@ -29,13 +29,13 @@ public class Titan1VertexQuery implements AtlasVertexQuery<Titan1Vertex, Titan1E
     @Override
     public Iterable<AtlasVertex<Titan1Vertex, Titan1Edge>> vertices() {
         Iterable vertices = query_.vertices();
-        return new IterableAdapter<Vertex,AtlasVertex<Titan1Vertex, Titan1Edge>>(vertices, VertexMapper.INSTANCE);
+        return new IterableAdapter<Vertex, AtlasVertex<Titan1Vertex, Titan1Edge>>(vertices, VertexMapper.INSTANCE);
     }
 
     @Override
     public Iterable<AtlasEdge<Titan1Vertex, Titan1Edge>> edges() {
         Iterable vertices = query_.edges();
-        return new IterableAdapter<Edge,AtlasEdge<Titan1Vertex, Titan1Edge>>(vertices, EdgeMapper.INSTANCE);
+        return new IterableAdapter<Edge, AtlasEdge<Titan1Vertex, Titan1Edge>>(vertices, EdgeMapper.INSTANCE);
 
     }
 

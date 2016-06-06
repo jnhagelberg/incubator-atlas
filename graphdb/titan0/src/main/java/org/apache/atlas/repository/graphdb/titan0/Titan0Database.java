@@ -39,7 +39,7 @@ import com.thinkaurelius.titan.diskstorage.StandardIndexProvider;
 import com.thinkaurelius.titan.diskstorage.solr.Solr5Index;
 
 /**
- * Titan 0.5.4 implementation of GraphDatabase
+ * Titan 0.5.4 implementation of GraphDatabase.
  */
 public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
 
@@ -68,9 +68,11 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
     }
 
     /**
-     * Titan loads index backend name to implementation using StandardIndexProvider.ALL_MANAGER_CLASSES
-     * But StandardIndexProvider.ALL_MANAGER_CLASSES is a private static final ImmutableMap
-     * Only way to inject Solr5Index is to modify this field. So, using hacky reflection to add Sol5Index
+     * Titan loads index backend name to implementation using
+     * StandardIndexProvider.ALL_MANAGER_CLASSES But
+     * StandardIndexProvider.ALL_MANAGER_CLASSES is a private static final
+     * ImmutableMap Only way to inject Solr5Index is to modify this field. So,
+     * using hacky reflection to add Sol5Index
      */
     private static void addSolr5Index() {
         try {
@@ -82,13 +84,17 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
             modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
 
             Map<String, String> customMap = new HashMap<>(StandardIndexProvider.getAllProviderClasses());
-            customMap.put("solr", Solr5Index.class.getName()); //for consistency with Titan 1.0.0
-            customMap.put("solr5", Solr5Index.class.getName()); //for backward compatibility
+            customMap.put("solr", Solr5Index.class.getName()); // for
+                                                               // consistency
+                                                               // with Titan
+                                                               // 1.0.0
+            customMap.put("solr5", Solr5Index.class.getName()); // for backward
+                                                                // compatibility
             ImmutableMap<String, String> immap = ImmutableMap.copyOf(customMap);
             field.set(null, immap);
 
             LOG.debug("Injected solr5 index - {}", Solr5Index.class.getName());
-        } catch(Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -115,7 +121,7 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
     public static void unload() {
 
         synchronized (Titan0Database.class) {
-            if(graphInstance == null) {
+            if (graphInstance == null) {
                 return;
             }
 
@@ -131,15 +137,15 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
         String currentIndexBackend = managementSystem.get(INDEX_BACKEND_CONF);
         managementSystem.commit();
 
-        if(! equals(configuredIndexBackend, currentIndexBackend)) {
-            throw new RuntimeException("Configured Index Backend " + configuredIndexBackend + " differs from earlier configured Index Backend " + currentIndexBackend + ". Aborting!");
+        if (!equals(configuredIndexBackend, currentIndexBackend)) {
+            throw new RuntimeException("Configured Index Backend " + configuredIndexBackend
+                    + " differs from earlier configured Index Backend " + currentIndexBackend + ". Aborting!");
         }
 
     }
 
-
     private static boolean equals(Object o1, Object o2) {
-        if(o1 == null) {
+        if (o1 == null) {
             return o2 == null;
         }
         return o1.equals(o2);
@@ -147,10 +153,10 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
 
     @Override
     public AtlasGraph<Titan0Vertex, Titan0Edge> getGraph() {
-       //force graph loading up front to avoid bootstrapping
-       //issues
-       getGraphInstance();
-       return new Titan0Graph();
+        // force graph loading up front to avoid bootstrapping
+        // issues
+        getGraphInstance();
+        return new Titan0Graph();
     }
 
     @Override
@@ -162,6 +168,5 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
     public boolean isGraphLoaded() {
         return graphInstance != null;
     }
-
 
 }

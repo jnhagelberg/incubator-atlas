@@ -456,7 +456,7 @@ class GremlinTranslator(expr: Expression,
             val attrType : IDataType[_] = attrInfo.dataType;
             if(inSelect) {
                 val expr = s"${genQuery(e, inSelect)}.value($propertyName)";
-                return addTypeCast(expr, attrType);
+                return gPersistenceBehavior.convertPersistentToActualValue(expr, attrType);
                 
             }
             else {
@@ -474,32 +474,7 @@ class GremlinTranslator(expr: Expression,
                 return s"""has("${fieldGremlinExpr}", ${gPersistenceBehavior.gremlinCompOp(c)}($expr2))""";
             }
     }
-
-    def addTypeCast(expr: String, t: IDataType[_]) : String = {
-      //use "as" syntax since the value might be stored using a
-      //different representation in the underlying graph database.  This
-      //coerces the value into the type we need.
-      if(getPrimitiveTypeQualifier.isDefinedAt(t)) {
-          return """(${expr} as ${getPrimitiveTypeQualifier(t)})"""
-      }
-      else {
-        return expr;
-      }      
-    }
     
-    def getPrimitiveTypeQualifier : PartialFunction[IDataType[_],String]  = {
-
-    case t:BooleanType => "Boolean";
-    case t:ByteType => "Byte";
-    case t:DateType => "Long"; //dates are stored numerically
-    case t:DoubleType => "Double";
-    case t:FloatType => "Float";
-    case t:IntType => "Integer";
-    case t:LongType => "Long";
-    case t:ShortType => "Short";
-    case t:StringType => "String";
-}
-
     def genFullQuery(expr: Expression): String = {
         var q = genQuery(expr, false)
         if(gPersistenceBehavior.addGraphVertexPrefix(preStatements)) {

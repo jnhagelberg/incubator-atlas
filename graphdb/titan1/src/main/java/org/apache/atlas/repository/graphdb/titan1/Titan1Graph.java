@@ -23,6 +23,7 @@ import org.apache.atlas.repository.graphdb.AtlasIndexQuery;
 import org.apache.atlas.repository.graphdb.AtlasSchemaViolationException;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.repository.graphdb.GremlinVersion;
+import org.apache.atlas.typesystem.types.IDataType;
 import org.apache.atlas.utils.adapters.IteratorAdapter;
 import org.apache.tinkerpop.gremlin.groovy.jsr223.GremlinGroovyScriptEngine;
 import org.apache.tinkerpop.gremlin.groovy.jsr223.customizer.CompileStaticCustomizerProvider;
@@ -208,7 +209,7 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
 
         Object rawColumnValue = null;
         if(rowValue instanceof Map) {
-           rawColumnValue = ((Map<?,?>)rowValue).get(colName);
+           rawColumnValue = ((Map<?, ?>)rowValue).get(colName);
         }
         else {
             //when there is only one column, result does not come back as a map
@@ -285,4 +286,10 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
         return result;
 
     }
+
+	@Override
+	public String convertPersistentToActualValue(String expr, IDataType<?> type) {
+		//nothing special needed, value is stored in required type
+		return expr;
+	}
 }

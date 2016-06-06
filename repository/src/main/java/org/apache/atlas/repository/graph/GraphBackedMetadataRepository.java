@@ -351,4 +351,8 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
     private <V,E> AtlasGraph<V,E> getGraph() {
         return (AtlasGraph<V,E>)graph;
     }
+
+	public String convertPersistentToActualValue(String expr, IDataType<?> t) {
+		return graph.convertPersistentToActualValue(expr, t);
+	}
 }

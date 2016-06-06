@@ -20,6 +20,7 @@ package org.apache.atlas.services;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -175,7 +176,7 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
 
     @InterfaceAudience.Private
     private void createSuperTypes() throws AtlasException {
-    	
+
     	//create all the indices up front so that the graph database can group the
     	//index initializations together for efficiency
         HierarchicalTypeDefinition<ClassType> infraType = TypesUtil
@@ -185,13 +186,13 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
         HierarchicalTypeDefinition<ClassType> datasetType = TypesUtil
                 .createClassTypeDef(AtlasClient.DATA_SET_SUPER_TYPE, ImmutableSet.<String>of(), NAME_ATTRIBUTE,
                         DESCRIPTION_ATTRIBUTE);
-        
+
 
         HierarchicalTypeDefinition<ClassType> referenceableType = TypesUtil
                 .createClassTypeDef(AtlasClient.REFERENCEABLE_SUPER_TYPE, ImmutableSet.<String>of(),
                         TypesUtil.createUniqueRequiredAttrDef(AtlasClient.REFERENCEABLE_ATTRIBUTE_NAME,
                                 DataTypes.STRING_TYPE));
-        
+
 
         HierarchicalTypeDefinition<ClassType> processType = TypesUtil
             .createClassTypeDef(AtlasClient.PROCESS_SUPER_TYPE, ImmutableSet.<String>of(AtlasClient.REFERENCEABLE_SUPER_TYPE),
@@ -201,8 +202,8 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
                     Multiplicity.OPTIONAL, false, null),
                 new AttributeDefinition("outputs", DataTypes.arrayTypeName(AtlasClient.DATA_SET_SUPER_TYPE),
                     Multiplicity.OPTIONAL, false, null));
-        
-        
+
+
         TypeRegistrationContext context = new TypeRegistrationContext(false);
         context.addClassType(infraType);
         context.addClassType(datasetType);
@@ -210,7 +211,7 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
         context.addClassType(processType);
         context.createTypes();
     }
-    
+
 
     /**
      * Creates a new type based on the type system to enable adding
@@ -222,8 +223,8 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
     @Override
     public JSONObject createType(String typeDefinition) throws AtlasException {
     	return createOrUpdateTypes(typeDefinition, false);
-    }    
-    
+    }
+
     private JSONObject createOrUpdateTypes(String typeDefinition, boolean isUpdate) throws AtlasException {
     	TypeRegistrationContext ctx = new TypeRegistrationContext(isUpdate);
     	ctx.addType(typeDefinition);
@@ -758,30 +759,30 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
     }
 
 	private class TypeRegistrationContext {
-		
+
 		private final boolean isUpdate_;
 		private TypesDef combinedTypeDef_;
-		
-		public TypeRegistrationContext(boolean isUpdate) {    		 	         
-	         isUpdate_ = isUpdate; 	         
+
+		public TypeRegistrationContext(boolean isUpdate) {
+	         isUpdate_ = isUpdate;
 		}
-		
+
 		public void addClassType(HierarchicalTypeDefinition<ClassType> type) throws AtlasException {
-			
+
 	        if (typeSystem.isRegistered(type.typeName)) {
 	        	return;
 	        }
-	        
+
 	        TypesDef typesDef = TypesUtil.getTypesDef(
-	        		ImmutableList.<EnumTypeDefinition>of(), 
+	        		ImmutableList.<EnumTypeDefinition>of(),
 	        		ImmutableList.<StructTypeDefinition>of(),
 	                ImmutableList.<HierarchicalTypeDefinition<TraitType>>of(),
 	                ImmutableList.of(type));
 	        addType(TypesSerialization.toJson(typesDef));
 		}
-		
+
 		public void addType(String typeDefinition) {
-			
+
 			ParamChecker.notEmpty(typeDefinition, "type definition");
 			TypesDef typesDef = validateTypeDefinition(typeDefinition);
 	        if(combinedTypeDef_ == null) {
@@ -790,11 +791,18 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
 	        else {
 	        	 combinedTypeDef_ = TypesUtil.combineTypesDefs(combinedTypeDef_, typesDef);
 	         }
-		}			
-		
+		}
+
 		public JSONObject createTypes() throws AtlasException {
-			
+
 			 try {
+				 	if(combinedTypeDef_ == null) {
+				 		//nothing to do
+				 		return new JSONObject() {{
+			                put(AtlasClient.TYPES, Collections.emptySet());
+			            }};
+				 	}
+
 		            final TypeSystem.TransientTypeSystem transientTypeSystem = typeSystem.createTransientTypeSystem(combinedTypeDef_, isUpdate_);
 		            final Map<String, IDataType> typesAdded = transientTypeSystem.getTypesAdded();
 		            try {
@@ -820,6 +828,6 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
 		            throw new AtlasException("Unable to create response ", e);
 		        }
 		}
-				 
+
 	}
 }

@@ -30,40 +30,38 @@ import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.VertexQuery;
 
 /**
- * Titan 0.5.4 implementation of AtlasVertexQuery
+ * Titan 0.5.4 implementation of AtlasVertexQuery.
  */
 public class Titan0VertexQuery implements AtlasVertexQuery<Titan0Vertex, Titan0Edge> {
 
-    private VertexQuery query_;
+    private VertexQuery vertexQuery;
 
     public Titan0VertexQuery(VertexQuery vertexQuery) {
-        query_ = vertexQuery;
+        this.vertexQuery = vertexQuery;
     }
 
     @Override
     public AtlasVertexQuery<Titan0Vertex, Titan0Edge> direction(AtlasEdgeDirection queryDirection) {
-        query_.direction(TitanObjectFactory.createDirection(queryDirection));
+        vertexQuery.direction(TitanObjectFactory.createDirection(queryDirection));
         return this;
 
     }
 
     @Override
     public Iterable<AtlasVertex<Titan0Vertex, Titan0Edge>> vertices() {
-        Iterable<Vertex> vertices = query_.vertices();
+        Iterable<Vertex> vertices = vertexQuery.vertices();
         return Iterables.transform(vertices, VertexToAtlasVertexFunction.INSTANCE);
     }
 
     @Override
     public Iterable<AtlasEdge<Titan0Vertex, Titan0Edge>> edges() {
-        Iterable<Edge> vertices = query_.edges();
+        Iterable<Edge> vertices = vertexQuery.edges();
         return Iterables.transform(vertices, EdgeToAtlasEdgeFunction.INSTANCE);
 
     }
 
     @Override
     public long count() {
-        return query_.count();
+        return vertexQuery.count();
     }
-
-
 }

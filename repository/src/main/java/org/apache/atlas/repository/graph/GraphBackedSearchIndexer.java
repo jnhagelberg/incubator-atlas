@@ -106,7 +106,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
             // create a composite index for guid as its unique
             createIndexes(management, Constants.GUID_PROPERTY_KEY, String.class, true,
                    Multiplicity.OPTIONAL, true);
-            
+
             createIndexes(management, Constants.STATE_PROPERTY_KEY, String.class, false,
                     Multiplicity.OPTIONAL, true);
 
@@ -151,7 +151,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
          AtlasPropertyKey fullText =
                 management.makePropertyKey(Constants.ENTITY_TEXT_PROPERTY_KEY, String.class, Multiplicity.OPTIONAL);
 
-        management.createFullTextIndex(Constants.FULLTEXT_INDEX, fullText, Constants.BACKING_INDEX);        
+        management.createFullTextIndex(Constants.FULLTEXT_INDEX, fullText, Constants.BACKING_INDEX);
 
         LOG.info("Created mixed index for {}", Constants.ENTITY_TEXT_PROPERTY_KEY);
     }

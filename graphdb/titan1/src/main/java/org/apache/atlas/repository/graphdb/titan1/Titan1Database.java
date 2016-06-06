@@ -80,12 +80,12 @@ public class Titan1Database implements GraphDatabase<Titan1Vertex, Titan1Edge> {
 
         //add serializers for non-standard property value types that Atlas uses
 
-        titanConfig.addProperty("attributes.custom.attribute1.attribute-class",TypeCategory.class.getName());
-        titanConfig.addProperty("attributes.custom.attribute1.serializer-class",TypeCategorySerializer.class.getName());
+        titanConfig.addProperty("attributes.custom.attribute1.attribute-class", TypeCategory.class.getName());
+        titanConfig.addProperty("attributes.custom.attribute1.serializer-class", TypeCategorySerializer.class.getName());
 
         //not ideal, but avoids making large changes to Atlas
         titanConfig.addProperty("attributes.custom.attribute2.attribute-class", ArrayList.class.getName());
-        titanConfig.addProperty("attributes.custom.attribute2.serializer-class",StringListSerializer.class.getName());
+        titanConfig.addProperty("attributes.custom.attribute2.serializer-class", StringListSerializer.class.getName());
 
 
         titanConfig.addProperty("attributes.custom.attribute3.attribute-class", BigInteger.class.getName());

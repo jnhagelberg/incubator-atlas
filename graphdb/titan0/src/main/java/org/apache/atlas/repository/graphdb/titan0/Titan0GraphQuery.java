@@ -30,25 +30,25 @@ import com.tinkerpop.blueprints.GraphQuery;
 import com.tinkerpop.blueprints.Vertex;
 
 /**
- * Titan 0.5.4 implementation of AtlasGraphQuery
+ * Titan 0.5.4 implementation of AtlasGraphQuery.
  */
 public class Titan0GraphQuery implements AtlasGraphQuery<Titan0Vertex, Titan0Edge> {
 
-    private GraphQuery wrapped_;
+    private GraphQuery wrappedQuery;
 
     public Titan0GraphQuery(GraphQuery query) {
-        wrapped_ = query;
+        wrappedQuery = query;
     }
 
     @Override
     public AtlasGraphQuery<Titan0Vertex, Titan0Edge> has(String propertyKey, Object value) {
-        GraphQuery result = wrapped_.has(propertyKey, value);
+        GraphQuery result = wrappedQuery.has(propertyKey, value);
         return wrapResult(result);
 
     }
 
     private AtlasGraphQuery<Titan0Vertex, Titan0Edge> wrapResult(GraphQuery result) {
-        if(result == wrapped_) {
+        if (result == wrappedQuery) {
             return this;
         }
         return GraphDbObjectFactory.createQuery(result);
@@ -56,32 +56,33 @@ public class Titan0GraphQuery implements AtlasGraphQuery<Titan0Vertex, Titan0Edg
 
     @Override
     public Iterable<AtlasVertex<Titan0Vertex, Titan0Edge>> vertices() {
-        Iterable<Vertex> result = wrapped_.vertices();
+        Iterable<Vertex> result = wrappedQuery.vertices();
         return Iterables.transform(result, VertexToAtlasVertexFunction.INSTANCE);
     }
 
     @Override
     public Iterable<AtlasEdge<Titan0Vertex, Titan0Edge>> edges() {
-        Iterable<Edge> result = wrapped_.edges();
+        Iterable<Edge> result = wrappedQuery.edges();
         return Iterables.transform(result, EdgeToAtlasEdgeFunction.INSTANCE);
     }
 
     @Override
-    public AtlasGraphQuery<Titan0Vertex, Titan0Edge> has(String propertyKey, ComparisionOperator operator, Object value) {
+    public AtlasGraphQuery<Titan0Vertex, Titan0Edge> has(String propertyKey, ComparisionOperator operator,
+            Object value) {
         Compare c = getGremlinPredicate(operator);
-        GraphQuery result = wrapped_.has(propertyKey, c, value);
+        GraphQuery result = wrappedQuery.has(propertyKey, c, value);
         return wrapResult(result);
     }
 
     private Compare getGremlinPredicate(ComparisionOperator op) {
-        switch(op) {
-            case EQUAL:
-                return Compare.EQUAL;
-            case GREATER_THAN_EQUAL:
-                return Compare.GREATER_THAN_EQUAL;
-            case LESS_THAN_EQUAL:
-                return Compare.LESS_THAN_EQUAL;
-            default:
+        switch (op) {
+        case EQUAL:
+            return Compare.EQUAL;
+        case GREATER_THAN_EQUAL:
+            return Compare.GREATER_THAN_EQUAL;
+        case LESS_THAN_EQUAL:
+            return Compare.LESS_THAN_EQUAL;
+        default:
             throw new RuntimeException("Unsupported comparison operator:" + op);
         }
     }

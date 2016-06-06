@@ -255,4 +255,10 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
         return metadataRepository.getSupportedGremlinVersion();
     }
 
+    @Override
+    public String convertPersistentToActualValue(String expr, IDataType<?> t) {
+    	return metadataRepository.convertPersistentToActualValue(expr, t);
+    }
+
+
 }

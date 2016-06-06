@@ -17,15 +17,6 @@
  */
 package org.apache.atlas.repository.graphdb.titan0;
 
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-
-import org.apache.atlas.AtlasException;
 import org.apache.atlas.repository.graphdb.AtlasGraphIndex;
 import org.apache.atlas.repository.graphdb.AtlasGraphManagement;
 import org.apache.atlas.repository.graphdb.AtlasPropertyKey;
@@ -35,10 +26,8 @@ import org.slf4j.LoggerFactory;
 
 import com.thinkaurelius.titan.core.Cardinality;
 import com.thinkaurelius.titan.core.PropertyKey;
-import com.thinkaurelius.titan.core.TitanGraph;
 import com.thinkaurelius.titan.core.schema.Mapping;
 import com.thinkaurelius.titan.core.schema.PropertyKeyMaker;
-import com.thinkaurelius.titan.core.schema.SchemaStatus;
 import com.thinkaurelius.titan.core.schema.TitanGraphIndex;
 import com.thinkaurelius.titan.core.schema.TitanManagement;
 import com.tinkerpop.blueprints.Edge;
@@ -46,73 +35,74 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
 
 /**
- * Titan 0.5.4 implementation of AtlasGraphManagement
+ * Titan 0.5.4 implementation of AtlasGraphManagement.
  */
 public class Titan0DatabaseManager implements AtlasGraphManagement {
 
     private static final Logger LOG = LoggerFactory.getLogger(Titan0DatabaseManager.class);
 
+    private TitanManagement management;
 
-    private TitanManagement management_;
-    private TitanGraph graph_;
+    public Titan0DatabaseManager(TitanManagement managementSystem) {
 
-    public Titan0DatabaseManager(TitanGraph graph, TitanManagement managementSystem) {
-        graph_ = graph;
-        management_ = managementSystem;
+        management = managementSystem;
     }
-
 
     @Override
     public void buildMixedVertexIndex(String index, String backingIndex) {
-       buildMixedIndex(index, Vertex.class, backingIndex);
+        buildMixedIndex(index, Vertex.class, backingIndex);
     }
 
     @Override
     public void buildMixedEdgeIndex(String index, String backingIndex) {
-       buildMixedIndex(index, Edge.class, backingIndex);
+        buildMixedIndex(index, Edge.class, backingIndex);
     }
 
     private void buildMixedIndex(String index, Class<? extends Element> titanClass, String backingIndex) {
 
-       management_.buildIndex(index, titanClass).buildMixedIndex(backingIndex);
+        management.buildIndex(index, titanClass).buildMixedIndex(backingIndex);
     }
-
 
     @Override
     public void createFullTextIndex(String indexName, AtlasPropertyKey propertyKey, String backingIndex) {
 
         PropertyKey fullText = TitanObjectFactory.createPropertyKey(propertyKey);
 
-        management_.buildIndex(indexName, Vertex.class)
-            .addKey(fullText, com.thinkaurelius.titan.core.schema.Parameter.of("mapping", Mapping.TEXT))
-            .buildMixedIndex(backingIndex);
+        management.buildIndex(indexName, Vertex.class)
+                .addKey(fullText, com.thinkaurelius.titan.core.schema.Parameter.of("mapping", Mapping.TEXT))
+                .buildMixedIndex(backingIndex);
     }
 
     @Override
     public boolean containsPropertyKey(String vertexTypePropertyKey) {
-        return management_.containsPropertyKey(vertexTypePropertyKey);
+        return management.containsPropertyKey(vertexTypePropertyKey);
     }
 
     @Override
     public void rollback() {
-        management_.rollback();
+        management.rollback();
 
     }
 
     @Override
     public void commit() {
-        management_.commit();
+        management.commit();
     }
 
-    /* (non-Javadoc)
-     * @see org.apache.atlas.repository.graphdb.AtlasGraphManagement#makePropertyKey(java.lang.String, java.lang.Class, org.apache.atlas.typesystem.types.Multiplicity)
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.apache.atlas.repository.graphdb.AtlasGraphManagement#makePropertyKey(
+     * java.lang.String, java.lang.Class,
+     * org.apache.atlas.typesystem.types.Multiplicity)
      */
     @Override
     public AtlasPropertyKey makePropertyKey(String propertyName, Class propertyClass, Multiplicity multiplicity) {
 
-        PropertyKeyMaker propertyKeyBuilder = management_.makePropertyKey(propertyName).dataType(propertyClass);
+        PropertyKeyMaker propertyKeyBuilder = management.makePropertyKey(propertyName).dataType(propertyClass);
 
-        if(multiplicity != null) {
+        if (multiplicity != null) {
             Cardinality cardinality = TitanObjectFactory.createCardinality(multiplicity);
             propertyKeyBuilder.cardinality(cardinality);
         }
@@ -120,49 +110,60 @@ public class Titan0DatabaseManager implements AtlasGraphManagement {
         return GraphDbObjectFactory.createPropertyKey(propertyKey);
     }
 
-
-    /* (non-Javadoc)
-     * @see org.apache.atlas.repository.graphdb.AtlasGraphManagement#getPropertyKey(java.lang.String)
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.apache.atlas.repository.graphdb.AtlasGraphManagement#getPropertyKey(
+     * java.lang.String)
      */
     @Override
     public AtlasPropertyKey getPropertyKey(String propertyName) {
 
-        return GraphDbObjectFactory.createPropertyKey(management_.getPropertyKey(propertyName));
+        return GraphDbObjectFactory.createPropertyKey(management.getPropertyKey(propertyName));
     }
 
-
-    /* (non-Javadoc)
-     * @see org.apache.atlas.repository.graphdb.AtlasGraphManagement#createCompositeIndex(java.lang.String, org.apache.atlas.repository.graphdb.AtlasPropertyKey, boolean)
+    /*
+     * (non-Javadoc)
+     *
+     * @see org.apache.atlas.repository.graphdb.AtlasGraphManagement#
+     * createCompositeIndex(java.lang.String,
+     * org.apache.atlas.repository.graphdb.AtlasPropertyKey, boolean)
      */
     @Override
     public void createCompositeIndex(String propertyName, AtlasPropertyKey propertyKey, boolean enforceUniqueness) {
         PropertyKey titanKey = TitanObjectFactory.createPropertyKey(propertyKey);
-        TitanManagement.IndexBuilder indexBuilder =
-            management_.buildIndex(propertyName, Vertex.class).addKey(titanKey);
+        TitanManagement.IndexBuilder indexBuilder = management.buildIndex(propertyName, Vertex.class).addKey(titanKey);
         if (enforceUniqueness) {
             indexBuilder.unique();
         }
         indexBuilder.buildCompositeIndex();
     }
 
-
-    /* (non-Javadoc)
-     * @see org.apache.atlas.repository.graphdb.AtlasGraphManagement#addIndexKey(java.lang.String, org.apache.atlas.repository.graphdb.AtlasPropertyKey)
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.apache.atlas.repository.graphdb.AtlasGraphManagement#addIndexKey(java
+     * .lang.String, org.apache.atlas.repository.graphdb.AtlasPropertyKey)
      */
     @Override
     public void addIndexKey(String indexName, AtlasPropertyKey propertyKey) {
         PropertyKey titanKey = TitanObjectFactory.createPropertyKey(propertyKey);
-        TitanGraphIndex vertexIndex = management_.getGraphIndex(indexName);
-        management_.addIndexKey(vertexIndex, titanKey);
+        TitanGraphIndex vertexIndex = management.getGraphIndex(indexName);
+        management.addIndexKey(vertexIndex, titanKey);
     }
 
-
-    /* (non-Javadoc)
-     * @see org.apache.atlas.repository.graphdb.AtlasGraphManagement#getGraphIndex(java.lang.String)
+    /*
+     * (non-Javadoc)
+     *
+     * @see
+     * org.apache.atlas.repository.graphdb.AtlasGraphManagement#getGraphIndex(
+     * java.lang.String)
      */
     @Override
     public AtlasGraphIndex getGraphIndex(String indexName) {
-        TitanGraphIndex index = management_.getGraphIndex(indexName);
+        TitanGraphIndex index = management.getGraphIndex(indexName);
         return GraphDbObjectFactory.createGraphIndex(index);
     }
 

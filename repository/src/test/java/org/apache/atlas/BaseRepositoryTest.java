@@ -369,7 +369,7 @@ public class BaseRepositoryTest {
         ITypedReferenceableInstance typedInstance = clsType.convert(referenceable, Multiplicity.REQUIRED);
 
         List<String> guids = repository.createEntities(typedInstance);
-        
+
         // return the reference to created instance with guid
         return new Id(guids.get(guids.size() - 1), 0, referenceable.getTypeName());
     }
