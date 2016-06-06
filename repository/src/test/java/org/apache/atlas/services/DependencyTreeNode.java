@@ -20,8 +20,6 @@ import com.google.common.collect.ImmutableList;
  *
  * @see JSONImporter
  *
- * @author jeff
- *
  */
 public class DependencyTreeNode {
 
