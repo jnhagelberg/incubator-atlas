@@ -103,6 +103,10 @@ public class HBaseBasedAuditRepository implements Service, EntityAuditRepository
         LOG.info("Putting {} events", events.size());
         Table table = null;
         try {
+        	if(connection == null) {
+        		LOG.error("Unable to log events, there is no connection to hbase!");
+        		return;
+        	}
             table = connection.getTable(tableName);
             List<Put> puts = new ArrayList<>(events.size());
             for (EntityAuditEvent event : events) {

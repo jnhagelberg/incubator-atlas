@@ -272,7 +272,7 @@ public abstract class DeleteHandler {
                 edge = GraphHelper.getEdgeForLabel(outVertex, edgeLabel);
                 if (shouldUpdateReverseAttribute) {
                     GraphHelper.setProperty(outVertex, propertyName, null);
-            }
+                }
             } else {
                 // Cannot unset a required attribute.
                 throw new NullRequiredAttributeException("Cannot unset required attribute " + GraphHelper.getQualifiedFieldName(type, attributeName) +
@@ -293,7 +293,7 @@ public abstract class DeleteHandler {
 
                     AtlasVertex<?,?> elementVertex = elementEdge.getInVertex();
                     if (elementVertex.getId().toString().equals(inVertex.getId().toString())) {
-                            edge = elementEdge;
+                        edge = elementEdge;
 
                         //TODO element.size includes deleted items as well. should exclude
                         if (!attributeInfo.multiplicity.nullAllowed()

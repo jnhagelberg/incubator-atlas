@@ -42,16 +42,8 @@ public class Titan0GraphQuery implements AtlasGraphQuery<Titan0Vertex, Titan0Edg
 
     @Override
     public AtlasGraphQuery<Titan0Vertex, Titan0Edge> has(String propertyKey, Object value) {
-        GraphQuery result = wrappedQuery.has(propertyKey, value);
-        return wrapResult(result);
-
-    }
-
-    private AtlasGraphQuery<Titan0Vertex, Titan0Edge> wrapResult(GraphQuery result) {
-        if (result == wrappedQuery) {
-            return this;
-        }
-        return GraphDbObjectFactory.createQuery(result);
+        wrappedQuery = wrappedQuery.has(propertyKey, value);
+        return this;
     }
 
     @Override
@@ -70,8 +62,8 @@ public class Titan0GraphQuery implements AtlasGraphQuery<Titan0Vertex, Titan0Edg
     public AtlasGraphQuery<Titan0Vertex, Titan0Edge> has(String propertyKey, ComparisionOperator operator,
             Object value) {
         Compare c = getGremlinPredicate(operator);
-        GraphQuery result = wrappedQuery.has(propertyKey, c, value);
-        return wrapResult(result);
+        wrappedQuery = wrappedQuery.has(propertyKey, c, value);
+        return this;
     }
 
     private Compare getGremlinPredicate(ComparisionOperator op) {

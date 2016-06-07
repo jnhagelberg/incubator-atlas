@@ -106,13 +106,12 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
     }
 
     protected void bindAuditRepository(Binder binder) {
-        //Map EntityAuditRepository interface to hbase based implementation
-        //binder.bind(EntityAuditRepository.class).to(HBaseBasedAuditRepository.class).asEagerSingleton();
+    	//Map EntityAuditRepository interface to hbase based implementation
+        binder.bind(EntityAuditRepository.class).to(HBaseBasedAuditRepository.class).asEagerSingleton();
 
         //Add HBaseBasedAuditRepository to service so that connection is closed at shutdown
-        //Multibinder<Service> serviceBinder = Multibinder.newSetBinder(binder, Service.class);
-        //serviceBinder.addBinding().to(HBaseBasedAuditRepository.class);
-        binder.bind(EntityAuditRepository.class).to(InMemoryEntityAuditRepository.class).asEagerSingleton();
+        Multibinder<Service> serviceBinder = Multibinder.newSetBinder(binder, Service.class);
+        serviceBinder.addBinding().to(HBaseBasedAuditRepository.class);
     }
 
     private static final String DELETE_HANDLER_IMPLEMENTATION_PROPERTY = "atlas.DeleteHandler.impl";

@@ -18,6 +18,7 @@
 
 package org.apache.atlas.repository.graph;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -42,6 +43,7 @@ import org.apache.atlas.typesystem.exception.EntityNotFoundException;
 import org.apache.atlas.typesystem.exception.TypeNotFoundException;
 import org.apache.atlas.typesystem.json.InstanceSerialization;
 import org.apache.atlas.typesystem.persistence.Id;
+import org.apache.atlas.typesystem.persistence.Id.EntityState;
 import org.apache.atlas.typesystem.persistence.ReferenceableInstance;
 import org.apache.atlas.typesystem.types.AttributeInfo;
 import org.apache.atlas.typesystem.types.ClassType;
@@ -187,6 +189,8 @@ public final class GraphHelper {
         // returning one since entityType, qualifiedName should be unique
         AtlasVertex<V,E> vertex = results.hasNext() ? results.next() : null;
 
+        //in some cases, even though the state property has been changed to DELETED, the 
+        //graph query will return elements
         if (!GraphHelper.elementExists(vertex)) {
             LOG.debug("Could not find a vertex with {}", condition.toString());
             throw new EntityNotFoundException("Could not find an entity in the repository with " + conditionStr);
@@ -317,7 +321,21 @@ public final class GraphHelper {
     }
 
     public <V,E> AtlasVertex<V,E> getVertexForProperty(String propertyKey, Object value) throws EntityNotFoundException {
-        return findVertex(propertyKey, value, Constants.STATE_PROPERTY_KEY, Id.EntityState.ACTIVE.name());
+        
+    	AtlasVertex<V,E> result = findVertex(propertyKey, value, Constants.STATE_PROPERTY_KEY, Id.EntityState.ACTIVE.name());
+        if(GraphHelper.getState(result) == EntityState.DELETED) {
+        	//in some cases, the graph query will return elements whose state is actually deleted.  This
+        	//can happen if we query the graph before the updated state for the vertex has been
+        	//propagated into the graph index.
+        	StringBuilder conditionString = new StringBuilder();
+        	conditionString.append(propertyKey);
+        	conditionString.append(" = ");
+        	conditionString.append(value);
+        	conditionString.append(" and state__ = ACTIVE");
+        	LOG.debug("Could not find a vertex with {}", conditionString);
+        	throw new EntityNotFoundException("Could not find an entity in the repository with " + conditionString);
+        }
+        return result;
     }
 
     public static String getQualifiedNameForMapKey(String prefix, String key) {

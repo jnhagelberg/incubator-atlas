@@ -113,7 +113,7 @@ public class DefaultMetadataServiceTest {
             }
         }
         catch(Throwable t) {
-            auditRepository = new InMemoryEntityAuditRepository();
+            auditRepository = new InMemoryEntityAuditRepository();            
         }
         RequestContext.createContext();
         RequestContext.get().setUser("testuser");
