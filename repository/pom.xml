@@ -164,11 +164,6 @@
                 <filtering>true</filtering>
                 <directory>${basedir}/src/test/resources</directory>
             </testResource>
-	    <!-- to do - clean this up.  No need for db-specific resource.  Impl set as system property. -->
-            <testResource>
-               <directory>${basedir}/src/test/titan0-resources</directory>
-               <filtering>true</filtering>
-           </testResource>
         </testResources>
         <plugins>
             <plugin>

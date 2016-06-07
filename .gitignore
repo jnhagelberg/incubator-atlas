@@ -21,6 +21,9 @@ core*.dmp
 .cache-tests
 *.releaseBackup
 
+credentials.json
+
+
 # IntelliJ
 *.iml
 *.ipr

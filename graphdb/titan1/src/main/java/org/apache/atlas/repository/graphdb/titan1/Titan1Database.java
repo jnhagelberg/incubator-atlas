@@ -22,8 +22,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 
-import org.apache.atlas.ApplicationProperties;
-import org.apache.atlas.AtlasException;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.GraphDatabase;
 import org.apache.atlas.repository.graphdb.titan1.serializer.BigDecimalSerializer;
@@ -111,14 +109,7 @@ public class Titan1Database implements GraphDatabase<Titan1Vertex, Titan1Edge> {
                     }
 
                     graphInstance = TitanFactory.open(config);
-
-                    TitanManagement mgmt = graphInstance.openManagement();
-                    //todo: refactor to use Constants class.  need that to be in the classpath...
-                    createPropertyKeyIfNeeded("__traitNames", mgmt);
-                    createPropertyKeyIfNeeded("__superTypeNames", mgmt);
-
-                    mgmt.commit();
-
+                    
                     validateIndexBackend(config);
                 }
             }
