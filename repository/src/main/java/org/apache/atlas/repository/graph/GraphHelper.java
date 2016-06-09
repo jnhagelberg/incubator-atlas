@@ -18,7 +18,6 @@
 
 package org.apache.atlas.repository.graph;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
