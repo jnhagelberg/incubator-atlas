@@ -18,13 +18,15 @@
 
 package org.apache.atlas.catalog;
 
-import com.thinkaurelius.titan.core.TitanGraph;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.catalog.definition.ResourceDefinition;
 import org.apache.atlas.catalog.exception.CatalogRuntimeException;
 import org.apache.atlas.catalog.exception.ResourceAlreadyExistsException;
 import org.apache.atlas.catalog.exception.ResourceNotFoundException;
-import org.apache.atlas.repository.graph.TitanGraphProvider;
 import org.apache.atlas.services.MetadataService;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.Referenceable;
@@ -34,11 +36,11 @@ import org.apache.atlas.typesystem.exception.EntityNotFoundException;
 import org.apache.atlas.typesystem.exception.TraitNotFoundException;
 import org.apache.atlas.typesystem.exception.TypeExistsException;
 import org.apache.atlas.typesystem.json.TypesSerialization;
-import org.apache.atlas.typesystem.types.*;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import org.apache.atlas.typesystem.types.AttributeDefinition;
+import org.apache.atlas.typesystem.types.ClassType;
+import org.apache.atlas.typesystem.types.HierarchicalType;
+import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition;
+import org.apache.atlas.typesystem.types.TraitType;
 
 /**
  * Default implementation.
