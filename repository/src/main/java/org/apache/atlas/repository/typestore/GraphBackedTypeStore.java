@@ -138,11 +138,11 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
     }
 
     private String getPropertyKey(String parent, String child) {
-        return PROPERTY_PREFIX + parent + "." + child;
+        return PROPERTY_PREFIX + parent + Constants.SEPARATOR + child;
     }
 
     String getEdgeLabel(String parent, String child) {
-        return PROPERTY_PREFIX + "edge." + parent + "." + child;
+        return PROPERTY_PREFIX + "edge" + Constants.SEPARATOR + parent + Constants.SEPARATOR + child;
     }
 
     private void storeInGraph(TypeSystem typeSystem, DataTypes.TypeCategory category, String typeName, String typeDescription,

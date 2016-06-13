@@ -252,7 +252,7 @@ public final class GraphToTypedInstanceMapper {
 
         HashMap values = new HashMap();
         for (String key : keys) {
-            final String keyPropertyName = propertyName + "." + key;
+            final String keyPropertyName = propertyName + Constants.SEPARATOR + key;
             final String edgeLabel = GraphHelper.EDGE_LABEL_PREFIX + keyPropertyName;
             final Object keyValue = instanceVertex.getProperty(keyPropertyName, Object.class);
             Object mapValue = mapVertexToCollectionEntry(instanceVertex, attributeInfo, valueType, keyValue, edgeLabel);

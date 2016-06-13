@@ -236,7 +236,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
     }
 
     private void createIndexForAttribute(AtlasGraphManagement management, String typeName, AttributeInfo field) {
-        final String propertyName = typeName + "." + field.name;
+        final String propertyName = typeName + Constants.SEPARATOR + field.name;
         switch (field.dataType().getTypeCategory()) {
         case PRIMITIVE:
             createIndexes(management, propertyName, getPrimitiveClass(field.dataType()), field.isUnique,

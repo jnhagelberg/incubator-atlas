@@ -166,7 +166,7 @@ public class GraphBackedMetadataRepositoryTest {
     public void testGetTraitLabel() throws Exception {
         Assert.assertEquals(
             repositoryService.getTraitLabel(typeSystem.getDataType(ClassType.class, TestUtils.TABLE_TYPE),
-                TestUtils.CLASSIFICATION), TestUtils.TABLE_TYPE + "." + TestUtils.CLASSIFICATION);
+                TestUtils.CLASSIFICATION), TestUtils.TABLE_TYPE + Constants.SEPARATOR + TestUtils.CLASSIFICATION);
     }
 
     @Test

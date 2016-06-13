@@ -396,7 +396,7 @@ public abstract class GraphBackedMetadataRepositoryDeleteTestBase {
         Assert.assertNotNull(mapValueInstance);
         String mapValueGuid = mapValueInstance.getId()._getId();
         String edgeLabel = GraphHelper.getEdgeLabel(mapOwnerType, mapOwnerType.fieldMapping.fields.get("map"));
-        String mapEntryLabel = edgeLabel + "." + "value1";
+        String mapEntryLabel = edgeLabel + Constants.SEPARATOR + "value1";
         AtlasEdgeLabel atlasEdgeLabel = new AtlasEdgeLabel(mapEntryLabel);
         AtlasVertex<?,?> mapOwnerVertex = GraphHelper.getInstance().getVertexForGUID(mapOwnerGuid);
         object = mapOwnerVertex.getProperty(atlasEdgeLabel.getQualifiedMapKey(), Object.class);
@@ -754,7 +754,7 @@ public abstract class GraphBackedMetadataRepositoryDeleteTestBase {
         String mapOwnerGuid = guids.get(0);
 
         String edgeLabel = GraphHelper.getEdgeLabel(mapOwnerType, mapOwnerType.fieldMapping.fields.get("map"));
-        String mapEntryLabel = edgeLabel + "." + "value1";
+        String mapEntryLabel = edgeLabel + Constants.SEPARATOR + "value1";
         AtlasEdgeLabel atlasEdgeLabel = new AtlasEdgeLabel(mapEntryLabel);
 
         // Verify MapOwner.map attribute has expected value.
@@ -877,7 +877,7 @@ public abstract class GraphBackedMetadataRepositoryDeleteTestBase {
         Assert.assertNotNull(mapValueInstance);
         Assert.assertEquals(mapValueInstance.getId()._getId(), mapValueGuid);
         String edgeLabel = GraphHelper.getEdgeLabel(mapOwnerType, mapOwnerType.fieldMapping.fields.get("map"));
-        String mapEntryLabel = edgeLabel + "." + "value1";
+        String mapEntryLabel = edgeLabel + Constants.SEPARATOR + "value1";
         AtlasEdgeLabel atlasEdgeLabel = new AtlasEdgeLabel(mapEntryLabel);
         AtlasVertex<?,?> mapOwnerVertex = GraphHelper.getInstance().getVertexForGUID(mapOwnerGuid);
         object = mapOwnerVertex.getProperty(atlasEdgeLabel.getQualifiedMapKey(), Object.class);

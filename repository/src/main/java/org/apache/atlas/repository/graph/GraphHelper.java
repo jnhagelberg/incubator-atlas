@@ -320,25 +320,25 @@ public final class GraphHelper {
     }
 
     public <V,E> AtlasVertex<V,E> getVertexForProperty(String propertyKey, Object value) throws EntityNotFoundException {
-        
-    	AtlasVertex<V,E> result = findVertex(propertyKey, value, Constants.STATE_PROPERTY_KEY, Id.EntityState.ACTIVE.name());
+
+        AtlasVertex<V,E> result = findVertex(propertyKey, value, Constants.STATE_PROPERTY_KEY, Id.EntityState.ACTIVE.name());
         if(GraphHelper.getState(result) == EntityState.DELETED) {
-        	//in some cases, the graph query will return elements whose state is actually deleted.  This
-        	//can happen if we query the graph before the updated state for the vertex has been
-        	//propagated into the graph index.
-        	StringBuilder conditionString = new StringBuilder();
-        	conditionString.append(propertyKey);
-        	conditionString.append(" = ");
-        	conditionString.append(value);
-        	conditionString.append(" and state__ = ACTIVE");
-        	LOG.debug("Could not find a vertex with {}", conditionString);
-        	throw new EntityNotFoundException("Could not find an entity in the repository with " + conditionString);
+            //in some cases, the graph query will return elements whose state is actually deleted.  This
+            //can happen if we query the graph before the updated state for the vertex has been
+            //propagated into the graph index.
+            StringBuilder conditionString = new StringBuilder();
+            conditionString.append(propertyKey);
+            conditionString.append(" = ");
+            conditionString.append(value);
+            conditionString.append(" and state__ = ACTIVE");
+            LOG.debug("Could not find a vertex with {}", conditionString);
+            throw new EntityNotFoundException("Could not find an entity in the repository with " + conditionString);
         }
         return result;
     }
 
     public static String getQualifiedNameForMapKey(String prefix, String key) {
-        return prefix + "." + key;
+        return prefix + Constants.SEPARATOR + key;
     }
 
     public static String getQualifiedFieldName(ITypedInstance typedInstance, AttributeInfo attributeInfo) throws AtlasException {
@@ -347,13 +347,13 @@ public final class GraphHelper {
     }
 
     public static String getQualifiedFieldName(IDataType dataType, String attributeName) throws AtlasException {
-        return dataType.getTypeCategory() == DataTypes.TypeCategory.STRUCT ? dataType.getName() + "." + attributeName
+        return dataType.getTypeCategory() == DataTypes.TypeCategory.STRUCT ? dataType.getName() + Constants.SEPARATOR + attributeName
             // else class or trait
             : ((HierarchicalType) dataType).getQualifiedName(attributeName);
     }
 
     public static String getTraitLabel(String typeName, String attrName) {
-        return typeName + "." + attrName;
+        return typeName + "_" + attrName;
     }
 
     public static Object getProperty(AtlasVertex<?,?> entityVertex, String propertyName) {

@@ -24,6 +24,14 @@ package org.apache.atlas.repository;
  */
 public final class Constants {
 
+    /** 
+     * Separator for different parts of property names.  This has been temporarily changed from "." to "_"
+     * to allow IBM Graph Database creation to be completed.  This should be reverted back to "." once
+     * https://github.ibm.com/CloudDataServices/cds-graph-service/issues/960 is in production in
+     * IBM Graph Database.
+     */
+    public static final String SEPARATOR = "_";
+    
     /**
      * Globally Unique identifier property key.
      */
@@ -49,10 +57,10 @@ public final class Constants {
     /**
      * Properties for type store graph.
      */
-    public static final String TYPE_CATEGORY_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "type.category";
+    public static final String TYPE_CATEGORY_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "type_category";
     public static final String VERTEX_TYPE_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "type";
-    public static final String TYPENAME_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "type.name";
-    public static final String TYPEDESCRIPTION_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "type.description";
+    public static final String TYPENAME_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "type_name";
+    public static final String TYPEDESCRIPTION_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "type_description";
 
     /**
      * Trait names property key and index name.
