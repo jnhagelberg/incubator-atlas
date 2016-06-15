@@ -54,7 +54,7 @@ public class SoftDeleteHandler extends DeleteHandler {
         if (force) {
             context.removeEdge(edge);
         } else {
-            
+
             if (context.isActive(edge)) {
                 context.setProperty(edge, STATE_PROPERTY_KEY, Id.EntityState.DELETED.name());
                 context.setProperty(edge, MODIFICATION_TIMESTAMP_PROPERTY_KEY,

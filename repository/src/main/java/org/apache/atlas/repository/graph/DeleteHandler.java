@@ -26,7 +26,6 @@ import org.apache.atlas.AtlasException;
 import org.apache.atlas.RequestContext;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.typesystem.exception.NullRequiredAttributeException;
-import org.apache.atlas.typesystem.persistence.Id;
 import org.apache.atlas.typesystem.types.AttributeInfo;
 import org.apache.atlas.typesystem.types.DataTypes;
 import org.apache.atlas.typesystem.types.FieldMapping;
@@ -140,7 +139,7 @@ public abstract class DeleteHandler {
                     Iterator<Edge> edges = GraphHelper.getOutGoingEdgesByLabel(instanceVertex, edgeLabel);
                     if (edges != null) {
                         while (edges.hasNext()) {
-                            Edge edge = edges.next();                                
+                            Edge edge = edges.next();
                             deleteEdgeReference(context, edge, elementType.getTypeCategory(), attributeInfo.isComposite, false);
                         }
                     }
@@ -189,11 +188,11 @@ public abstract class DeleteHandler {
         else {
             LOG.debug("Deleting {}", string(edge));
         }
-      
+
         boolean forceDelete =
                 (typeCategory == DataTypes.TypeCategory.STRUCT || typeCategory == DataTypes.TypeCategory.TRAIT)
                         ? forceDeleteStructTrait : false;
-        
+
         if (typeCategory == DataTypes.TypeCategory.STRUCT || typeCategory == DataTypes.TypeCategory.TRAIT
                 || (typeCategory == DataTypes.TypeCategory.CLASS && isComposite)) {
             //If the vertex is of type struct/trait, delete the edge and then the reference vertex as the vertex is not shared by any other entities.
@@ -243,7 +242,7 @@ public abstract class DeleteHandler {
 
         while(edges.hasNext()) {
             Edge edge = edges.next();
-            
+
             if (context.isActive(edge)) {
                 //Delete only the active edge references
                 AttributeInfo attribute = getAttributeForEdge(edge.getLabel());
@@ -268,7 +267,7 @@ public abstract class DeleteHandler {
                 attributeName);
         String typeName = GraphHelper.getTypeName(outVertex);
         String outId = GraphHelper.getIdFromVertex(outVertex);
-        
+
         if (context.isProcessedOrDeleted(outVertex)) {
             //If the reference vertex is marked for deletion, skip updating the reference
             return;

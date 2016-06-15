@@ -29,47 +29,44 @@ import com.tinkerpop.blueprints.Element;
 import com.tinkerpop.blueprints.Vertex;
 
 /**
- * Accumulates the changes that are needed to perform a delete,
- * applies them all at once, so that the underlying graph
- * system can batch the updates.  It also prevents any actual
- * updates of the graph from happening until all of the processing
- * has taken place.  This makes the processing more robust in the
- * face of non-ACID transactions.  We won't even attempt any
- * graph updates if processing errors occur. 
+ * Accumulates the changes that are needed to perform a delete, applies them all
+ * at once, so that the underlying graph system can batch the updates. It also
+ * prevents any actual updates of the graph from happening until all of the
+ * processing has taken place. This makes the processing more robust in the face
+ * of non-ACID transactions. We won't even attempt any graph updates if
+ * processing errors occur.
  *
  */
 public class DeleteContext {
-    
+
     private GraphHelper graphHelper_;
-    
-    //maintain a list of the actions so that the operations get applied
-    //in the same order as they came in at
+
+    // maintain a list of the actions so that the operations get applied
+    // in the same order as they came in at
     private List<DeleteAction> deleteActions_ = new ArrayList<DeleteAction>();
     private Set<Element> elementsMarkedForDelete_ = new HashSet<Element>();
     private Set<Vertex> processedVertices_ = new HashSet<Vertex>();
-    
-    
+
     public DeleteContext(GraphHelper helper) {
         graphHelper_ = helper;
     }
-    
+
     public void registerSoftDeletedElement(Element element) {
-        
+
         elementsMarkedForDelete_.add(element);
     }
-    
+
     public void removeVertex(Vertex vertex) {
-        
-        if(isDeleted(vertex)) {
+
+        if (isDeleted(vertex)) {
             throw new IllegalStateException("Cannot delete a vertex that has already been deleted");
         }
         deleteActions_.add(new VertexRemoval(vertex));
         elementsMarkedForDelete_.add(vertex);
     }
 
-    
     public void removeEdge(Edge edge) {
-        if(isDeleted(edge)) {
+        if (isDeleted(edge)) {
             throw new IllegalStateException("Cannot delete an edge that has already been deleted");
         }
         deleteActions_.add(new EdgeRemoval(edge));
@@ -77,32 +74,30 @@ public class DeleteContext {
     }
 
     public void setProperty(Element element, String name, Object value) {
-        if(isDeleted(element)) {
+        if (isDeleted(element)) {
             throw new IllegalStateException("Cannot update an element that has been deleted.");
-        }      
+        }
         deleteActions_.add(new PropertyUpdate(element, name, value));
     }
-    
+
     public void commitDelete() {
-        for(DeleteAction action : deleteActions_) {
+        for (DeleteAction action : deleteActions_) {
             action.perform(graphHelper_);
         }
         elementsMarkedForDelete_.clear();
         processedVertices_.clear();
     }
-    
+
     private static interface DeleteAction {
         void perform(GraphHelper helper);
     }
-    
+
     private static class PropertyUpdate implements DeleteAction {
-        
+
         private Element element_;
         private String property_;
         private Object newValue_;
-        
-        
-        
+
         public PropertyUpdate(Element element_, String property_, Object newValue_) {
             super();
             this.element_ = element_;
@@ -114,11 +109,10 @@ public class DeleteContext {
             GraphHelper.setProperty(element_, property_, newValue_);
         }
     }
-    
+
     private static class VertexRemoval implements DeleteAction {
         private Vertex toDelete_;
 
-                
         public VertexRemoval(Vertex toDelete) {
             super();
             this.toDelete_ = toDelete;
@@ -126,14 +120,14 @@ public class DeleteContext {
 
         @Override
         public void perform(GraphHelper helper) {
-            helper.removeVertex(toDelete_);            
-        }        
+            helper.removeVertex(toDelete_);
+        }
     }
-    
+
     private static class EdgeRemoval implements DeleteAction {
-        
+
         private Edge toDelete_;
-                
+
         public EdgeRemoval(Edge toDelete) {
             super();
             this.toDelete_ = toDelete;
@@ -141,27 +135,27 @@ public class DeleteContext {
 
         @Override
         public void perform(GraphHelper helper) {
-            helper.removeEdge(toDelete_);            
-        }        
+            helper.removeEdge(toDelete_);
+        }
     }
-    
+
     public boolean isProcessedOrDeleted(Vertex vertex) {
-        return isProcessed(vertex) || ! isActive(vertex);
+        return isProcessed(vertex) || !isActive(vertex);
     }
 
     public boolean isActive(Element element) {
         EntityState state = GraphHelper.getState(element);
-        return state == EntityState.ACTIVE && ! isDeleted(element);
+        return state == EntityState.ACTIVE && !isDeleted(element);
     }
-    
+
     public boolean isProcessed(Vertex vertex) {
         return processedVertices_.contains(vertex);
     }
-    
+
     public void addProcessedVertex(Vertex vertex) {
         processedVertices_.add(vertex);
     }
-    
+
     private boolean isDeleted(Element instanceVertex) {
         return elementsMarkedForDelete_.contains(instanceVertex);
     }

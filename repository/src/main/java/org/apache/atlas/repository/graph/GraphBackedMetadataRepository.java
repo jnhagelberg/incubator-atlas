@@ -231,7 +231,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
             GraphHelper.addProperty(instanceVertex, Constants.TRAIT_NAMES_PROPERTY_KEY, traitName);
             GraphHelper.setProperty(instanceVertex, Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY,
                     RequestContext.get().getRequestTime());
-            
+
         } catch (RepositoryException e) {
             throw e;
         } catch (Exception e) {
@@ -250,13 +250,13 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
     @GraphTransaction
     public void deleteTrait(String guid, String traitNameToBeDeleted) throws TraitNotFoundException, EntityNotFoundException, RepositoryException {
         LOG.info("Deleting trait={} from entity={}", traitNameToBeDeleted, guid);
-        
+
         Vertex instanceVertex = graphHelper.getVertexForGUID(guid);
 
         List<String> traitNames = GraphHelper.getTraitNames(instanceVertex);
         if (!traitNames.contains(traitNameToBeDeleted)) {
-                throw new TraitNotFoundException(
-                        "Could not find trait=" + traitNameToBeDeleted + " in the repository for entity: " + guid);
+            throw new TraitNotFoundException(
+                    "Could not find trait=" + traitNameToBeDeleted + " in the repository for entity: " + guid);
         }
 
         try {
@@ -275,7 +275,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         }
     }
 
-    
+
     private void updateTraits(DeleteContext context, Vertex instanceVertex, List<String> traitNames) {
         // remove the key
         instanceVertex.removeProperty(Constants.TRAIT_NAMES_PROPERTY_KEY);

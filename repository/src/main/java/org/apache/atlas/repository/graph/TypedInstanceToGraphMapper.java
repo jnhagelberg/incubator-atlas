@@ -358,9 +358,9 @@ public final class TypedInstanceToGraphMapper {
                                              Collection<String> currentEntries,
                                              Collection<Object> newEntries,
                                              IDataType entryType, AttributeInfo attributeInfo) throws AtlasException {
-        
+
         if (currentEntries != null && !currentEntries.isEmpty()) {
-            
+
             LOG.debug("Removing unused entries from the old collection");
             if (entryType.getTypeCategory() == DataTypes.TypeCategory.STRUCT
                     || entryType.getTypeCategory() == DataTypes.TypeCategory.CLASS) {
