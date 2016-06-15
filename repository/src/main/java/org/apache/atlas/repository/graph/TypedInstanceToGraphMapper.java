@@ -218,8 +218,10 @@ public final class TypedInstanceToGraphMapper {
                         attrValue, currentEdge, edgeLabel, operation);
 
                 if (currentEdge != null && !currentEdge.getId().toString().equals(newEdgeId)) {
-                    deleteHandler.deleteEdgeReference(currentEdge, attributeInfo.dataType().getTypeCategory(),
+                    DeleteContext context = new DeleteContext(graphHelper);
+                    deleteHandler.deleteEdgeReference(context, currentEdge, attributeInfo.dataType().getTypeCategory(),
                             attributeInfo.isComposite, true);
+                    context.commitDelete();
                 }
                 break;
 
@@ -356,11 +358,13 @@ public final class TypedInstanceToGraphMapper {
                                              Collection<String> currentEntries,
                                              Collection<Object> newEntries,
                                              IDataType entryType, AttributeInfo attributeInfo) throws AtlasException {
+        
         if (currentEntries != null && !currentEntries.isEmpty()) {
+            
             LOG.debug("Removing unused entries from the old collection");
             if (entryType.getTypeCategory() == DataTypes.TypeCategory.STRUCT
                     || entryType.getTypeCategory() == DataTypes.TypeCategory.CLASS) {
-
+                DeleteContext context = new DeleteContext(graphHelper);
                 //Remove the edges for (current edges - new edges)
                 List<String> cloneElements = new ArrayList<>(currentEntries);
                 cloneElements.removeAll(newEntries);
@@ -370,13 +374,14 @@ public final class TypedInstanceToGraphMapper {
                 if (!cloneElements.isEmpty()) {
                     for (String edgeIdForDelete : cloneElements) {
                         Edge edge = graphHelper.getEdgeByEdgeId(instanceVertex, edgeLabel, edgeIdForDelete);
-                        boolean deleted = deleteHandler.deleteEdgeReference(edge, entryType.getTypeCategory(),
+                        boolean deleted = deleteHandler.deleteEdgeReference(context, edge, entryType.getTypeCategory(),
                                 attributeInfo.isComposite, true);
                         if (!deleted) {
                             additionalElements.add(edgeIdForDelete);
                         }
                     }
                 }
+                context.commitDelete();
                 return additionalElements;
             }
         }
@@ -445,7 +450,7 @@ public final class TypedInstanceToGraphMapper {
         boolean reference = (elementType.getTypeCategory() == DataTypes.TypeCategory.STRUCT
                 || elementType.getTypeCategory() == DataTypes.TypeCategory.CLASS);
         Map<String, String> additionalMap = new HashMap<>();
-
+        DeleteContext context = new DeleteContext(graphHelper);
         for (String currentKey : currentMap.keySet()) {
             boolean shouldDeleteKey = !newMap.containsKey(currentKey);
             if (reference) {
@@ -455,7 +460,7 @@ public final class TypedInstanceToGraphMapper {
                     String edgeLabel = GraphHelper.getQualifiedNameForMapKey(propertyName, currentKey);
                     Edge edge = graphHelper.getEdgeByEdgeId(instanceVertex, edgeLabel, currentMap.get(currentKey));
                     boolean deleted =
-                            deleteHandler.deleteEdgeReference(edge, elementType.getTypeCategory(), attributeInfo.isComposite, true);
+                            deleteHandler.deleteEdgeReference(context, edge, elementType.getTypeCategory(), attributeInfo.isComposite, true);
                     if (!deleted) {
                         additionalMap.put(currentKey, currentEdge);
                         shouldDeleteKey = false;
@@ -465,9 +470,10 @@ public final class TypedInstanceToGraphMapper {
 
             if (shouldDeleteKey) {
                 String propertyNameForKey = GraphHelper.getQualifiedNameForMapKey(propertyName, currentKey);
-                graphHelper.setProperty(instanceVertex, propertyNameForKey, null);
+                context.setProperty(instanceVertex, propertyNameForKey, null);
             }
         }
+        context.commitDelete();
         return additionalMap;
     }
 

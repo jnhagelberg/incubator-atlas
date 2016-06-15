@@ -36,29 +36,30 @@ public class SoftDeleteHandler extends DeleteHandler {
     }
 
     @Override
-    protected void _deleteVertex(Vertex instanceVertex, boolean force) {
+    protected void _deleteVertex(DeleteContext context, Vertex instanceVertex, boolean force) {
         if (force) {
-            graphHelper.removeVertex(instanceVertex);
+            context.removeVertex(instanceVertex);
         } else {
-            Id.EntityState state = GraphHelper.getState(instanceVertex);
-            if (state != Id.EntityState.DELETED) {
-                GraphHelper.setProperty(instanceVertex, STATE_PROPERTY_KEY, Id.EntityState.DELETED.name());
-                GraphHelper.setProperty(instanceVertex, MODIFICATION_TIMESTAMP_PROPERTY_KEY,
+            if (context.isActive(instanceVertex)) {
+                context.setProperty(instanceVertex, STATE_PROPERTY_KEY, Id.EntityState.DELETED.name());
+                context.setProperty(instanceVertex, MODIFICATION_TIMESTAMP_PROPERTY_KEY,
                         RequestContext.get().getRequestTime());
+                context.registerSoftDeletedElement(instanceVertex);
             }
         }
     }
 
     @Override
-    protected void deleteEdge(Edge edge, boolean force) throws AtlasException {
+    protected void deleteEdge(DeleteContext context, Edge edge, boolean force) throws AtlasException {
         if (force) {
-            graphHelper.removeEdge(edge);
+            context.removeEdge(edge);
         } else {
-            Id.EntityState state = GraphHelper.getState(edge);
-            if (state != Id.EntityState.DELETED) {
-                GraphHelper.setProperty(edge, STATE_PROPERTY_KEY, Id.EntityState.DELETED.name());
-                GraphHelper
-                        .setProperty(edge, MODIFICATION_TIMESTAMP_PROPERTY_KEY, RequestContext.get().getRequestTime());
+            
+            if (context.isActive(edge)) {
+                context.setProperty(edge, STATE_PROPERTY_KEY, Id.EntityState.DELETED.name());
+                context.setProperty(edge, MODIFICATION_TIMESTAMP_PROPERTY_KEY,
+                        RequestContext.get().getRequestTime());
+                context.registerSoftDeletedElement(edge);
             }
         }
     }
