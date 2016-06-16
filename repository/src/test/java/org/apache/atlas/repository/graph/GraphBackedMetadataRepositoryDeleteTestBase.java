@@ -21,6 +21,7 @@ package org.apache.atlas.repository.graph;
 import static org.apache.atlas.TestUtils.COLUMNS_ATTR_NAME;
 import static org.apache.atlas.TestUtils.COLUMN_TYPE;
 import static org.apache.atlas.TestUtils.NAME;
+import static org.apache.atlas.TestUtils.PII;
 import static org.apache.atlas.TestUtils.PROCESS_TYPE;
 import static org.apache.atlas.TestUtils.TABLE_TYPE;
 import static org.apache.atlas.TestUtils.createColumnEntity;
@@ -28,11 +29,13 @@ import static org.apache.atlas.TestUtils.createDBEntity;
 import static org.apache.atlas.TestUtils.createTableEntity;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotEquals;
-import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,10 +47,12 @@ import javax.inject.Inject;
 
 import org.apache.atlas.AtlasClient;
 import org.apache.atlas.AtlasException;
+import org.apache.atlas.GraphTransaction;
 import org.apache.atlas.RepositoryMetadataModule;
 import org.apache.atlas.RequestContext;
 import org.apache.atlas.TestUtils;
 import org.apache.atlas.repository.Constants;
+import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.RepositoryException;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
@@ -80,17 +85,6 @@ import org.testng.annotations.Test;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-
-
-import static org.apache.atlas.TestUtils.COLUMNS_ATTR_NAME;
-import static org.apache.atlas.TestUtils.COLUMN_TYPE;
-import static org.apache.atlas.TestUtils.NAME;
-import static org.apache.atlas.TestUtils.PII;
-import static org.apache.atlas.TestUtils.PROCESS_TYPE;
-import static org.apache.atlas.TestUtils.TABLE_TYPE;
-import static org.apache.atlas.TestUtils.createColumnEntity;
-import static org.apache.atlas.TestUtils.createDBEntity;
-import static org.apache.atlas.TestUtils.createTableEntity;
 /**
  * Test for GraphBackedMetadataRepository.deleteEntities
  *
@@ -103,7 +97,7 @@ public abstract class GraphBackedMetadataRepositoryDeleteTestBase {
     @Inject
     private AtlasGraphProvider graphProvider;
 
-    protected GraphBackedMetadataRepository repositoryService;
+    protected MetadataRepository repositoryService;
 
     private TypeSystem typeSystem;
 
@@ -114,8 +108,38 @@ public abstract class GraphBackedMetadataRepositoryDeleteTestBase {
 
         new GraphBackedSearchIndexer(graphProvider);
 
-        repositoryService = new GraphBackedMetadataRepository(graphProvider, getDeleteHandler(typeSystem));
-
+        final GraphBackedMetadataRepository delegate = new GraphBackedMetadataRepository(graphProvider, getDeleteHandler(typeSystem));
+        
+        repositoryService = (MetadataRepository)Proxy.newProxyInstance(Thread.currentThread().getContextClassLoader(),
+                new Class[]{MetadataRepository.class}, new InvocationHandler() {
+            
+            @Override
+            public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+                boolean useTransaction = method.isAnnotationPresent(GraphTransaction.class);
+                try {
+                    
+                    Object result = method.invoke(delegate, args);
+                    if(useTransaction) {
+                        graphProvider.get().commit();
+                    }
+                    return result;
+                }
+                catch(InvocationTargetException e) {
+                    if(useTransaction) {
+                        graphProvider.get().rollback();
+                    }
+                    throw e.getCause();
+                }
+                catch(Throwable t) {
+                    if(useTransaction) {
+                        graphProvider.get().rollback();
+                    }
+                    throw t;
+                }
+            }
+            
+        });
+        
         TestUtils.defineDeptEmployeeTypes(typeSystem);
         TestUtils.createHiveTypes(typeSystem);
     }
