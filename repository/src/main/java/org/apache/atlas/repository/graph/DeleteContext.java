@@ -88,6 +88,27 @@ public class DeleteContext {
         processedVertices_.clear();
     }
 
+    public boolean isProcessedOrDeleted(Vertex vertex) {
+        return isProcessed(vertex) || ! isActive(vertex);
+    }
+
+    public boolean isActive(Element element) {
+        EntityState state = GraphHelper.getState(element);
+        return state == EntityState.ACTIVE && !isDeleted(element);
+    }
+
+    public boolean isProcessed(Vertex vertex) {
+        return processedVertices_.contains(vertex);
+    }
+
+    public void addProcessedVertex(Vertex vertex) {
+        processedVertices_.add(vertex);
+    }
+
+    private boolean isDeleted(Element instanceVertex) {
+        return elementsMarkedForDelete_.contains(instanceVertex);
+    }
+
     private static interface DeleteAction {
         void perform(GraphHelper helper);
     }
@@ -105,6 +126,7 @@ public class DeleteContext {
             this.newValue_ = newValue_;
         }
 
+        @Override
         public void perform(GraphHelper helper) {
             GraphHelper.setProperty(element_, property_, newValue_);
         }
@@ -137,27 +159,6 @@ public class DeleteContext {
         public void perform(GraphHelper helper) {
             helper.removeEdge(toDelete_);
         }
-    }
-
-    public boolean isProcessedOrDeleted(Vertex vertex) {
-        return isProcessed(vertex) || !isActive(vertex);
-    }
-
-    public boolean isActive(Element element) {
-        EntityState state = GraphHelper.getState(element);
-        return state == EntityState.ACTIVE && !isDeleted(element);
-    }
-
-    public boolean isProcessed(Vertex vertex) {
-        return processedVertices_.contains(vertex);
-    }
-
-    public void addProcessedVertex(Vertex vertex) {
-        processedVertices_.add(vertex);
-    }
-
-    private boolean isDeleted(Element instanceVertex) {
-        return elementsMarkedForDelete_.contains(instanceVertex);
     }
 
 }
