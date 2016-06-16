@@ -221,7 +221,6 @@ class GremlinTranslator(expr: Expression,
         stats.last
     }
 
-
     private def genQuery(expr: Expression, inSelect: Boolean): String = expr match {
         case ClassExpression(clsName) =>
             typeTestExpression(clsName)
@@ -230,56 +229,24 @@ class GremlinTranslator(expr: Expression,
         case fe@FieldExpression(fieldName, fInfo, child)
             if fe.dataType.getTypeCategory == TypeCategory.PRIMITIVE || fe.dataType.getTypeCategory == TypeCategory.ARRAY => {
             val fN = "\"" + gPersistenceBehavior.fieldNameInVertex(fInfo.dataType, fInfo.attrInfo) + "\""
-            child match {
-                case Some(e) => genPropertyAccessExpr(e, fInfo, fN, inSelect)
-                case None => s"$fN"
-            }
+            genPropertyAccessExpr(child, fInfo, fN, inSelect)
+            
         }
         case fe@FieldExpression(fieldName, fInfo, child)
             if fe.dataType.getTypeCategory == TypeCategory.CLASS || fe.dataType.getTypeCategory == TypeCategory.STRUCT => {
             val direction = if (fInfo.isReverse) "in" else "out"
             val edgeLbl = gPersistenceBehavior.edgeLabel(fInfo)
             val step = s"""$direction("$edgeLbl")"""
-            child match {
-                case Some(e) => s"${genQuery(e, inSelect)}.$step"
-                case None => step
-            }
+            generateAndPrependExpr(child, inSelect, s"""$step""")
         }
         case fe@FieldExpression(fieldName, fInfo, child) if fInfo.traitName != null => {
             val direction = gPersistenceBehavior.instanceToTraitEdgeDirection
             val edgeLbl = gPersistenceBehavior.edgeLabel(fInfo)
             val step = s"""$direction("$edgeLbl")"""
-            child match {
-              case Some(e) => s"${genQuery(e, inSelect)}.$step"
-              case None => step
-            }
+            generateAndPrependExpr(child, inSelect, s"""$step""")
         }
         case c@ComparisonExpression(symb, f@FieldExpression(fieldName, fInfo, ch), l) => {
-          val QUOTE = "\"";
-          val fieldGremlinExpr = s"${gPersistenceBehavior.fieldNameInVertex(fInfo.dataType, fInfo.attrInfo)}"
-            ch match {
-                case Some(child) => {
-                  s"""${genQuery(child, inSelect)}.${genHasPredicate(fieldGremlinExpr,c, l)}"""
-                }
-                case None => {
-                    if (fInfo.attrInfo.dataType == DataTypes.DATE_TYPE) {
-                        try {
-                            //Accepts both date, datetime formats
-                            val dateStr = l.toString.stripPrefix(QUOTE).stripSuffix(QUOTE)
-                            val dateVal = ISODateTimeFormat.dateOptionalTimeParser().parseDateTime(dateStr).getMillis
-                            return genHasPredicate(fieldGremlinExpr, c, dateVal);
-                        } catch {
-                            case pe: java.text.ParseException =>
-                                throw new GremlinTranslationException(c,
-                                    "Date format " + l + " not supported. Should be of the format " + TypeSystem.getInstance().getDateFormat.toPattern);
-
-                        }
-                    }
-                    else {
-                        return genHasPredicate(fieldGremlinExpr, c, l);
-                    }
-                }
-            }
+          return genHasPredicate(ch, fInfo, fieldName, inSelect, c, l)
         }
         case fil@FilterExpression(child, condExpr) => {
             s"${genQuery(child, inSelect)}.${genQuery(condExpr, inSelect)}"
@@ -362,7 +329,8 @@ class GremlinTranslator(expr: Expression,
 
             if (inSelect) {
                 gPersistenceBehavior.fieldPrefixInSelect()
-            } else {
+            }           
+            else {
                 if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
                     s"""back("$alias")"""
                 }
@@ -446,33 +414,84 @@ class GremlinTranslator(expr: Expression,
         case x => throw new GremlinTranslationException(x, "expression not yet supported")
     }
 
-    def genPropertyAccessExpr(e: Expression, fInfo : FieldInfo, propertyName: String, inSelect: Boolean) : String = {
+    def genPropertyAccessExpr(e: Option[Expression], fInfo : FieldInfo, quotedPropertyName: String, inSelect: Boolean) : String = {
         
         if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
-            s"${genQuery(e, inSelect)}.$propertyName"
+            generateAndPrependExpr(e, inSelect, s"""$quotedPropertyName""")
         }
         else {
             val attrInfo : AttributeInfo = fInfo.attrInfo;
             val attrType : IDataType[_] = attrInfo.dataType;
             if(inSelect) {
-                val expr = s"${genQuery(e, inSelect)}.value($propertyName)";
-                return gPersistenceBehavior.convertPersistentToActualValue(expr, attrType);
-                
+                val expr = generateAndPrependExpr(e, inSelect, s"""value($quotedPropertyName)""");
+                return gPersistenceBehavior.generatePersisentToLogicalConversionExpression(expr, attrType);                
             }
-            else {
-                 s"${genQuery(e, inSelect)}.values($propertyName)"
+            else {  
+                val unmapped = s"""values($quotedPropertyName)""" 
+                val expr = if(gPersistenceBehavior.isPropertyValueConversionNeeded(attrType)) {                   
+                    val conversionFunction = gPersistenceBehavior.generatePersisentToLogicalConversionExpression(s"""it.get()""", attrType); 
+                    s"""$unmapped.map{ $conversionFunction }"""
+                 }
+                 else {
+                    unmapped
+                 }
+                 generateAndPrependExpr(e, inSelect, expr)
             }
         }
     }
+    
 
-    def genHasPredicate(fieldGremlinExpr: String, c: ComparisonExpression, expr2: Any) : String = {
+    
+    def generateAndPrependExpr(e1: Option[Expression], inSelect: Boolean, e2: String) : String = e1 match {
+      
+        case Some(x) => s"""${genQuery(x, inSelect)}.$e2"""
+        case None => e2      
+    }
 
-            if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
-                return s"""has("${fieldGremlinExpr}", ${gPersistenceBehavior.gremlinCompOp(c)}, $expr2)""";
+    def genHasPredicate(e: Option[Expression], fInfo : FieldInfo, fieldName: String, inSelect: Boolean, c: ComparisonExpression, expr: Expression) : String = {
+      
+       val qualifiedPropertyName = s"${gPersistenceBehavior.fieldNameInVertex(fInfo.dataType, fInfo.attrInfo)}"
+       val persistentExprValue = translateValueToPersistentForm(fInfo, expr);
+       if(gPersistenceBehavior.getSupportedGremlinVersion() == GremlinVersion.TWO) {
+            return generateAndPrependExpr(e, inSelect, s"""has("${qualifiedPropertyName}", ${gPersistenceBehavior.gremlinCompOp(c)}, $persistentExprValue)""");
+       }
+       else {     
+           val attrInfo : AttributeInfo = fInfo.attrInfo;
+            val attrType : IDataType[_] = attrInfo.dataType;
+            if(gPersistenceBehavior.isPropertyValueConversionNeeded(attrType)) {
+                //for some types, the logical value cannot be stored directly in the underlying graph,
+                //and conversion logic is needed to convert the persistent form of the value
+                //to the actual value.  In cases like this, we generate a conversion expression to 
+                //do this conversion and use the filter step to perform the comparsion in the gremlin query
+                val conversionExpr = gPersistenceBehavior.generatePersisentToLogicalConversionExpression(s"""((Vertex)it.get()).value("$qualifiedPropertyName")""", attrType);
+                return generateAndPrependExpr(e, inSelect, s"""filter{$conversionExpr ${gPersistenceBehavior.gremlinPrimitiveOp(c)} $persistentExprValue}""");
             }
             else {
-                return s"""has("${fieldGremlinExpr}", ${gPersistenceBehavior.gremlinCompOp(c)}($expr2))""";
+                return generateAndPrependExpr(e, inSelect, s"""has("${qualifiedPropertyName}", ${gPersistenceBehavior.gremlinCompOp(c)}($persistentExprValue))""");
             }
+        }
+    }
+    
+    
+    def translateValueToPersistentForm(fInfo: FieldInfo, l: Expression): Any = {
+      
+       if (fInfo.attrInfo.dataType == DataTypes.DATE_TYPE) {
+            val QUOTE = "\"";
+            try {
+                //Accepts both date, datetime formats
+                val dateStr = l.toString.stripPrefix(QUOTE).stripSuffix(QUOTE)
+                val dateVal = ISODateTimeFormat.dateOptionalTimeParser().parseDateTime(dateStr).getMillis
+                return dateVal
+             } catch {
+                   case pe: java.text.ParseException =>
+                        throw new GremlinTranslationException(l,
+                                    "Date format " + l + " not supported. Should be of the format " + 
+                                    TypeSystem.getInstance().getDateFormat.toPattern);
+             }
+        }
+        else {
+            return l
+        }      
     }
     
     def genFullQuery(expr: Expression): String = {
@@ -503,16 +522,16 @@ class GremlinTranslator(expr: Expression,
 
        //Following code extracts the select expressions from expression tree.
 
-             val  se = SelectExpressionHelper.extractSelectExpression(e1)
-             if (se.isDefined)
-             {
-                val  rMap = buildResultMapping(se.get)
-                GremlinQuery(e1, genFullQuery(e1), rMap)
-             }
-             else
-             {
-                GremlinQuery(e1, genFullQuery(e1), null)
-             }
+         val  se = SelectExpressionHelper.extractSelectExpression(e1)
+         if (se.isDefined)
+         {
+            val  rMap = buildResultMapping(se.get)
+            GremlinQuery(e1, genFullQuery(e1), rMap)
+         }
+         else
+         {
+            GremlinQuery(e1, genFullQuery(e1), null)
+         }
         }
 
     }

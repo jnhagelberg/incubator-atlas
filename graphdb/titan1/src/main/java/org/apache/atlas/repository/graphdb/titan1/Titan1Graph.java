@@ -287,9 +287,15 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
 
     }
 
-	@Override
-	public String convertPersistentToActualValue(String expr, IDataType<?> type) {
-		//nothing special needed, value is stored in required type
-		return expr;
-	}
+    @Override
+    public String generatePersisentToLogicalConversionExpression(String expr, IDataType<?> type) {
+        //nothing special needed, value is stored in required type
+        return expr;
+    }
+
+    @Override
+    public boolean isPropertyValueConversionNeeded(IDataType<?> type) {
+        
+        return false;
+    }
 }

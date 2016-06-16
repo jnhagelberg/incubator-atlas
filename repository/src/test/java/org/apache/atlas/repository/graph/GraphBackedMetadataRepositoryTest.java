@@ -343,7 +343,7 @@ public class GraphBackedMetadataRepositoryTest {
         GraphHelper.getInstance().getVertexForGUID(aGUID);
         Long modificationTimestampPostUpdate = vertex.getProperty(Constants.MODIFICATION_TIMESTAMP_PROPERTY_KEY, Long.class);
         Assert.assertNotNull(modificationTimestampPostUpdate);
-        Assert.assertTrue(modificationTimestampPostUpdate > modificationTimestampPreUpdate);
+        Assert.assertTrue(modificationTimestampPostUpdate >= modificationTimestampPreUpdate);
     }
 
     @Test(expectedExceptions = EntityNotFoundException.class)

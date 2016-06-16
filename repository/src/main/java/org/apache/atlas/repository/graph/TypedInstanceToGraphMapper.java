@@ -587,7 +587,7 @@ public final class TypedInstanceToGraphMapper {
         if (GraphHelper.elementExists(currentEdge) && newAttributeValue != null) {
             newEdgeId = updateClassEdge(instanceVertex, currentEdge, newAttributeValue, newReferenceVertex,
                     attributeInfo, edgeLabel);
-        } else if (! GraphHelper.elementExists(currentEdge)&& newAttributeValue != null){
+        } else if (! GraphHelper.elementExists(currentEdge) && newAttributeValue != null){
             AtlasEdge<V,E> newEdge = addClassEdge(instanceVertex, newReferenceVertex, edgeLabel);
             newEdgeId = newEdge.getId().toString();
         }

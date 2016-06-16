@@ -117,14 +117,6 @@ public class Titan1Database implements GraphDatabase<Titan1Vertex, Titan1Edge> {
         return graphInstance;
     }
 
-    private static void createPropertyKeyIfNeeded(String name, TitanManagement mgmt) {
-
-        if(! mgmt.containsRelationType(name)) {
-            mgmt.makePropertyKey(name).dataType(String.class).cardinality(Cardinality.SET).make();
-        }
-    }
-
-
     public static void unload() {
         synchronized (Titan1Database.class) {
 

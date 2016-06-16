@@ -48,8 +48,8 @@ import org.apache.atlas.repository.graphdb.AtlasGraph
 trait GraphPersistenceStrategies {
 
     def getSupportedGremlinVersion() : GremlinVersion
-    def convertPersistentToActualValue(expr: String, t: IDataType[_]) : String
-
+    def generatePersisentToLogicalConversionExpression(expr: String, t: IDataType[_]) : String
+    def isPropertyValueConversionNeeded(attrType: IDataType[_]) : Boolean
     /**
      * Name of attribute used to store typeName in vertex
      */
@@ -119,7 +119,7 @@ trait GraphPersistenceStrategies {
             "it"
         }
 
-    }
+    }   
 
     /**
      * extract the Id from a Vertex.
@@ -138,6 +138,16 @@ trait GraphPersistenceStrategies {
          else {
             gremlin3CompOp(op);
          }
+     }
+    
+     def gremlinPrimitiveOp(op: ComparisonExpression) = op.symbol match {
+        case "=" => "=="
+        case "!=" => "!="
+        case ">" => ">"
+        case ">=" => ">="
+        case "<" => "<"
+        case "<=" => "<="
+        case _ => throw new ExpressionException(op, "Comparison operator not supported in Gremlin")
      }
 
     private def gremlin2CompOp(op: ComparisonExpression) = op.symbol match {
@@ -251,6 +261,10 @@ trait GraphPersistenceStrategies {
     private def fillVarWithSubTypeInstances(typeName : String, fillVar : String) = {
         s"""g.V().has("${superTypeAttributeName}", "${typeName}").fill($fillVar)"""
     }
+
+ 
+
+  
 }
 
 case class GraphPersistenceStrategy1[V,E](g: AtlasGraph[V,E]) extends GraphPersistenceStrategies {
@@ -263,10 +277,13 @@ case class GraphPersistenceStrategy1[V,E](g: AtlasGraph[V,E]) extends GraphPersi
         return g.getSupportedGremlinVersion();
     }
     
-    override def convertPersistentToActualValue(expr: String, t: IDataType[_]) : String = {
-        return g.convertPersistentToActualValue(expr, t);
+    override def generatePersisentToLogicalConversionExpression(expr: String, t: IDataType[_]) : String = {
+        return g.generatePersisentToLogicalConversionExpression(expr, t);
     }  
 
+    override def isPropertyValueConversionNeeded(t : IDataType[_]) : Boolean = {
+      return g.isPropertyValueConversionNeeded(t)
+    }
     
     def edgeLabel(dataType: IDataType[_], aInfo: AttributeInfo) = s"__${dataType.getName}.${aInfo.name}"
 

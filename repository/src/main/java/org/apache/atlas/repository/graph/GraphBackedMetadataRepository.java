@@ -356,7 +356,11 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         return (AtlasGraph<V,E>)graph;
     }
 
-	public String convertPersistentToActualValue(String expr, IDataType<?> t) {
-		return graph.convertPersistentToActualValue(expr, t);
+	public String generatePersisentToLogicalConversionExpression(String expr, IDataType<?> t) {
+		return graph.generatePersisentToLogicalConversionExpression(expr, t);
 	}
+
+    public boolean isPropertyValueConversionNeeded(IDataType<?> t) {
+        return graph.isPropertyValueConversionNeeded(t);
+    }
 }

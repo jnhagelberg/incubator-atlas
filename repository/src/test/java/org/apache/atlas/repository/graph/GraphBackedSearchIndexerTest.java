@@ -128,11 +128,11 @@ public class GraphBackedSearchIndexerTest {
         ClassType databaseType = typeSystem.defineClassType(databaseTypeDefinition);
         graphBackedSearchIndexer.onAdd(Arrays.asList(databaseType));
 
-        verifySystemCompositeIndex(managementSystem, "Database.name", false);
-        verifyVertexIndexContains(managementSystem, "Database.name");
+        verifySystemCompositeIndex(managementSystem, "Database" + Constants.SEPARATOR + "name", false);
+        verifyVertexIndexContains(managementSystem, "Database" + Constants.SEPARATOR + "name");
 
-        verifySystemCompositeIndex(managementSystem, "Database.managedType", false);
-        verifyVertexIndexContains(managementSystem, "Database.managedType");
+        verifySystemCompositeIndex(managementSystem, "Database" + Constants.SEPARATOR + "managedType", false);
+        verifyVertexIndexContains(managementSystem, "Database" + Constants.SEPARATOR + "managedType");
     }
 
     private void verifyVertexIndexContains(AtlasGraphManagement managementSystem, String indexName) {

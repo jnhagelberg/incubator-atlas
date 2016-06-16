@@ -17,6 +17,10 @@
  */
 package org.apache.atlas.repository.graph;
 
+import java.util.regex.Pattern;
+
+import org.apache.atlas.repository.Constants;
+
 /**
  * Represents an edge label used in Atlas.
  * The format of an Atlas edge label is EDGE_LABEL_PREFIX<<typeName>>.<<attributeName>>[.mapKey]
@@ -32,7 +36,7 @@ public class AtlasEdgeLabel {
 
     public AtlasEdgeLabel(String edgeLabel) {
         String labelWithoutPrefix = edgeLabel.substring(GraphHelper.EDGE_LABEL_PREFIX.length());
-        String[] fields = labelWithoutPrefix.split("\\.", 3);
+        String[] fields = labelWithoutPrefix.split(Pattern.quote(Constants.SEPARATOR), 3);
         if (fields.length < 2 || fields.length > 3) {
             throw new IllegalArgumentException("Invalid edge label " + edgeLabel +
                 ": expected 2 or 3 label components but found " + fields.length);
@@ -42,7 +46,7 @@ public class AtlasEdgeLabel {
         if (fields.length == 3) {
             mapKey_ = fields[2];
             qualifiedMapKey_ = labelWithoutPrefix;
-            qualifiedAttributeName_ = typeName_ + '.' + attributeName_;
+            qualifiedAttributeName_ = typeName_ + Constants.SEPARATOR + attributeName_;
         }
         else {
             mapKey_ = null;

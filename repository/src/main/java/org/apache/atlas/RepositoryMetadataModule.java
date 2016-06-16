@@ -79,7 +79,7 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
         //before we try to restore the typesystem
         Multibinder<TypesChangeListener> typesChangeListenerBinder =
                 Multibinder.newSetBinder(binder(), TypesChangeListener.class);
-        typesChangeListenerBinder.addBinding().to(GraphBackedSearchIndexer.class).asEagerSingleton();
+        typesChangeListenerBinder.addBinding().to(GraphBackedSearchIndexer.class);
 
         // bind the MetadataService interface to an implementation
         bind(MetadataService.class).to(DefaultMetadataService.class).asEagerSingleton();

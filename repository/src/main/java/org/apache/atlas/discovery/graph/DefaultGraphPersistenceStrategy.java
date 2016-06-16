@@ -110,7 +110,7 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
     public String fieldPrefixInSelect() {
         return GraphPersistenceStrategies$class.fieldPrefixInSelect(this);
     }
-
+   
     @Override
     public <V,E> Id getIdFromVertex(String dataTypeName, AtlasVertex<V,E> vertex) {
         return GraphHelper.getIdFromVertex(dataTypeName, vertex);
@@ -214,6 +214,11 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
     public String gremlinCompOp(Expressions.ComparisonExpression op) {
         return GraphPersistenceStrategies$class.gremlinCompOp(this, op);
     }
+    
+    @Override
+    public String gremlinPrimitiveOp(Expressions.ComparisonExpression op) {
+        return GraphPersistenceStrategies$class.gremlinPrimitiveOp(this, op);
+    }
 
     @Override
     public String loopObjectExpression(IDataType<?> dataType) {
@@ -256,9 +261,13 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
     }
 
     @Override
-    public String convertPersistentToActualValue(String expr, IDataType<?> t) {
-    	return metadataRepository.convertPersistentToActualValue(expr, t);
+    public String generatePersisentToLogicalConversionExpression(String expr, IDataType<?> t) {
+    	return metadataRepository.generatePersisentToLogicalConversionExpression(expr, t);
     }
-
+    
+    @Override
+    public boolean isPropertyValueConversionNeeded(IDataType<?> t) {
+        return metadataRepository.isPropertyValueConversionNeeded(t);
+    }
 
 }

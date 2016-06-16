@@ -247,12 +247,14 @@ public interface AtlasGraph<V,E> {
      * convert property values from the value that is stored in the graph
      * to the value/type that the user expects to get back.
      *
-     * @param expr
+     * @param expr - gremlin expr that represents the persistent property value
      * @param type
      * @return
      */
-    String convertPersistentToActualValue(String expr, IDataType<?> type);
+    String generatePersisentToLogicalConversionExpression(String valueExpr, IDataType<?> type);
 
+    boolean isPropertyValueConversionNeeded(IDataType<?> type);
+    
     /**
      * Gets the version of Gremlin that this graph uses.
      *

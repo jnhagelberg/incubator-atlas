@@ -24,6 +24,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.RequestContext;
@@ -349,11 +351,11 @@ public final class GraphHelper {
     public static String getQualifiedFieldName(IDataType dataType, String attributeName) throws AtlasException {
         return dataType.getTypeCategory() == DataTypes.TypeCategory.STRUCT ? dataType.getName() + Constants.SEPARATOR + attributeName
             // else class or trait
-            : ((HierarchicalType) dataType).getQualifiedName(attributeName);
+            : ((HierarchicalType) dataType).getQualifiedName(attributeName).replaceAll(Pattern.quote("."), Matcher.quoteReplacement(Constants.SEPARATOR));
     }
 
     public static String getTraitLabel(String typeName, String attrName) {
-        return typeName + "_" + attrName;
+        return typeName + Constants.SEPARATOR + attrName;
     }
 
     public static Object getProperty(AtlasVertex<?,?> entityVertex, String propertyName) {

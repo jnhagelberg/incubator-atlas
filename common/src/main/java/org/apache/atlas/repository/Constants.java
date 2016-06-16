@@ -30,7 +30,7 @@ public final class Constants {
      * https://github.ibm.com/CloudDataServices/cds-graph-service/issues/960 is in production in
      * IBM Graph Database.
      */
-    public static final String SEPARATOR = "_";
+    public static final String SEPARATOR = "z";
     
     /**
      * Globally Unique identifier property key.
@@ -57,10 +57,10 @@ public final class Constants {
     /**
      * Properties for type store graph.
      */
-    public static final String TYPE_CATEGORY_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "type_category";
+    public static final String TYPE_CATEGORY_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "type" + SEPARATOR + "category";
     public static final String VERTEX_TYPE_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "type";
-    public static final String TYPENAME_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "type_name";
-    public static final String TYPEDESCRIPTION_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "type_description";
+    public static final String TYPENAME_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "type" + SEPARATOR + "name";
+    public static final String TYPEDESCRIPTION_PROPERTY_KEY = INTERNAL_PROPERTY_KEY_PREFIX + "type" + SEPARATOR + "Gdescription";
 
     /**
      * Trait names property key and index name.
