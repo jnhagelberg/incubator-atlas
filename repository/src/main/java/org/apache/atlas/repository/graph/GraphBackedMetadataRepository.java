@@ -260,23 +260,23 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         }
 
         try {
-            DeleteContext context = new DeleteContext(graphHelper);
+            DeleteContext deleteContext = new DeleteContext(graphHelper);
             final String entityTypeName = GraphHelper.getTypeName(instanceVertex);
             String relationshipLabel = GraphHelper.getTraitLabel(entityTypeName, traitNameToBeDeleted);
             Edge edge = GraphHelper.getEdgeForLabel(instanceVertex, relationshipLabel);
-            deleteHandler.deleteEdgeReference(context, edge, DataTypes.TypeCategory.TRAIT, false, true);
+            deleteHandler.deleteEdgeReference(deleteContext, edge, DataTypes.TypeCategory.TRAIT, false, true);
 
             // update the traits in entity once trait removal is successful
             traitNames.remove(traitNameToBeDeleted);
-            updateTraits(context, instanceVertex, traitNames);
-            context.commitDelete();
+            updateTraits(deleteContext, instanceVertex, traitNames);
+            deleteContext.commitDelete();
         } catch (Exception e) {
             throw new RepositoryException(e);
         }
     }
 
 
-    private void updateTraits(DeleteContext context, Vertex instanceVertex, List<String> traitNames) {
+    private void updateTraits(DeleteContext deleteContext, Vertex instanceVertex, List<String> traitNames) {
         // remove the key
         instanceVertex.removeProperty(Constants.TRAIT_NAMES_PROPERTY_KEY);
 
@@ -326,7 +326,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
         if (guids == null || guids.size() == 0) {
             throw new IllegalArgumentException("guids must be non-null and non-empty");
         }
-        DeleteContext context = new DeleteContext(graphHelper);
+        DeleteContext deleteContext = new DeleteContext(graphHelper);
         for (String guid : guids) {
             if (guid == null) {
                 LOG.warn("deleteEntities: Ignoring null guid");
@@ -334,7 +334,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
             }
             try {
                 Vertex instanceVertex = graphHelper.getVertexForGUID(guid);
-                deleteHandler.deleteEntity(context, instanceVertex);
+                deleteHandler.deleteEntity(deleteContext, instanceVertex);
 
             } catch (EntityNotFoundException e) {
                 // Entity does not exist - treat as non-error, since the caller
@@ -346,7 +346,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
             }
 
         }
-        context.commitDelete();
+        deleteContext.commitDelete();
         RequestContext requestContext = RequestContext.get();
         return new AtlasClient.EntityResult(requestContext.getCreatedEntityIds(),
                 requestContext.getUpdatedEntityIds(), requestContext.getDeletedEntityIds());

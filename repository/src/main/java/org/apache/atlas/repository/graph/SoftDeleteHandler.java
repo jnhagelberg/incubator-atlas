@@ -44,7 +44,7 @@ public class SoftDeleteHandler extends DeleteHandler {
                 context.setProperty(instanceVertex, STATE_PROPERTY_KEY, Id.EntityState.DELETED.name());
                 context.setProperty(instanceVertex, MODIFICATION_TIMESTAMP_PROPERTY_KEY,
                         RequestContext.get().getRequestTime());
-                context.registerSoftDeletedElement(instanceVertex);
+                context.softDeleteElement(instanceVertex);
             }
         }
     }
@@ -59,7 +59,7 @@ public class SoftDeleteHandler extends DeleteHandler {
                 context.setProperty(edge, STATE_PROPERTY_KEY, Id.EntityState.DELETED.name());
                 context.setProperty(edge, MODIFICATION_TIMESTAMP_PROPERTY_KEY,
                         RequestContext.get().getRequestTime());
-                context.registerSoftDeletedElement(edge);
+                context.softDeleteElement(edge);
             }
         }
     }

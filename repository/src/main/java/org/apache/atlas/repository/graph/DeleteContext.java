@@ -51,11 +51,23 @@ public class DeleteContext {
         graphHelper_ = helper;
     }
 
-    public void registerSoftDeletedElement(Element element) {
+    /**
+     * Records that the given element has been soft deleted so
+     * that is is treated as deleted by the delete context.
+     * 
+     * @param element
+     */
+    public void softDeleteElement(Element element) {
 
         elementsMarkedForDelete_.add(element);
     }
-
+    
+    /**
+     * Records that the specified Vertex should be deleted.  It will be deleted
+     * when commitDelete() is called.
+     * 
+     * @param vertex The vertex to delete.
+     */
     public void removeVertex(Vertex vertex) {
 
         if (isDeleted(vertex)) {
@@ -65,6 +77,12 @@ public class DeleteContext {
         elementsMarkedForDelete_.add(vertex);
     }
 
+    /**
+    * Records that the specified Edge should be deleted.  It will be deleted
+    * when commitDelete() is called.
+    * 
+    * @param vertex The vertex to delete.
+    */
     public void removeEdge(Edge edge) {
         if (isDeleted(edge)) {
             throw new IllegalStateException("Cannot delete an edge that has already been deleted");
@@ -73,6 +91,14 @@ public class DeleteContext {
         elementsMarkedForDelete_.add(edge);
     }
 
+    /**
+     * Records that a property needs to be set in an Element.  The change will take place
+     * when commitDelete() is called.
+     * 
+     * @param element the element to update
+     * @param name the name of the property to set
+     * @param value the value to set the property to
+     */
     public void setProperty(Element element, String name, Object value) {
         if (isDeleted(element)) {
             throw new IllegalStateException("Cannot update an element that has been deleted.");
@@ -80,6 +106,10 @@ public class DeleteContext {
         deleteActions_.add(new PropertyUpdate(element, name, value));
     }
 
+    /**
+     * Applies all of the acccumulated changes to the graph.
+     * 
+     */
     public void commitDelete() {
         for (DeleteAction action : deleteActions_) {
             action.perform(graphHelper_);
@@ -88,19 +118,47 @@ public class DeleteContext {
         processedVertices_.clear();
     }
 
+    /**
+    * Returns true if either:
+    * 
+    *  1) the given vertex has been previously processed by the delete algoritm or 
+    *  2) the given element has been deleted, either through the DeleteContext or previously through the soft
+    * delete mechanism.
+    * 
+    * @param element
+    * @return
+    */
     public boolean isProcessedOrDeleted(Vertex vertex) {
         return isProcessed(vertex) || ! isActive(vertex);
     }
 
+    /**
+     * Returns true if the given element has not been deleted, either
+     * through the DeleteContext or previously through the soft
+     * delete mechanism.
+     * 
+     * @param element
+     * @return
+     */
     public boolean isActive(Element element) {
         EntityState state = GraphHelper.getState(element);
         return state == EntityState.ACTIVE && !isDeleted(element);
     }
-
+    /**
+     * Returns true if the given Vertex has been previsouly processed
+     * by the delete algorithm.
+     * 
+     * @param vertex
+     * @return
+     */
     public boolean isProcessed(Vertex vertex) {
         return processedVertices_.contains(vertex);
     }
-
+    /**
+     * Records that a given Vertex has been processed by the delete algorithm.
+     * 
+     * @param vertex
+     */
     public void addProcessedVertex(Vertex vertex) {
         processedVertices_.add(vertex);
     }
@@ -108,7 +166,12 @@ public class DeleteContext {
     private boolean isDeleted(Element instanceVertex) {
         return elementsMarkedForDelete_.contains(instanceVertex);
     }
-
+    
+    /** 
+     * Interface for delete actions that are accumulated by this 
+     * class to be executed later.
+     *
+     */
     private static interface DeleteAction {
         void perform(GraphHelper helper);
     }
