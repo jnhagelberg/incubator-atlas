@@ -54,18 +54,18 @@ public class DeleteContext {
     /**
      * Records that the given element has been soft deleted so
      * that is is treated as deleted by the delete context.
-     * 
+     *
      * @param element
      */
     public void softDeleteElement(Element element) {
 
         elementsMarkedForDelete_.add(element);
     }
-    
+
     /**
      * Records that the specified Vertex should be deleted.  It will be deleted
      * when commitDelete() is called.
-     * 
+     *
      * @param vertex The vertex to delete.
      */
     public void removeVertex(Vertex vertex) {
@@ -80,7 +80,7 @@ public class DeleteContext {
     /**
     * Records that the specified Edge should be deleted.  It will be deleted
     * when commitDelete() is called.
-    * 
+    *
     * @param vertex The vertex to delete.
     */
     public void removeEdge(Edge edge) {
@@ -94,7 +94,7 @@ public class DeleteContext {
     /**
      * Records that a property needs to be set in an Element.  The change will take place
      * when commitDelete() is called.
-     * 
+     *
      * @param element the element to update
      * @param name the name of the property to set
      * @param value the value to set the property to
@@ -108,7 +108,7 @@ public class DeleteContext {
 
     /**
      * Applies all of the acccumulated changes to the graph.
-     * 
+     *
      */
     public void commitDelete() {
         for (DeleteAction action : deleteActions_) {
@@ -120,11 +120,11 @@ public class DeleteContext {
 
     /**
     * Returns true if either:
-    * 
-    *  1) the given vertex has been previously processed by the delete algoritm or 
+    *
+    *  1) the given vertex has been previously processed by the delete algoritm or
     *  2) the given element has been deleted, either through the DeleteContext or previously through the soft
     * delete mechanism.
-    * 
+    *
     * @param element
     * @return
     */
@@ -136,7 +136,7 @@ public class DeleteContext {
      * Returns true if the given element has not been deleted, either
      * through the DeleteContext or previously through the soft
      * delete mechanism.
-     * 
+     *
      * @param element
      * @return
      */
@@ -147,7 +147,7 @@ public class DeleteContext {
     /**
      * Returns true if the given Vertex has been previsouly processed
      * by the delete algorithm.
-     * 
+     *
      * @param vertex
      * @return
      */
@@ -156,7 +156,7 @@ public class DeleteContext {
     }
     /**
      * Records that a given Vertex has been processed by the delete algorithm.
-     * 
+     *
      * @param vertex
      */
     public void addProcessedVertex(Vertex vertex) {
@@ -166,9 +166,9 @@ public class DeleteContext {
     private boolean isDeleted(Element instanceVertex) {
         return elementsMarkedForDelete_.contains(instanceVertex);
     }
-    
-    /** 
-     * Interface for delete actions that are accumulated by this 
+
+    /**
+     * Interface for delete actions that are accumulated by this
      * class to be executed later.
      *
      */
