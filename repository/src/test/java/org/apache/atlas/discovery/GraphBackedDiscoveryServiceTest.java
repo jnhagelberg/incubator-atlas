@@ -18,8 +18,23 @@
 
 package org.apache.atlas.discovery;
 
-import com.google.common.collect.ImmutableSet;
+import static org.apache.atlas.typesystem.types.utils.TypesUtil.createClassTypeDef;
+import static org.apache.atlas.typesystem.types.utils.TypesUtil.createOptionalAttrDef;
+import static org.apache.atlas.typesystem.types.utils.TypesUtil.createRequiredAttrDef;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import javax.inject.Inject;
+
+import org.apache.atlas.AtlasException;
 import org.apache.atlas.BaseRepositoryTest;
 import org.apache.atlas.RepositoryMetadataModule;
 import org.apache.atlas.RequestContext;
@@ -28,6 +43,7 @@ import org.apache.atlas.discovery.graph.GraphBackedDiscoveryService;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.graph.AtlasGraphProvider;
+import org.apache.atlas.repository.graph.GraphBackedSearchIndexer;
 import org.apache.atlas.repository.graphdb.GremlinVersion;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.Referenceable;
@@ -35,6 +51,7 @@ import org.apache.atlas.typesystem.persistence.Id;
 import org.apache.atlas.typesystem.types.ClassType;
 import org.apache.atlas.typesystem.types.DataTypes;
 import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition;
+import org.apache.atlas.typesystem.types.IDataType;
 import org.apache.atlas.typesystem.types.Multiplicity;
 import org.apache.atlas.typesystem.types.TypeSystem;
 import org.codehaus.jettison.json.JSONArray;
@@ -47,19 +64,7 @@ import org.testng.annotations.DataProvider;
 import org.testng.annotations.Guice;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import static org.apache.atlas.typesystem.types.utils.TypesUtil.createClassTypeDef;
-import static org.apache.atlas.typesystem.types.utils.TypesUtil.createOptionalAttrDef;
-import static org.apache.atlas.typesystem.types.utils.TypesUtil.createRequiredAttrDef;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
+import com.google.common.collect.ImmutableSet;
 
 @Guice(modules = RepositoryMetadataModule.class)
 public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
@@ -70,11 +75,37 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
     @Inject
     private GraphBackedDiscoveryService discoveryService;
 
+    private Collection<IDataType> getTypes(TypeSystem ts) throws AtlasException {
+        Collection<IDataType> result = new ArrayList<IDataType>();
+        for(String name : ts.getTypeNames()) {
+            result.add(ts.getDataType(IDataType.class, name));
+        }
+        return result;
+    }
+    
     @BeforeClass
     public void setUp() throws Exception {
         super.setUp();
-        TypeSystem typeSystem = TypeSystem.getInstance();
+        Collection<String> oldTypeNames = new HashSet<String>();
+        final TypeSystem typeSystem = TypeSystem.getInstance();
+        oldTypeNames.addAll(typeSystem.getTypeNames());
+        
+        Collection<String> newTypeNames = new HashSet<String>();
         TestUtils.defineDeptEmployeeTypes(typeSystem);
+        newTypeNames.addAll(typeSystem.getTypeNames());
+        newTypeNames.removeAll(oldTypeNames);
+        
+        Collection<IDataType> newTypes = new ArrayList<IDataType>();
+        for(String name : newTypeNames) {
+            try {
+                newTypes.add(typeSystem.getDataType(IDataType.class, name));                    
+            } catch (AtlasException e) {
+                e.printStackTrace();
+            }
+                       
+        }
+        GraphBackedSearchIndexer idx = new GraphBackedSearchIndexer(new AtlasGraphProvider());        
+        idx.onAdd(newTypes);
 
         ITypedReferenceableInstance hrDept = TestUtils.createDeptEg1(typeSystem);
         repositoryService.createEntities(hrDept);
@@ -94,7 +125,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
 
     @AfterClass
     public void tearDown() throws Exception {
-        super.tearDown();
+        //super.tearDown();
     }
 
     @Test
@@ -222,6 +253,71 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
         }
     }
 
+    @DataProvider(name = "comparisonQueriesProvider")
+    private Object[][] createComparisonQueries() {
+        return new Object[][] {
+            {"Person where (birthday < \"1950-01-01T02:35:58.440Z\" )", 0},
+            {"Person where (birthday > \"1975-01-01T02:35:58.440Z\" )", 2},
+            {"Person where (birthday >= \"1975-01-01T02:35:58.440Z\" )", 2},
+            {"Person where (birthday <= \"1950-01-01T02:35:58.440Z\" )", 0},            
+            {"Person where (birthday = \"1975-01-01T02:35:58.440Z\" )", 0},
+            {"Person where (birthday != \"1975-01-01T02:35:58.440Z\" )", 2},
+            
+            {"Person where (isOrganDonor = true)", 2},
+            {"Person where (isOrganDonor = false)", 1},
+            {"Person where (isOrganDonor != false)", 2},
+            {"Person where (isOrganDonor != true)", 1},            
+            
+            {"Person where (numberOfCars > 0)", 2},
+            {"Person where (numberOfCars > 1)", 1},
+            {"Person where (numberOfCars >= 1)", 2},
+            {"Person where (numberOfCars < 2)", 2},
+            {"Person where (numberOfCars <= 2)", 3},
+            {"Person where (numberOfCars = 2)", 1},
+            {"Person where (numberOfCars != 2)", 2},
+            
+            {"Person where (houseNumber > 0)", 2},
+            {"Person where (houseNumber > 17)", 1},
+            {"Person where (houseNumber >= 17)", 2},
+            {"Person where (houseNumber < 153)", 2},
+            {"Person where (houseNumber <= 153)", 3},
+            {"Person where (houseNumber =  17)", 1},
+            {"Person where (houseNumber != 12)", 3},
+            
+            {"Person where (carMileage > 0)", 2},
+            {"Person where (carMileage > 13)", 1},
+            {"Person where (carMileage >= 13)", 2},
+            {"Person where (carMileage < 13364)", 2},
+            {"Person where (carMileage <= 13364)", 3},
+            {"Person where (carMileage =  13)", 1},
+            {"Person where (carMileage != 13)", 2},
+            
+            {"Person where (shares > 0)", 2},
+            {"Person where (shares > 13)", 2},
+            {"Person where (shares >= 16000)", 1},
+            {"Person where (shares < 13364)", 1},
+            {"Person where (shares <= 15000)", 2},
+            {"Person where (shares =  15000)", 1},
+            {"Person where (shares != 1)", 3},
+                       
+            {"Person where (salary > 0)", 2},
+            {"Person where (salary > 100000)", 2},
+            {"Person where (salary >= 200000)", 1},
+            {"Person where (salary < 13364)", 0},
+            {"Person where (salary <= 150000)", 2},
+            {"Person where (salary =  12334)", 0},
+            {"Person where (salary != 12344)", 3},
+            
+            {"Person where (age > 36)", 1},
+            {"Person where (age > 49)", 1},
+            {"Person where (age >= 49)", 1},
+            {"Person where (age < 50)", 2},
+            {"Person where (age <= 35)", 2},
+            {"Person where (age =  35)", 0},
+            {"Person where (age != 35)", 3}
+        };
+    }
+        
     @DataProvider(name = "dslQueriesProvider")
     private Object[][] createDSLQueries() {
 
@@ -262,7 +358,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
                 {"hive_db where (name = \"Reporting\") select name as _col_0, (createTime + 1) as _col_1 ", 1},
                 {"hive_table where (name = \"sales_fact\" and createTime > \"2014-01-01\" ) select name as _col_0, createTime as _col_1 ", 1},
                 {"hive_table where (name = \"sales_fact\" and createTime >= \"2014-12-11T02:35:58.440Z\" ) select name as _col_0, createTime as _col_1 ", 1},
-
+                
             /*
             todo: does not work - ATLAS-146
             {"hive_db where (name = \"Reporting\") and ((createTime + 1) > 0)"},
@@ -601,6 +697,30 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
 
     @Test(dataProvider = "dslQueriesProvider")
     public void  testSearchByDSLQueries(String dslQuery, Integer expectedNumRows) throws Exception {
+        System.out.println("Executing dslQuery = " + dslQuery);
+        String jsonResults = discoveryService.searchByDSL(dslQuery);
+        assertNotNull(jsonResults);
+
+        JSONObject results = new JSONObject(jsonResults);
+        assertEquals(results.length(), 3);
+        System.out.println("results = " + results);
+
+        Object query = results.get("query");
+        assertNotNull(query);
+
+        JSONObject dataType = results.getJSONObject("dataType");
+        assertNotNull(dataType);
+        String typeName = dataType.getString("typeName");
+        assertNotNull(typeName);
+
+        JSONArray rows = results.getJSONArray("rows");
+        assertNotNull(rows);
+        assertEquals( rows.length(), expectedNumRows.intValue(), "query [" + dslQuery + "] returned [" + rows.length() + "] rows.  Expected " + expectedNumRows.intValue() + " rows."); // some queries may not have any results
+        System.out.println("query [" + dslQuery + "] returned [" + rows.length() + "] rows");
+    }
+    
+    @Test(dataProvider = "comparisonQueriesProvider")
+    public void  testDataTypeComparisonQueries(String dslQuery, Integer expectedNumRows) throws Exception {
         System.out.println("Executing dslQuery = " + dslQuery);
         String jsonResults = discoveryService.searchByDSL(dslQuery);
         assertNotNull(jsonResults);

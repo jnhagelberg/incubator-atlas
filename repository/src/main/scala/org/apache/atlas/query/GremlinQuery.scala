@@ -463,8 +463,9 @@ class GremlinTranslator(expr: Expression,
                 //and conversion logic is needed to convert the persistent form of the value
                 //to the actual value.  In cases like this, we generate a conversion expression to 
                 //do this conversion and use the filter step to perform the comparsion in the gremlin query
-                val conversionExpr = gPersistenceBehavior.generatePersisentToLogicalConversionExpression(s"""((Vertex)it.get()).value("$qualifiedPropertyName")""", attrType);
-                return generateAndPrependExpr(e, inSelect, s"""filter{$conversionExpr ${gPersistenceBehavior.gremlinPrimitiveOp(c)} $persistentExprValue}""");
+                val vertexExpr = "((Vertex)it.get())";
+                val conversionExpr = gPersistenceBehavior.generatePersisentToLogicalConversionExpression(s"""$vertexExpr.value("$qualifiedPropertyName")""", attrType);
+                return generateAndPrependExpr(e, inSelect, s"""filter{$vertexExpr.property("$qualifiedPropertyName").isPresent() && $conversionExpr ${gPersistenceBehavior.gremlinPrimitiveOp(c)} $persistentExprValue}""");
             }
             else {
                 return generateAndPrependExpr(e, inSelect, s"""has("${qualifiedPropertyName}", ${gPersistenceBehavior.gremlinCompOp(c)}($persistentExprValue))""");

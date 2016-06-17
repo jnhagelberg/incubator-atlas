@@ -28,14 +28,19 @@ import static org.apache.atlas.typesystem.types.utils.TypesUtil.createUniqueRequ
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Date;
 
+import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.graph.GraphHelper;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
+import org.apache.atlas.services.MetadataService;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.Referenceable;
 import org.apache.atlas.typesystem.TypesDef;
+import org.apache.atlas.typesystem.json.TypesSerialization;
 import org.apache.atlas.typesystem.persistence.Id;
 import org.apache.atlas.typesystem.types.AttributeDefinition;
 import org.apache.atlas.typesystem.types.ClassType;
@@ -95,6 +100,17 @@ public final class TestUtils {
         return tempFile.getPath();
     }
 
+    public static void defineDeptEmployeeTypes(TypeSystem ts) throws AtlasException {
+        TypesDef def = defineDeptEmployeeTypes();
+        ts.defineTypes(def);
+    }
+    
+    public static void defineDeptEmployeeTypes(MetadataService metadataService) throws AtlasException {
+        TypesDef typesDef = defineDeptEmployeeTypes();
+        String typesAsJSON = TypesSerialization.toJson(typesDef);
+        metadataService.createType(typesAsJSON);
+    }
+    
     /**
      * Class Hierarchy is:
      * Department(name : String, employees : Array[Person])
@@ -103,8 +119,9 @@ public final class TestUtils {
      * <p/>
      * Persons can have SecurityClearance(level : Int) clearance.
      */
-    public static void defineDeptEmployeeTypes(TypeSystem ts) throws AtlasException {
+    public static TypesDef defineDeptEmployeeTypes() throws AtlasException {
 
+        MetadataRepository repos;
         String _description = "_description";
         EnumTypeDefinition orgLevelEnum =
                 new EnumTypeDefinition("OrgLevel", "OrgLevel"+_description, new EnumValue("L1", 1), new EnumValue("L2", 2));
@@ -124,7 +141,18 @@ public final class TestUtils {
                 createOptionalAttrDef("address", "Address"),
                 new AttributeDefinition("department", "Department", Multiplicity.REQUIRED, false, "employees"),
                 new AttributeDefinition("manager", "Manager", Multiplicity.OPTIONAL, false, "subordinates"),
-                new AttributeDefinition("mentor", "Person", Multiplicity.OPTIONAL, false, null));
+                new AttributeDefinition("mentor", "Person", Multiplicity.OPTIONAL, false, null),
+                createOptionalAttrDef("birthday", DataTypes.DATE_TYPE),
+                createOptionalAttrDef("isOrganDonor", DataTypes.BOOLEAN_TYPE),
+                createOptionalAttrDef("numberOfCars", DataTypes.BYTE_TYPE),
+                createOptionalAttrDef("houseNumber", DataTypes.SHORT_TYPE),
+                createOptionalAttrDef("carMileage", DataTypes.INT_TYPE),
+                createOptionalAttrDef("shares", DataTypes.LONG_TYPE),
+                createOptionalAttrDef("salary", DataTypes.DOUBLE_TYPE),
+                createOptionalAttrDef("age", DataTypes.FLOAT_TYPE),
+                createOptionalAttrDef("numberOfStarsEstimate", DataTypes.BIGINTEGER_TYPE),
+                createOptionalAttrDef("approximationOfPi", DataTypes.BIGDECIMAL_TYPE)
+                );
 
         HierarchicalTypeDefinition<ClassType> managerTypeDef = createClassTypeDef("Manager", "Manager"+_description, ImmutableSet.of("Person"),
                 new AttributeDefinition("subordinates", String.format("array<%s>", "Person"), Multiplicity.COLLECTION,
@@ -134,7 +162,7 @@ public final class TestUtils {
                 createTraitTypeDef("SecurityClearance", "SecurityClearance"+_description, ImmutableSet.<String>of(),
                         createRequiredAttrDef("level", DataTypes.INT_TYPE));
 
-        ts.defineTypes(ImmutableList.of(orgLevelEnum), ImmutableList.of(addressDetails),
+        return TypesUtil.getTypesDef(ImmutableList.of(orgLevelEnum), ImmutableList.of(addressDetails),
                 ImmutableList.of(securityClearanceTypeDef),
                 ImmutableList.of(deptTypeDef, personTypeDef, managerTypeDef));
     }
@@ -160,13 +188,25 @@ public final class TestUtils {
         johnAddr.set("street", "Stewart Drive");
         johnAddr.set("city", "Sunnyvale");
         john.set("address", johnAddr);
+        
+        john.set("birthday",new Date(1950, 5, 15));
+        john.set("isOrganDonor", true);
+        john.set("numberOfCars", 1);
+        john.set("houseNumber", 153);
+        john.set("carMileage", 13364);
+        john.set("shares", 15000);
+        john.set("salary", 123345.678);
+        john.set("age", 50);
+        john.set("numberOfStarsEstimate", new BigInteger("1000000000000000000000"));
+        john.set("approximationOfPi", new BigDecimal("3.141592653589793238462643383279502884197169399375105820974944592307816406286"));
 
         jane.set("name", "Jane");
         jane.set("department", hrDept);
         janeAddr.set("street", "Great America Parkway");
         janeAddr.set("city", "Santa Clara");
         jane.set("address", janeAddr);
-
+        janeAddr.set("street", "Great America Parkway");
+       
         julius.set("name", "Julius");
         julius.set("department", hrDept);
         juliusAddr.set("street", "Madison Ave");
@@ -174,6 +214,7 @@ public final class TestUtils {
         julius.set("address", juliusAddr);
         julius.set("subordinates", ImmutableList.<Referenceable>of());
 
+        
         max.set("name", "Max");
         max.set("department", hrDept);
         maxAddr.set("street", "Ripley St");
@@ -181,6 +222,16 @@ public final class TestUtils {
         max.set("address", maxAddr);
         max.set("manager", jane);
         max.set("mentor", julius);
+        max.set("birthday",new Date(1979, 3, 15));
+        max.set("isOrganDonor", true);
+        max.set("numberOfCars", 2);
+        max.set("houseNumber", 17);
+        max.set("carMileage", 13);
+        max.set("shares", Long.MAX_VALUE);
+        max.set("salary", Double.MAX_VALUE);
+        max.set("numberOfStarsEstimate", new BigInteger("1000000000000000000000000000000"));
+        max.set("approximationOfPi", new BigDecimal("3.1415926535897932"));
+
 
         john.set("manager", jane);
         john.set("mentor", max);

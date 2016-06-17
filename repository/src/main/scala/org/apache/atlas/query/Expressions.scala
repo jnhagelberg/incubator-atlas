@@ -636,7 +636,11 @@ object Expressions {
                 left.dataType;
             } else if(left.dataType == DataTypes.DATE_TYPE) {
                 DataTypes.DATE_TYPE
-            } else if (left.dataType != DataTypes.STRING_TYPE || right.dataType != DataTypes.STRING_TYPE) {
+            }
+            else if(left.dataType == DataTypes.BOOLEAN_TYPE) {
+                DataTypes.BOOLEAN_TYPE;
+            }
+            else if (left.dataType != DataTypes.STRING_TYPE || right.dataType != DataTypes.STRING_TYPE) {
                 TypeUtils.combinedType(left.dataType, right.dataType)
             }
             DataTypes.BOOLEAN_TYPE
