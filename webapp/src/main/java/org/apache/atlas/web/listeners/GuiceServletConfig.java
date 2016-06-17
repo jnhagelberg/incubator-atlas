@@ -20,16 +20,7 @@ package org.apache.atlas.web.listeners;
 
 import java.util.HashMap;
 import java.util.Map;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Key;
-import com.google.inject.Module;
-import com.google.inject.Provider;
-import com.google.inject.TypeLiteral;
-import com.google.inject.servlet.GuiceServletContextListener;
-import com.sun.jersey.api.core.PackagesResourceConfig;
-import com.sun.jersey.guice.JerseyServletModule;
-import com.sun.jersey.guice.spi.container.servlet.GuiceContainer;
+
 import javax.servlet.ServletContextEvent;
 
 import org.apache.atlas.ApplicationProperties;
@@ -42,12 +33,11 @@ import org.apache.atlas.repository.graph.GraphProvider;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.service.Services;
 import org.apache.atlas.web.filters.ActiveServerFilter;
-import org.apache.atlas.web.filters.AtlasAuthenticationFilter;
 import org.apache.atlas.web.filters.AuditFilter;
+import org.apache.atlas.web.filters.RequestContextFilter;
 import org.apache.atlas.web.service.ActiveInstanceElectorModule;
 import org.apache.atlas.web.service.ServiceModule;
 import org.apache.commons.configuration.Configuration;
-import org.apache.commons.configuration.ConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -55,6 +45,7 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.Module;
 import com.google.inject.Provider;
 import com.google.inject.TypeLiteral;
 import com.google.inject.servlet.GuiceServletContextListener;
@@ -104,7 +95,7 @@ public class GuiceServletConfig extends GuiceServletContextListener {
                         protected void configureServlets() {
                             filter("/*").through(AuditFilter.class);
                             configureActiveServerFilterIfNecessary();
-
+                            configureRequestContextFilter();
                             String packages = getServletContext().getInitParameter(GUICE_CTX_PARAM);
 
                             LOG.info("Jersey loading from packages: " + packages);
@@ -122,6 +113,10 @@ public class GuiceServletConfig extends GuiceServletContextListener {
                             } else {
                                 filter("/*").through(ActiveServerFilter.class);
                             }
+                        }
+                        private void configureRequestContextFilter() {
+                                filter("/*").through(
+                                        RequestContextFilter.class);
                         }
 
                     });

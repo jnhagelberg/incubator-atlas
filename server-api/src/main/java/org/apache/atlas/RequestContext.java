@@ -43,7 +43,7 @@ public class RequestContext {
 
     private String user;
     private long requestTime;
-
+    private String tenantId;
     TypeSystem typeSystem = TypeSystem.getInstance();
 
     private RequestContext() {
@@ -124,4 +124,12 @@ public class RequestContext {
     public boolean isDeletedEntity(String entityGuid) {
         return deletedEntityIds.contains(entityGuid);
     }
+
+	public String getTenantId() {
+		return tenantId;
+	}
+
+	public void setTenantId(String tenantId) {
+		this.tenantId = tenantId;
+	}
 }

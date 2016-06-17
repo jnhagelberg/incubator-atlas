@@ -41,4 +41,6 @@ public interface GraphDatabase<V,E> {
      * Unloads the graph (used testing)
      */
     void unloadGraph();
+    
+    void setTenantId(String tenantId);
 }

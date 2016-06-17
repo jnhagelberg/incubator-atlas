@@ -160,4 +160,10 @@ public class Titan1Database implements GraphDatabase<Titan1Vertex, Titan1Edge> {
     public boolean isGraphLoaded() {
         return graphInstance != null;
     }
+
+	@Override
+	public void setTenantId(String tenantId) {
+		// TODO Auto-generated method stub
+		
+	}
 }
