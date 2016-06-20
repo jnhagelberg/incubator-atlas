@@ -18,8 +18,10 @@
 
 package org.apache.atlas.web.resources;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import org.apache.atlas.AtlasClient;
+import org.apache.atlas.AtlasConstants;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.EntityAuditEvent;
 import org.apache.atlas.services.MetadataService;
@@ -33,6 +35,7 @@ import org.apache.atlas.typesystem.types.ValueConversionException;
 import org.apache.atlas.utils.ParamChecker;
 import org.apache.atlas.web.util.Servlets;
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.protocol.HTTP;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -59,6 +62,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -101,6 +105,8 @@ public class EntityResource {
     @Consumes({Servlets.JSON_MEDIA_TYPE, MediaType.APPLICATION_JSON})
     @Produces(Servlets.JSON_MEDIA_TYPE)
     public Response submit(@Context HttpServletRequest request) {
+
+        String entityJson = null;
         try {
             String entities = Servlets.getRequestPayload(request);
 
@@ -114,29 +120,46 @@ public class EntityResource {
                 }}.toString();
             }
 
-            LOG.debug("submitting entities {} ", AtlasClient.toString(new JSONArray(entities)));
+            entityJson = AtlasClient.toString(new JSONArray(entities));
+            LOG.debug("submitting entities {} ", entityJson);
 
             final List<String> guids = metadataService.createEntities(entities);
             JSONObject response = getResponse(new AtlasClient.EntityResult(guids, null, null));
 
-            UriBuilder ub = uriInfo.getAbsolutePathBuilder();
-            URI locationURI = guids.isEmpty() ? null : ub.path(guids.get(0)).build();
+            URI locationURI = getLocationURI(guids);
 
             return Response.created(locationURI).entity(response).build();
 
         } catch(EntityExistsException e) {
-            LOG.error("Unique constraint violation", e);
+            LOG.error("Unique constraint violation for entity entityDef={}", entityJson, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.CONFLICT));
         } catch (ValueConversionException ve) {
-            LOG.error("Unable to persist entity instance due to a desrialization error ", ve);
+            LOG.error("Unable to persist entity instance due to a deserialization error entityDef={}", entityJson, ve);
             throw new WebApplicationException(Servlets.getErrorResponse(ve.getCause(), Response.Status.BAD_REQUEST));
         } catch (AtlasException | IllegalArgumentException e) {
-            LOG.error("Unable to persist entity instance", e);
+            LOG.error("Unable to persist entity instance entityDef={}", entityJson, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.BAD_REQUEST));
         } catch (Throwable e) {
-            LOG.error("Unable to persist entity instance", e);
+            LOG.error("Unable to persist entity instance entityDef={}", entityJson, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.INTERNAL_SERVER_ERROR));
         }
+    }
+
+
+    @VisibleForTesting
+    public URI getLocationURI(List<String> guids) {
+        URI locationURI = null;
+        if (uriInfo != null) {
+            UriBuilder ub = uriInfo.getAbsolutePathBuilder();
+            locationURI = guids.isEmpty() ? null : ub.path(guids.get(0)).build();
+        } else {
+            String uriPath = AtlasClient.API.GET_ENTITY.getPath();
+            locationURI = guids.isEmpty() ? null : UriBuilder
+                .fromPath(AtlasConstants.DEFAULT_ATLAS_REST_ADDRESS)
+                .path(uriPath).path(guids.get(0)).build();
+
+        }
+        return locationURI;
     }
 
     private JSONObject getResponse(AtlasClient.EntityResult entityResult) throws AtlasException, JSONException {
@@ -160,24 +183,28 @@ public class EntityResource {
     @Consumes({Servlets.JSON_MEDIA_TYPE, MediaType.APPLICATION_JSON})
     @Produces(Servlets.JSON_MEDIA_TYPE)
     public Response updateEntities(@Context HttpServletRequest request) {
+
+        String entityJson = null;
         try {
             final String entities = Servlets.getRequestPayload(request);
-            LOG.debug("updating entities {} ", AtlasClient.toString(new JSONArray(entities)));
+
+            entityJson = AtlasClient.toString(new JSONArray(entities));
+            LOG.debug("updating entities {} ", entityJson);
 
             AtlasClient.EntityResult entityResult = metadataService.updateEntities(entities);
             JSONObject response = getResponse(entityResult);
             return Response.ok(response).build();
         } catch(EntityExistsException e) {
-            LOG.error("Unique constraint violation", e);
+            LOG.error("Unique constraint violation for entityDef={}", entityJson, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.CONFLICT));
         } catch (ValueConversionException ve) {
-            LOG.error("Unable to persist entity instance due to a desrialization error ", ve);
+            LOG.error("Unable to persist entity instance due to a deserialization error entityDef={}", entityJson, ve);
             throw new WebApplicationException(Servlets.getErrorResponse(ve.getCause(), Response.Status.BAD_REQUEST));
         } catch (AtlasException | IllegalArgumentException e) {
-            LOG.error("Unable to persist entity instance", e);
+            LOG.error("Unable to persist entity instance entityDef={}", entityJson, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.BAD_REQUEST));
         } catch (Throwable e) {
-            LOG.error("Unable to persist entity instance", e);
+            LOG.error("Unable to persist entity instance entityDef={}", entityJson, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.INTERNAL_SERVER_ERROR));
         }
     }
@@ -221,32 +248,35 @@ public class EntityResource {
     public Response updateByUniqueAttribute(@QueryParam("type") String entityType,
                                             @QueryParam("property") String attribute,
                                             @QueryParam("value") String value, @Context HttpServletRequest request) {
-        try {
-            String entities = Servlets.getRequestPayload(request);
 
-            LOG.debug("Partially updating entity by unique attribute {} {} {} {} ", entityType, attribute, value, entities);
+        String entityJson = null;
+        try {
+            entityJson = Servlets.getRequestPayload(request);
+
+            LOG.debug("Partially updating entity by unique attribute {} {} {} {} ", entityType, attribute, value, entityJson);
 
             Referenceable updatedEntity =
-                InstanceSerialization.fromJsonReferenceable(entities, true);
+                InstanceSerialization.fromJsonReferenceable(entityJson, true);
+
             AtlasClient.EntityResult entityResult =
                     metadataService.updateEntityByUniqueAttribute(entityType, attribute, value, updatedEntity);
 
             JSONObject response = getResponse(entityResult);
             return Response.ok(response).build();
         } catch (ValueConversionException ve) {
-            LOG.error("Unable to persist entity instance due to a desrialization error ", ve);
+            LOG.error("Unable to persist entity instance due to a deserialization error {} ", entityJson, ve);
             throw new WebApplicationException(Servlets.getErrorResponse(ve.getCause(), Response.Status.BAD_REQUEST));
         } catch(EntityExistsException e) {
-            LOG.error("Unique constraint violation", e);
+            LOG.error("Unique constraint violation for entity {} ", entityJson, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.CONFLICT));
         } catch (EntityNotFoundException e) {
-            LOG.error("An entity with type={} and qualifiedName={} does not exist", entityType, value, e);
+            LOG.error("An entity with type={} and qualifiedName={} does not exist {} ", entityType, value, entityJson, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.NOT_FOUND));
         } catch (AtlasException | IllegalArgumentException e) {
-            LOG.error("Unable to create/update entity {}" + entityType + ":" + attribute + "." + value, e);
+            LOG.error("Unable to partially update entity {} {} " + entityType + ":" + attribute + "." + value, entityJson, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.BAD_REQUEST));
         } catch (Throwable e) {
-            LOG.error("Unable to update entity {}" + entityType + ":" + attribute + "." + value, e);
+            LOG.error("Unable to partially update entity {} {} " + entityType + ":" + attribute + "." + value, entityJson, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.INTERNAL_SERVER_ERROR));
         }
     }
@@ -274,9 +304,10 @@ public class EntityResource {
     }
     
     private Response updateEntityPartialByGuid(String guid, HttpServletRequest request) {
+        String entityJson = null;
         try {
             ParamChecker.notEmpty(guid, "Guid property cannot be null");
-            final String entityJson = Servlets.getRequestPayload(request);
+            entityJson = Servlets.getRequestPayload(request);
             LOG.debug("partially updating entity for guid {} : {} ", guid, entityJson);
 
             Referenceable updatedEntity =
@@ -285,13 +316,13 @@ public class EntityResource {
             JSONObject response = getResponse(entityResult);
             return Response.ok(response).build();
         } catch (EntityNotFoundException e) {
-            LOG.error("An entity with GUID={} does not exist", guid, e);
+            LOG.error("An entity with GUID={} does not exist {} ", guid, entityJson, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.NOT_FOUND));
         } catch (AtlasException | IllegalArgumentException e) {
-            LOG.error("Unable to update entity {}", guid, e);
+            LOG.error("Unable to update entity by GUID {} {}", guid, entityJson, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.BAD_REQUEST));
         } catch (Throwable e) {
-            LOG.error("Unable to update entity {}", guid, e);
+            LOG.error("Unable to update entity by GUID {} {} ", guid, entityJson, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.INTERNAL_SERVER_ERROR));
         }
     }
@@ -307,22 +338,23 @@ public class EntityResource {
      * @return response payload as json
      */
     private Response updateEntityAttributeByGuid(String guid, String property, HttpServletRequest request) {
+        String value = null;
         try {
             Preconditions.checkNotNull(property, "Entity property cannot be null");
-            String value = Servlets.getRequestPayload(request);
+            value = Servlets.getRequestPayload(request);
             Preconditions.checkNotNull(value, "Entity value cannot be null");
 
             AtlasClient.EntityResult entityResult = metadataService.updateEntityAttributeByGuid(guid, property, value);
             JSONObject response = getResponse(entityResult);
             return Response.ok(response).build();
         } catch (EntityNotFoundException e) {
-            LOG.error("An entity with GUID={} does not exist", guid, e);
+            LOG.error("An entity with GUID={} does not exist {} ", guid, value, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.NOT_FOUND));
         } catch (AtlasException | IllegalArgumentException e) {
-            LOG.error("Unable to add property {} to entity id {}", property, guid, e);
+            LOG.error("Unable to add property {} to entity id {} {} ", property, guid, value, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.BAD_REQUEST));
         } catch (Throwable e) {
-            LOG.error("Unable to add property {} to entity id {}", property, guid, e);
+            LOG.error("Unable to add property {} to entity id {} {} ", property, guid, value, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.INTERNAL_SERVER_ERROR));
         }
     }
@@ -357,16 +389,16 @@ public class EntityResource {
             return Response.ok(response).build();
         } catch (EntityNotFoundException e) {
             if(guids != null || !guids.isEmpty()) {
-                LOG.error("An entity with GUID={} does not exist", guids, e);
+                LOG.error("An entity with GUID={} does not exist ", guids, e);
             } else {
                 LOG.error("An entity with qualifiedName {}-{}-{} does not exist", entityType, attribute, value, e);
             }
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.NOT_FOUND));
         }  catch (AtlasException | IllegalArgumentException e) {
-            LOG.error("Unable to delete entities {}", guids, e);
+            LOG.error("Unable to delete entities {} {} {} {} ", guids, entityType, attribute, value, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.BAD_REQUEST));
         } catch (Throwable e) {
-            LOG.error("Unable to delete entities {}", guids, e);
+            LOG.error("Unable to delete entities {} {} {} {} ", guids, entityType, attribute, value, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.INTERNAL_SERVER_ERROR));
         }
     }
@@ -400,10 +432,10 @@ public class EntityResource {
             return Response.status(status).entity(response).build();
 
         } catch (EntityNotFoundException e) {
-            LOG.error("An entity with GUID={} does not exist", guid, e);
+            LOG.error("An entity with GUID={} does not exist ", guid, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.NOT_FOUND));
         } catch (AtlasException | IllegalArgumentException e) {
-            LOG.error("Bad GUID={}", guid, e);
+            LOG.error("Bad GUID={} ", guid, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.BAD_REQUEST));
         } catch (Throwable e) {
             LOG.error("Unable to get instance definition for GUID {}", guid, e);
@@ -543,27 +575,29 @@ public class EntityResource {
     @Path("{guid}/traits")
     @Consumes({Servlets.JSON_MEDIA_TYPE, MediaType.APPLICATION_JSON})
     @Produces(Servlets.JSON_MEDIA_TYPE)
-    public Response addTrait(@Context HttpServletRequest request, @PathParam("guid") String guid) {
+    public Response addTrait(@Context HttpServletRequest request, @PathParam("guid") final String guid) {
+        String traitDefinition = null;
         try {
-            final String traitDefinition = Servlets.getRequestPayload(request);
+            traitDefinition = Servlets.getRequestPayload(request);
             LOG.debug("Adding trait={} for entity={} ", traitDefinition, guid);
             metadataService.addTrait(guid, traitDefinition);
 
-            UriBuilder ub = uriInfo.getAbsolutePathBuilder();
-            URI locationURI = ub.path(guid).build();
+            URI locationURI = getLocationURI(new ArrayList<String>() {{
+                add(guid);
+            }});
 
             JSONObject response = new JSONObject();
             response.put(AtlasClient.REQUEST_ID, Servlets.getRequestId());
 
             return Response.created(locationURI).entity(response).build();
         } catch (EntityNotFoundException | TypeNotFoundException e) {
-            LOG.error("An entity with GUID={} does not exist", guid, e);
+            LOG.error("An entity with GUID={} does not exist traitDef={} ", guid, traitDefinition, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.NOT_FOUND));
         } catch (AtlasException | IllegalArgumentException e) {
-            LOG.error("Unable to add trait for entity={}", guid, e);
+            LOG.error("Unable to add trait for entity={} traitDef={}", guid, traitDefinition, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.BAD_REQUEST));
         } catch (Throwable e) {
-            LOG.error("Unable to add trait for entity={}", guid, e);
+            LOG.error("Unable to add trait for entity={} traitDef={}", guid, traitDefinition, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.INTERNAL_SERVER_ERROR));
         }
     }
@@ -590,7 +624,7 @@ public class EntityResource {
 
             return Response.ok(response).build();
         } catch (EntityNotFoundException | TypeNotFoundException e) {
-            LOG.error("An entity with GUID={} does not exist", guid, e);
+            LOG.error("An entity with GUID={} does not exist traitName={} ", guid, traitName, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.NOT_FOUND));
         } catch (TraitNotFoundException e) {
             LOG.error("The trait name={} for entity={} does not exist.", traitName, guid, e);
@@ -629,10 +663,10 @@ public class EntityResource {
             response.put(AtlasClient.EVENTS, getJSONArray(events));
             return Response.ok(response).build();
         } catch (AtlasException | IllegalArgumentException e) {
-            LOG.error("Unable to get audit events for entity {}", guid, e);
+            LOG.error("Unable to get audit events for entity guid={} startKey={}", guid, startKey, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.BAD_REQUEST));
         } catch (Throwable e) {
-            LOG.error("Unable to get audit events for entity {}", guid, e);
+            LOG.error("Unable to get audit events for entity guid={} startKey={}", guid, startKey, e);
             throw new WebApplicationException(Servlets.getErrorResponse(e, Response.Status.INTERNAL_SERVER_ERROR));
         }
     }

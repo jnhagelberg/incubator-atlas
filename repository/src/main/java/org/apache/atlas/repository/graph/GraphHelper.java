@@ -175,7 +175,7 @@ public final class GraphHelper {
      * @return vertex with the given property keys
      * @throws EntityNotFoundException
      */
-    private <V,E> AtlasVertex<V,E> findVertex(Object... args) throws EntityNotFoundException {
+    public <V,E> AtlasVertex<V,E> findVertex(Object... args) throws EntityNotFoundException {
         StringBuilder condition = new StringBuilder();
         AtlasGraph<V,E> graph = getGraph();
         AtlasGraphQuery<V,E> query = graph.query();
@@ -321,24 +321,6 @@ public final class GraphHelper {
         return findVertex(Constants.GUID_PROPERTY_KEY, guid);
     }
 
-    public <V,E> AtlasVertex<V,E> getVertexForProperty(String propertyKey, Object value) throws EntityNotFoundException {
-
-        AtlasVertex<V,E> result = findVertex(propertyKey, value, Constants.STATE_PROPERTY_KEY, Id.EntityState.ACTIVE.name());
-        if(GraphHelper.getState(result) == EntityState.DELETED) {
-            //in some cases, the graph query will return elements whose state is actually deleted.  This
-            //can happen if we query the graph before the updated state for the vertex has been
-            //propagated into the graph index.
-            StringBuilder conditionString = new StringBuilder();
-            conditionString.append(propertyKey);
-            conditionString.append(" = ");
-            conditionString.append(value);
-            conditionString.append(" and state__ = ACTIVE");
-            LOG.debug("Could not find a vertex with {}", conditionString);
-            throw new EntityNotFoundException("Could not find an entity in the repository with " + conditionString);
-        }
-        return result;
-    }
-
     public static String getQualifiedNameForMapKey(String prefix, String key) {
         return prefix + Constants.SEPARATOR + key;
     }
@@ -371,7 +353,7 @@ public final class GraphHelper {
             return entityVertex.getProperty(propertyName, Object.class);
         }
     }
-
+    
     public static List<String> getTraitNames(AtlasVertex<?,?> entityVertex) {
         ArrayList<String> traits = new ArrayList<>();
         Collection<String> propertyValues = entityVertex.getPropertyValues(Constants.TRAIT_NAMES_PROPERTY_KEY, String.class);
@@ -429,7 +411,9 @@ public final class GraphHelper {
             if (attributeInfo.isUnique) {
                 String propertyKey = getQualifiedFieldName(classType, attributeInfo.name);
                 try {
-                    result = getVertexForProperty(propertyKey, instance.get(attributeInfo.name));
+                    result = findVertex(propertyKey, instance.get(attributeInfo.name),
+                            Constants.ENTITY_TYPE_PROPERTY_KEY, classType.getName(),
+                            Constants.STATE_PROPERTY_KEY, Id.EntityState.ACTIVE.name());
                     LOG.debug("Found vertex by unique attribute : " + propertyKey + "=" + instance.get(attributeInfo.name));
                 } catch (EntityNotFoundException e) {
                     //Its ok if there is no entity with the same unique value

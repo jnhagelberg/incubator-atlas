@@ -154,6 +154,31 @@ Note that Kafka group ids are specified for a specific topic.  The Kafka group i
 atlas.kafka.entities.group.id=<consumer id>
 </verbatim>
 
+These configuration parameters are useful for setting up Kafka topics via Atlas provided scripts, described in the
+[[InstallationSteps][Installation Steps]] page.
+
+<verbatim>
+# Whether to create the topics automatically, default is true.
+# Comma separated list of topics to be created, default is "ATLAS_HOOK,ATLAS_ENTITES"
+atlas.notification.topics=ATLAS_HOOK,ATLAS_ENTITIES
+# Number of replicas for the Atlas topics, default is 1. Increase for higher resilience to Kafka failures.
+atlas.notification.replicas=1
+# Enable the below two properties if Kafka is running in Kerberized mode.
+# Set this to the service principal representing the Kafka service
+atlas.notification.kafka.service.principal=kafka/_HOST@EXAMPLE.COM
+# Set this to the location of the keytab file for Kafka
+#atlas.notification.kafka.keytab.location=/etc/security/keytabs/kafka.service.keytab
+</verbatim>
+
+These configuration parameters are useful for saving messages in case there are issues in reaching Kafka for
+sending messages.
+
+<verbatim>
+# Whether to save messages that failed to be sent to Kafka, default is true
+atlas.notification.log.failed.messages=true
+# If saving messages is enabled, the file name to save them to. This file will be created under the log directory of the hook's host component - like HiveServer2
+atlas.notification.failed.messages.filename=atlas_hook_failed_messages.log
+</verbatim>
 
 ---++ Client Configs
 <verbatim>

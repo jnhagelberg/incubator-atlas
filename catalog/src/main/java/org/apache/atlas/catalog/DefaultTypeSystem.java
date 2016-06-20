@@ -18,10 +18,6 @@
 
 package org.apache.atlas.catalog;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.catalog.definition.ResourceDefinition;
 import org.apache.atlas.catalog.exception.CatalogRuntimeException;
@@ -36,11 +32,11 @@ import org.apache.atlas.typesystem.exception.EntityNotFoundException;
 import org.apache.atlas.typesystem.exception.TraitNotFoundException;
 import org.apache.atlas.typesystem.exception.TypeExistsException;
 import org.apache.atlas.typesystem.json.TypesSerialization;
-import org.apache.atlas.typesystem.types.AttributeDefinition;
-import org.apache.atlas.typesystem.types.ClassType;
-import org.apache.atlas.typesystem.types.HierarchicalType;
-import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition;
-import org.apache.atlas.typesystem.types.TraitType;
+import org.apache.atlas.typesystem.types.*;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * Default implementation.
@@ -66,12 +62,12 @@ public class DefaultTypeSystem implements AtlasTypeSystem {
             // ok if type already exists
         }
         try {
-            Referenceable entity = new Referenceable(typeName, request.getProperties());
+            Referenceable entity = new Referenceable(typeName, request.getQueryProperties());
             ITypedReferenceableInstance typedInstance = metadataService.getTypedReferenceableInstance(entity);
             metadataService.createEntities(Collections.singletonList(typedInstance).toArray(new ITypedReferenceableInstance[1]));
         } catch (EntityExistsException e) {
             throw new ResourceAlreadyExistsException(
-                    "Attempted to create an entity which already exists: " + request.getProperties());
+                    "Attempted to create an entity which already exists: " + request.getQueryProperties());
         } catch (AtlasException e) {
             throw new CatalogRuntimeException("An expected exception occurred creating an entity: " + e, e);
         }

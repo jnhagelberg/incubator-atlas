@@ -167,7 +167,7 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
     }
 
     private static final AttributeDefinition NAME_ATTRIBUTE =
-            TypesUtil.createUniqueRequiredAttrDef("name", DataTypes.STRING_TYPE);
+            TypesUtil.createRequiredAttrDef(AtlasClient.NAME, DataTypes.STRING_TYPE);
     private static final AttributeDefinition DESCRIPTION_ATTRIBUTE =
             TypesUtil.createOptionalAttrDef("description", DataTypes.STRING_TYPE);
 
@@ -175,20 +175,20 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
     private void createSuperTypes() throws AtlasException {
 
         //create all the indices up front so that the graph database can group the
-        //index initializations together for efficiency
-        HierarchicalTypeDefinition<ClassType> infraType = TypesUtil
-                .createClassTypeDef(AtlasClient.INFRASTRUCTURE_SUPER_TYPE, ImmutableSet.<String>of(), NAME_ATTRIBUTE,
-                        DESCRIPTION_ATTRIBUTE);
-
-        HierarchicalTypeDefinition<ClassType> datasetType = TypesUtil
-                .createClassTypeDef(AtlasClient.DATA_SET_SUPER_TYPE, ImmutableSet.<String>of(), NAME_ATTRIBUTE,
-                        DESCRIPTION_ATTRIBUTE);
-
-
+        //index initializations together for efficiency        
+        
         HierarchicalTypeDefinition<ClassType> referenceableType = TypesUtil
                 .createClassTypeDef(AtlasClient.REFERENCEABLE_SUPER_TYPE, ImmutableSet.<String>of(),
                         TypesUtil.createUniqueRequiredAttrDef(AtlasClient.REFERENCEABLE_ATTRIBUTE_NAME,
                                 DataTypes.STRING_TYPE));
+                                
+        HierarchicalTypeDefinition<ClassType> infraType = TypesUtil
+            .createClassTypeDef(AtlasClient.INFRASTRUCTURE_SUPER_TYPE, ImmutableSet.<String>of(AtlasClient.REFERENCEABLE_SUPER_TYPE), NAME_ATTRIBUTE,
+                        DESCRIPTION_ATTRIBUTE);
+
+        HierarchicalTypeDefinition<ClassType> datasetType = TypesUtil
+            .createClassTypeDef(AtlasClient.DATA_SET_SUPER_TYPE, ImmutableSet.<String>of(AtlasClient.REFERENCEABLE_SUPER_TYPE), NAME_ATTRIBUTE,
+                        DESCRIPTION_ATTRIBUTE);
 
 
         HierarchicalTypeDefinition<ClassType> processType = TypesUtil
@@ -202,9 +202,9 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
 
 
         TypeRegistrationContext context = new TypeRegistrationContext(false);
-        context.addClassType(infraType);
-        context.addClassType(datasetType);
         context.addClassType(referenceableType);
+        context.addClassType(infraType);
+        context.addClassType(datasetType);        
         context.addClassType(processType);
         context.createTypes();
     }

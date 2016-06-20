@@ -308,6 +308,7 @@ public class BaseRepositoryTest {
         List<Referenceable> columns, String... traitNames) throws Exception {
         Referenceable referenceable = new Referenceable(HIVE_TABLE_TYPE, traitNames);
         referenceable.set("name", name);
+        referenceable.set(AtlasClient.REFERENCEABLE_ATTRIBUTE_NAME, name);
         referenceable.set("description", description);
         referenceable.set("owner", owner);
         referenceable.set("tableType", tableType);
@@ -330,7 +331,7 @@ public class BaseRepositoryTest {
         throws Exception {
         Referenceable referenceable = new Referenceable(HIVE_PROCESS_TYPE, traitNames);
         referenceable.set("name", name);
-        referenceable.set("qualifiedName", name);
+        referenceable.set(AtlasClient.REFERENCEABLE_ATTRIBUTE_NAME, name);
         referenceable.set("description", description);
         referenceable.set("user", user);
         referenceable.set("startTime", System.currentTimeMillis());
@@ -351,6 +352,7 @@ public class BaseRepositoryTest {
     Id view(String name, Id dbId, List<Id> inputTables, String... traitNames) throws Exception {
         Referenceable referenceable = new Referenceable(VIEW_TYPE, traitNames);
         referenceable.set("name", name);
+        referenceable.set(AtlasClient.REFERENCEABLE_ATTRIBUTE_NAME, name);
         referenceable.set("db", dbId);
 
         referenceable.set("inputTables", inputTables);

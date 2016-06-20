@@ -3,6 +3,7 @@ Apache Atlas Release Notes
 
 --trunk - unreleased
 INCOMPATIBLE CHANGES:
+ATLAS-542 Make qualifiedName and name consistent across all Datasets and Process (sumasai via yhemanth)
 ATLAS-716 Entity update/delete notifications (shwethags)
 ATLAS-619 Canonicalize hive queries (sumasai)
 ATLAS-497 Simple Authorization (saqeeb.s via yhemanth)
@@ -22,6 +23,15 @@ ATLAS-409 Atlas will not import avro tables with schema read from a file (dosset
 ATLAS-379 Create sqoop and falcon metadata addons (venkatnrangan,bvellanki,sowmyaramesh via shwethags)
 
 ALL CHANGES:
+ATLAS-901 Log messages that cannot be sent to Kafka to a specific log configuration (yhemanth)
+ATLAS-911 Get entity by unique attribute doesn't enforce type (shwethags)
+ATLAS-899 Fix Hive Hook documentation (sumasai via yhemanth)
+ATLAS-890 Log received messages in case of error (sumasai via yhemanth)
+ATLAS-888 NPE in NotificationHookConsumer (sumasai via shwethags)
+ATLAS-884 Process registration should call Entity update instead of create (sumasai)
+ATLAS-515 Ability to initialize Kafka topics with more than 1 replica (yhemanth)
+ATLAS-891 UI changes to implement Update term (Kalyanikashikar via yhemanth)
+ATLAS-794 Business Catalog Update (jspeidel via yhemanth)
 ATLAS-837 Enhance Sqoop addon to handle export operation (venkatnrangan via shwethags)
 ATLAS-869 Make LDAP/AD properties to be configurable. (nixonrodrigues via yhemanth)
 ATLAS-730 Change titan hbase table name (svimal2106 via sumasai )
