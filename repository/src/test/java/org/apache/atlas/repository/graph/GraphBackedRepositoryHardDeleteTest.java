@@ -92,6 +92,16 @@ public class GraphBackedRepositoryHardDeleteTest extends GraphBackedMetadataRepo
             //expected
         }
     }
+    
+    @Override
+    protected void assertEntityNotDeleted(String id) throws Exception {
+        try {
+            repositoryService.getEntityDefinition(id);
+        } catch(EntityNotFoundException e) {
+            fail("Entity should still exist");
+        }
+        
+    }
 
     @Override
     protected void assertDeletedColumn(ITypedReferenceableInstance tableInstance) throws AtlasException {
@@ -193,4 +203,6 @@ public class GraphBackedRepositoryHardDeleteTest extends GraphBackedMetadataRepo
         Assert.fail("Lower bound on attribute Manager.subordinates was not enforced - " +
             NullRequiredAttributeException.class.getSimpleName() + " was expected but none thrown");
     }
+
+   
 }

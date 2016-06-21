@@ -33,12 +33,12 @@ public class HardDeleteHandler extends DeleteHandler {
     }
 
     @Override
-    protected void _deleteVertex(AtlasVertex<?,?> instanceVertex, boolean force) {
-        graphHelper.removeVertex(instanceVertex);
+    protected void _deleteVertex(DeleteContext deleteContext, AtlasVertex<?,?> instanceVertex, boolean force) {
+        deleteContext.removeVertex(instanceVertex);
     }
 
     @Override
-    protected void deleteEdge(AtlasEdge<?,?> edge, boolean force) throws AtlasException {
-        graphHelper.removeEdge(edge);
+    protected void deleteEdge(DeleteContext deleteContext, AtlasEdge<?,?> edge, boolean force) throws AtlasException {
+        deleteContext.removeEdge(edge);
     }
 }

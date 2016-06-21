@@ -19,8 +19,8 @@
 package org.apache.atlas;
 
 import org.aopalliance.intercept.MethodInterceptor;
-import org.apache.atlas.discovery.DiscoveryService;
 import org.apache.atlas.discovery.DataSetLineageService;
+import org.apache.atlas.discovery.DiscoveryService;
 import org.apache.atlas.discovery.LineageService;
 import org.apache.atlas.discovery.graph.GraphBackedDiscoveryService;
 import org.apache.atlas.listener.EntityChangeListener;
@@ -29,15 +29,13 @@ import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.audit.EntityAuditListener;
 import org.apache.atlas.repository.audit.EntityAuditRepository;
 import org.apache.atlas.repository.audit.HBaseBasedAuditRepository;
-import org.apache.atlas.repository.audit.InMemoryEntityAuditRepository;
-import org.apache.atlas.repository.graph.DeleteHandler;
 import org.apache.atlas.repository.graph.AtlasGraphProvider;
+import org.apache.atlas.repository.graph.DeleteHandler;
 import org.apache.atlas.repository.graph.GraphBackedMetadataRepository;
 import org.apache.atlas.repository.graph.GraphBackedSearchIndexer;
 import org.apache.atlas.repository.graph.GraphProvider;
 import org.apache.atlas.repository.graph.SoftDeleteHandler;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
-import org.apache.atlas.repository.graphdb.GraphDatabase;
 import org.apache.atlas.repository.typestore.GraphBackedTypeStore;
 import org.apache.atlas.repository.typestore.ITypeStore;
 import org.apache.atlas.service.Service;
@@ -49,6 +47,8 @@ import org.apache.atlas.typesystem.types.TypeSystem;
 import org.apache.atlas.typesystem.types.TypeSystemProvider;
 
 import com.google.inject.Binder;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.matcher.Matchers;
 import com.google.inject.multibindings.Multibinder;
@@ -69,7 +69,7 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
         // allow for dynamic binding of the metadata repo & graph service
         // bind the MetadataRepositoryService interface to an implementation
         bind(MetadataRepository.class).to(GraphBackedMetadataRepository.class).asEagerSingleton();
-
+       
         bind(TypeSystem.class).toProvider(TypeSystemProvider.class).in(Singleton.class);
 
         // bind the ITypeStore interface to an implementation
@@ -103,6 +103,7 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
         MethodInterceptor interceptor = new GraphTransactionInterceptor();
         requestInjection(interceptor);
         bindInterceptor(Matchers.any(), Matchers.annotatedWith(GraphTransaction.class), interceptor);
+                
     }
 
     protected void bindAuditRepository(Binder binder) {

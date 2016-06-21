@@ -33,6 +33,7 @@ import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.typesystem.IStruct;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
 import org.apache.atlas.typesystem.ITypedStruct;
+import org.apache.atlas.typesystem.exception.EntityNotFoundException;
 import org.apache.atlas.typesystem.persistence.Id;
 import org.apache.atlas.typesystem.types.TypeSystem;
 import org.testng.Assert;
@@ -44,6 +45,7 @@ import static org.apache.atlas.TestUtils.PII;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 public class GraphBackedRepositorySoftDeleteTest extends GraphBackedMetadataRepositoryDeleteTestBase {
     @Override
@@ -96,6 +98,12 @@ public class GraphBackedRepositorySoftDeleteTest extends GraphBackedMetadataRepo
     protected void assertEntityDeleted(String id) throws Exception {
         ITypedReferenceableInstance entity = repositoryService.getEntityDefinition(id);
         assertEquals(entity.getId().getState(), Id.EntityState.DELETED);
+    }
+    
+    @Override
+    protected void assertEntityNotDeleted(String id) throws Exception {
+        ITypedReferenceableInstance entity = repositoryService.getEntityDefinition(id);
+        assertEquals(entity.getId().getState(), Id.EntityState.ACTIVE);
     }
 
     @Override
