@@ -17,6 +17,8 @@
  */
 package org.apache.atlas.repository.graphdb;
 
+import java.util.Map;
+
 /**
  * Represents a graph database
  *
@@ -42,5 +44,5 @@ public interface GraphDatabase<V,E> {
      */
     void unloadGraph();
     
-    void setTenantId(String tenantId);
+    void initialize(Map<String, String> initParameters);
 }

@@ -21,6 +21,7 @@ package org.apache.atlas.repository.graphdb.titan1;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Map;
 
 import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.GraphDatabase;
@@ -162,8 +163,6 @@ public class Titan1Database implements GraphDatabase<Titan1Vertex, Titan1Edge> {
     }
 
 	@Override
-	public void setTenantId(String tenantId) {
-		// TODO Auto-generated method stub
-		
+	public void initialize(Map<String, String> initParameters) {
 	}
 }

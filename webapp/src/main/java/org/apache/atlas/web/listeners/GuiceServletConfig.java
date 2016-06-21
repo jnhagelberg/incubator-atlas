@@ -114,7 +114,7 @@ public class GuiceServletConfig extends GuiceServletContextListener {
                                 filter("/*").through(ActiveServerFilter.class);
                             }
                         }
-                        private void configureRequestContextFilter() {
+                        private void configureRequestContextFilter()  {
                                 filter("/*").through(
                                         RequestContextFilter.class);
                         }

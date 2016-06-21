@@ -90,6 +90,8 @@ public final class Constants {
     public static final String EDGE_INDEX = "edge_index";
 
     public static final String FULLTEXT_INDEX = "fulltext_index";
+    
+    public static final String TENANT_ID = "tenant-id";
 
     private Constants() {
     }

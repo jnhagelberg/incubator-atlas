@@ -170,7 +170,7 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
     }
 
 	@Override
-	public void setTenantId(String tenantId) {
+	public void initialize(Map<String, String> initParameters) {
 		// TODO Auto-generated method stub
 		
 	}
