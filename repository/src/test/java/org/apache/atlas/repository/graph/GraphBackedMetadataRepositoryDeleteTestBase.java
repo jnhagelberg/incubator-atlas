@@ -227,6 +227,7 @@ public abstract class GraphBackedMetadataRepositoryDeleteTestBase {
     protected abstract void assertProcessForTestDeleteReference(ITypedReferenceableInstance processInstance) throws Exception;
 
     protected abstract void assertEntityDeleted(String id) throws Exception;
+    protected abstract void assertEntityNotDeleted(String id) throws Exception;
 
     private AtlasClient.EntityResult deleteEntities(String... id) throws Exception {
         RequestContext.createContext();
@@ -818,6 +819,28 @@ public abstract class GraphBackedMetadataRepositoryDeleteTestBase {
         }
     }
 
+    @Test
+    public void testRollbackOnDeleteException() throws Exception {
+        String deptGuid = createHrDeptGraph();
+        ITypedReferenceableInstance hrDept = repositoryService.getEntityDefinition(deptGuid);
+        Map<String, String> nameGuidMap = getEmployeeNameGuidMap(hrDept);
+
+        try {
+            
+            //Delete john and Max.  Max should fail.  Ensure that Max
+            //both exist afterwards.
+            deleteEntities(nameGuidMap.get("John"), nameGuidMap.get("Max"));
+            
+            assertTestDeleteTargetOfMultiplicityRequiredReference();
+        }
+        catch (Exception e) {
+            verifyExceptionThrown(e, NullRequiredAttributeException.class);
+            assertEntityNotDeleted(nameGuidMap.get("John"));
+            assertEntityNotDeleted(nameGuidMap.get("Max"));
+        }
+    }
+
+    
     protected abstract void assertTestDeleteTargetOfMultiplicityRequiredReference() throws Exception;
 
     @Test

@@ -18,8 +18,10 @@
 package org.apache.atlas.repository.graph;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.atlas.typesystem.persistence.Id.EntityState;
@@ -43,14 +45,18 @@ public class DeleteContext {
 
     // maintain a list of the actions so that the operations get applied
     // in the same order as they came in at
-    private List<DeleteAction> deleteActions_ = new ArrayList<DeleteAction>();
-    private Set<Element> elementsMarkedForDelete_ = new HashSet<Element>();
+    private List<DeleteAction> deleteActions_ = new ArrayList<DeleteAction>(); 
     private Set<Vertex> processedVertices_ = new HashSet<Vertex>();
-
+    private Map<Element, UpdatedElement> updateElements_ = new HashMap<>();
+    
     public DeleteContext(GraphHelper helper) {
         graphHelper_ = helper;
     }
 
+    //
+    //update methods (use getOrCreatedUpdatedElement)
+    //
+    
     /**
      * Records that the given element has been soft deleted so
      * that is is treated as deleted by the delete context.
@@ -58,8 +64,7 @@ public class DeleteContext {
      * @param element
      */
     public void softDeleteElement(Element element) {
-
-        elementsMarkedForDelete_.add(element);
+        getUpdatedElement(element).delete();
     }
 
     /**
@@ -74,9 +79,9 @@ public class DeleteContext {
             throw new IllegalStateException("Cannot delete a vertex that has already been deleted");
         }
         deleteActions_.add(new VertexRemoval(vertex));
-        elementsMarkedForDelete_.add(vertex);
+        getUpdatedElement(vertex).delete();
     }
-
+    
     /**
     * Records that the specified Edge should be deleted.  It will be deleted
     * when commitDelete() is called.
@@ -88,9 +93,9 @@ public class DeleteContext {
             throw new IllegalStateException("Cannot delete an edge that has already been deleted");
         }
         deleteActions_.add(new EdgeRemoval(edge));
-        elementsMarkedForDelete_.add(edge);
+        getUpdatedElement(edge).delete();
     }
-
+    
     /**
      * Records that a property needs to be set in an Element.  The change will take place
      * when commitDelete() is called.
@@ -104,6 +109,7 @@ public class DeleteContext {
             throw new IllegalStateException("Cannot update an element that has been deleted.");
         }
         deleteActions_.add(new PropertyUpdate(element, name, value));
+        getUpdatedElement(element).setProperty(name, value);
     }
 
     /**
@@ -114,9 +120,28 @@ public class DeleteContext {
         for (DeleteAction action : deleteActions_) {
             action.perform(graphHelper_);
         }
-        elementsMarkedForDelete_.clear();
+        deleteActions_.clear();
+        updateElements_.clear();
         processedVertices_.clear();
     }
+    
+    //
+    // read methods (use getReadOnlyUpdatedElement)
+    //
+    /**
+     * Gets the value of the specified property on the given element, taking into
+     * account change that have been applied to the DeleteContext but have not
+     * yet been committed into the graph.
+     * 
+     * @param element
+     * @param property
+     * @param clazz
+     * @return
+     */
+    public <T> T getProperty(Element element, String property) {
+        return getReadOnlyUpdatedElement(element).getProperty(property);
+    }        
+    
 
     /**
     * Returns true if either:
@@ -141,11 +166,17 @@ public class DeleteContext {
      * @return
      */
     public boolean isActive(Element element) {
+        
         EntityState state = GraphHelper.getState(element);
         return state == EntityState.ACTIVE && !isDeleted(element);
     }
+   
+    private boolean isDeleted(Element instanceVertex) {
+        return getReadOnlyUpdatedElement(instanceVertex).isDeleted();
+    }
+    
     /**
-     * Returns true if the given Vertex has been previsouly processed
+     * Returns true if the given Vertex has been previously processed
      * by the delete algorithm.
      *
      * @param vertex
@@ -163,10 +194,37 @@ public class DeleteContext {
         processedVertices_.add(vertex);
     }
 
-    private boolean isDeleted(Element instanceVertex) {
-        return elementsMarkedForDelete_.contains(instanceVertex);
+    
+    /**
+     * This returns an UpdatedElement that corresponds to the given element.  If there are no changes
+     * to the given element, a temporary UpdatedElement is created (but not cached).  No changes should be applied
+     * to UpdatedElements returned here, since they may not be saved.
+     */
+    private UpdatedElement getReadOnlyUpdatedElement(Element element) {
+       return getOrCreateUpdatedElement(element, false);        
     }
 
+    
+    /**
+     * This returns an UpdatedElement that corresponds to the given element.  If there are no changes
+     * to the given element, an UpdatedElement is created and added to the cache.
+     */
+    private UpdatedElement getUpdatedElement(Element element) {
+        return getOrCreateUpdatedElement(element, true);        
+    }
+
+    private UpdatedElement getOrCreateUpdatedElement(Element element, boolean updateCache) {
+        
+        UpdatedElement result = updateElements_.get(element);
+        if(result == null) {
+            result = new UpdatedElement(element);
+            if(updateCache) {
+                updateElements_.put(element, result);
+            }
+        }
+        return result;
+    }
+    
     /**
      * Interface for delete actions that are accumulated by this
      * class to be executed later.
@@ -223,5 +281,36 @@ public class DeleteContext {
             helper.removeEdge(toDelete_);
         }
     }
+    
+    private static class UpdatedElement {
+        
+        private Element wrapped_;
+        private boolean deleted_ = false;
+        private Map<String,Object> propertyChanges_ = new HashMap<String,Object>();
+        
+        public UpdatedElement(Element element) {
+            wrapped_ = element;
+        }
+        
+        public void setProperty(String key, Object value) {
+            propertyChanges_.put(key, value);
+        }
+
+        public <T> T getProperty(String key) {
+            if(propertyChanges_.containsKey(key)) {
+                return (T)propertyChanges_.get(key);
+            }
+            return wrapped_.getProperty(key);
+        }
+        
+        public void delete() {
+            deleted_ = true;
+            propertyChanges_.clear();
+        }
+        
+        public boolean isDeleted() {
+            return deleted_;
+        }      
+    }   
 
 }
