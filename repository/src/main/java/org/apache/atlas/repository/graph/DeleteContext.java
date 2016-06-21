@@ -47,7 +47,7 @@ public class DeleteContext {
     // in the same order as they came in at
     private List<DeleteAction> deleteActions_ = new ArrayList<DeleteAction>();
     private Set<Vertex> processedVertices_ = new HashSet<Vertex>();
-    private Map<Element, UpdatedElement> updateElements_ = new HashMap<>();
+    private Map<Element, UpdatedElement> updatedElements_ = new HashMap<>();
 
     public DeleteContext(GraphHelper helper) {
         graphHelper_ = helper;
@@ -117,7 +117,7 @@ public class DeleteContext {
             action.perform(graphHelper_);
         }
         deleteActions_.clear();
-        updateElements_.clear();
+        updatedElements_.clear();
         processedVertices_.clear();
     }
 
@@ -208,11 +208,11 @@ public class DeleteContext {
 
     private UpdatedElement getOrCreateUpdatedElement(Element element, boolean updateCache) {
 
-        UpdatedElement result = updateElements_.get(element);
+        UpdatedElement result = updatedElements_.get(element);
         if(result == null) {
             result = new UpdatedElement(element);
             if(updateCache) {
-                updateElements_.put(element, result);
+                updatedElements_.put(element, result);
             }
         }
         return result;
