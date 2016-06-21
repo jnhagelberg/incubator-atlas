@@ -21,6 +21,7 @@ package org.apache.atlas.repository.graphdb.titan1;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Map;
 
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
@@ -161,4 +162,8 @@ public class Titan1Database implements GraphDatabase<Titan1Vertex, Titan1Edge> {
     public boolean isGraphLoaded() {
         return graphInstance != null;
     }
+
+	@Override
+	public void initialize(Map<String, String> initParameters) {
+	}
 }

@@ -169,4 +169,10 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
         return graphInstance != null;
     }
 
+	@Override
+	public void initialize(Map<String, String> initParameters) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

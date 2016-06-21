@@ -18,10 +18,15 @@
 
 package org.apache.atlas.repository.graph;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.inject.Singleton;
 
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
+import org.apache.atlas.RequestContext;
+import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.GraphDatabase;
 
@@ -43,6 +48,9 @@ public class AtlasGraphProvider implements GraphProvider<AtlasGraph> {
                     Class implClass = ApplicationProperties.getClass(IMPL_PROPERTY, DEFAULT_DATABASE_IMPL_CLASS, GraphDatabase.class);
                     graphDb_ = (GraphDatabase<V, E>)implClass.newInstance();
                 }
+                Map<String, String> initParams = new HashMap <String, String> ();
+                initParams.put(Constants.TENANT_ID, RequestContext.get().getTenantId());
+                graphDb_.initialize(initParams);
                 graph_ = graphDb_.getGraph();
             }
             catch (IllegalAccessException e) {
