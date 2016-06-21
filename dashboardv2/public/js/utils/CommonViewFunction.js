@@ -20,19 +20,32 @@ define(['require', 'utils/Utils', 'modules/Modal', 'utils/Messages'], function(r
     'use strict';
 
     var CommonViewFunction = {};
-    CommonViewFunction.deleteTagModel = function(tagName) {
-        var msg = "<b>Tag:</b>";
-        if (tagName) {
+    CommonViewFunction.deleteTagModel = function(tagName, AssignTerm) {
+        var msg = "",
+            titleMessage = "",
+            deleteText = "";
+        if (tagName && AssignTerm != "assignTerm") {
             var tagOrTerm = Utils.checkTagOrTerm(tagName);
             if (tagOrTerm.term) {
-                msg = "<b>Term: " + tagName + "</b>";
+                msg = "<div class='ellipsis'>Delete: " + "<b>" + tagName + "?</b></div>" +
+                    "<p class='termNote'>Assets map to this term will be unclassified</p>";
+                titleMessage = Messages.deleteTerm;
+                deleteText = "Delete";
             } else {
-                msg = "<b>Tag: " + tagName + "</b>";
+                msg = "<div class='ellipsis'>Delete: " + "<b>" + tagName + "?</b></div>";
+                var titleMessage = Messages.deleteTag;
+                deleteText = "Delete";
             }
         }
+        if (AssignTerm == "assignTerm") {
+            msg = "<div class='ellipsis'>Remove: " + "<b>" + tagName + "?</b></div>" +
+                "<p class='termNote'>Assets map to this term will be unclassified</p>";
+            titleMessage = Messages.RemoveTerm;
+            deleteText = "Remove";
+        }
         var modal = new Modal({
-            title: Messages.deleteTitle,
-            okText: 'Delete',
+            title: titleMessage,
+            okText: deleteText,
             htmlContent: msg,
             cancelText: "Cancel",
             allowCancel: true,
@@ -196,6 +209,180 @@ define(['require', 'utils/Utils', 'modules/Modal', 'utils/Messages'], function(r
             }
         });
         return table;
+    }
+    CommonViewFunction.breadcrumbUrlMaker = function(url) {
+        if (url) {
+            var urlList = [];
+            var splitURL = url.split("api/atlas/v1/taxonomies/");
+            if (splitURL.length > 1) {
+                var splitUrlWithoutTerm = splitURL[1].split("/terms/");
+                if (splitUrlWithoutTerm.length == 1) {
+                    splitUrlWithoutTerm = splitUrlWithoutTerm[0].split("/");
+                }
+            } else {
+                var splitUrlWithoutTerm = splitURL[0].split("/terms/");
+                if (splitUrlWithoutTerm.length == 1) {
+                    splitUrlWithoutTerm = splitUrlWithoutTerm[0].split("/");
+                }
+            }
+
+            var href = "";
+            for (var i in splitUrlWithoutTerm) {
+                if (i == 0) {
+                    href = splitUrlWithoutTerm[i];
+                    urlList.push({
+                        value: splitUrlWithoutTerm[i],
+                        href: href
+                    });
+                } else {
+                    href += "/terms/" + splitUrlWithoutTerm[i];
+                    urlList.push({
+                        value: splitUrlWithoutTerm[i],
+                        href: href
+                    });
+                };
+            }
+            return urlList;
+        }
+    }
+    CommonViewFunction.breadcrumbMaker = function(options) {
+        var li = "";
+        if (options.urlList) {
+            _.each(options.urlList, function(object) {
+                li += '<li><a href="javascript:void(0)" class="link" data-href="/api/atlas/v1/taxonomies/' + object.href + '">' + object.value + '</a></li>';
+            });
+        }
+        if (options.scope) {
+            options.scope.html(li);
+            options.scope.asBreadcrumbs("destroy");
+            options.scope.asBreadcrumbs({
+                namespace: 'breadcrumb',
+                overflow: "left",
+                dropicon: "fa fa-ellipsis-h",
+                responsive: false,
+                dropdown: function() {
+                    return '<div class=\"dropdown\">' +
+                        '<a href=\"javascript:void(0);\" class=\"' + this.namespace + '-toggle\" data-toggle=\"dropdown\"><i class=\"' + this.dropicon + '\"</i></a>' +
+                        '<ul class=\"' + this.namespace + '-menu dropdown-menu popover bottom arrowPosition \" ><div class="arrow"></div></ul>' +
+                        '</div>';
+                },
+                dropdownContent: function(a) {
+                    return '<li><a class="link" href="javascript:void(0)" data-href="' + a.find('a').data('href') + '" class="dropdown-item">' + a.text() + "</a></li>";
+                }
+            });
+        }
+        options.scope.find('li a.link').click(function() {
+            Utils.setUrl({
+                url: "#!/taxonomy/detailCatalog" + $(this).data('href') + "?load=true",
+                mergeBrowserUrl: false,
+                trigger: true,
+                updateTabState: function() {
+                    return { taxonomyUrl: this.url, stateChanged: false };
+                }
+            });
+        });
+    }
+    CommonViewFunction.termTableBreadcrumbMaker = function(model) {
+        var traits = model.get('$traits$'),
+            url = "",
+            deleteHtml = "",
+            html = "",
+            id = model.get('$id$').id,
+            terms = [];
+        _.keys(traits).map(function(key) {
+            var tagName = Utils.checkTagOrTerm(traits[key].$typeName$);
+            if (tagName.term) {
+                terms.push({
+                    deleteHtml: '<a class="pull-left" title="Delete Term"><i class="fa fa-trash" data-id="tagClick" data-name="' + traits[key].$typeName$ + '" data-guid="' + model.get('$id$').id + '" ></i></a>',
+                    url: traits[key].$typeName$.split(".").join("/"),
+                    name: tagName.fullName
+                });
+            }
+        });
+        _.each(terms, function(obj, i) {
+            var className = "";
+            if (i >= 1) {
+                className += "showHideDiv hide";
+            }
+            obj['valueUrl'] = CommonViewFunction.breadcrumbUrlMaker(obj.url);
+            html += '<div class="' + className + '" dataterm-name="' + obj.name + '"><div class="liContent"></div>' + obj.deleteHtml + '</div>';
+        })
+        if (terms.length > 1) {
+            html += '<div><a  href="javascript:void(0)" data-id="showMoreLessTerm" class="inputTag inputTagGreen"><span>Show More </span><i class="fa fa-angle-right"></i></a></div>'
+        }
+        if (model.get('$id$')) {
+            html += '<div><a href="javascript:void(0)" class="inputAssignTag" data-id="addTerm" data-guid="' + model.get('$id$').id + '"><i class="fa fa-folder-o">' + " " + 'Assign Term</i></a></div>'
+        } else {
+            html += '<div><a href="javascript:void(0)" class="inputAssignTag" data-id="addTerm"><i class="fa fa-folder-o">' + " " + 'Assign Term</i></a></div>'
+        }
+        return {
+            html: '<div class="termTableBreadcrumb" dataterm-id="' + id + '">' + html + '</div>',
+            object: { scopeId: id, value: terms }
+        }
+
+    }
+    CommonViewFunction.tagForTable = function(model) {
+        var traits = model.get('$traits$'),
+            atags = "",
+            addTag = "",
+            count = 0;
+        _.keys(model.get('$traits$')).map(function(key) {
+            var tagName = Utils.checkTagOrTerm(traits[key].$typeName$),
+                className = "inputTag";
+            if (!tagName.term) {
+                if (count >= 1) {
+                    className += " hide";
+                }
+                ++count;
+                atags += '<a class="' + className + '" data-id="tagClick">' + traits[key].$typeName$ + '<i class="fa fa-times" data-id="delete" data-name="' + tagName.name + '" data-guid="' + model.get('$id$').id + '" ></i></a>';
+            }
+        });
+
+        if (model.get('$id$')) {
+            addTag += '<a href="javascript:void(0)" data-id="addTag" class="inputTag" data-guid="' + model.get('$id$').id + '" ><i style="right:0" class="fa fa-plus"></i></a>';
+        } else {
+            addTag += '<a href="javascript:void(0)" data-id="addTag" class="inputTag"><i style="right:0" class="fa fa-plus"></i></a>';
+        }
+        if (count > 1) {
+            addTag += '<a  href="javascript:void(0)" data-id="showMoreLess" class="inputTag inputTagGreen"><span>Show More </span><i class="fa fa-angle-right"></i></a>'
+        }
+        return '<div class="tagList">' + atags + addTag + '</div>';
+
+    }
+    CommonViewFunction.saveTermToAsset = function(options) {
+        require(['models/VCatalog'], function(Vcatalog) {
+            var VCatalog = new Vcatalog();
+            var name = options.termName;
+            VCatalog.url = function() {
+                return "api/atlas/v1/entities/" + options.guid + "/tags/" + name;
+            };
+            VCatalog.save(null, {
+                beforeSend: function() {},
+                success: function(data) {
+                    Utils.notifySuccess({
+                        content: "Term " + name + Messages.addTermToEntitySuccessMessage
+                    });
+                    if (options.callback) {
+                        options.callback();
+                    }
+                    if (options.collection) {
+                        options.collection.fetch({ reset: true });
+                    }
+                },
+                error: function(error, data, status) {
+                    if (data && data.responseText) {
+                        var data = JSON.parse(data.responseText);
+                        Utils.notifyError({
+                            content: data.message
+                        });
+                        if (options.callback) {
+                            options.callback();
+                        }
+                    }
+                },
+                complete: function() {}
+            });
+        })
     }
     CommonViewFunction.userDataFetch = function(options) {
         if (options.url) {

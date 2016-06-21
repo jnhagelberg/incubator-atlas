@@ -3,6 +3,23 @@ Apache Atlas Release Notes
 
 --trunk - unreleased
 INCOMPATIBLE CHANGES:
+
+
+ALL CHANGES:
+ATLAS-925 Change master version to 0.8-incubating (shwethags)
+
+
+--Release 0.7-incubating
+
+INCOMPATIBLE CHANGES:
+ATLAS-822 Type updates - don't allow updating supertypes ( shwethags via sumasai )
+ATLAS-698 Remove Rexster Graph API (svimal2106 via shwethags)
+ATLAS-844 Remove titan berkeley and elastic search jars if hbase/solr based profiles are chosen (yhemanth via shwethags)
+ATLAS-819 All user defined types should have a set of common attributes (shwethags)
+ATLAS-915 Fix docs for import-hive changes (svimal2106 via sumasai)
+ATLAS-688 import-hive should depend on Hive CLASSPATH jars instead of packaging everything (svimal2106 via sumasai)
+ATLAS-835 Falcon Integration with Atlas (sowmyaramesh via shwethags)
+ATLAS-912 Update to use Kafka 0.10.0.0 (from 0.9.0.0) (madhan.neethiraj via yhemanth)
 ATLAS-542 Make qualifiedName and name consistent across all Datasets and Process (sumasai via yhemanth)
 ATLAS-716 Entity update/delete notifications (shwethags)
 ATLAS-619 Canonicalize hive queries (sumasai)
@@ -23,6 +40,17 @@ ATLAS-409 Atlas will not import avro tables with schema read from a file (dosset
 ATLAS-379 Create sqoop and falcon metadata addons (venkatnrangan,bvellanki,sowmyaramesh via shwethags)
 
 ALL CHANGES:
+ATLAS-922 remove test atlas-application.properties embedded in atlas-typesystem.jar ( mneethiraj via sumasai)
+ATLAS-765 Need documentation for Authentication and Authorization features of Atlas (nixonrodrigues via yhemanth)
+ATLAS-930 QuickStart is failing when run after a specific sequence of operations (yhemanth via shwethags)
+ATLAS-904 Hive hook fails due to session state not being set (sumasai via yhemanth)
+ATLAS-929 Add test for trait preservation on column rename for non-default database (svimal2106 via shwethags)
+ATLAS-922 remove test atlas-application.properties embedded in atlas-typesystem.jar (madhan.neethiraj via yhemanth)
+ATLAS-725 UI : Filter out or highlight deleted entities in search result outputs(dsl, text) , schema view, and lineage graph (kevalbhatt18 via sumasai)
+ATLAS-897 Atlas UI: Feature to associate multiple assets with a term. (kevalbhatt18 via sumasai)
+ATLAS-866 Improve association of terms with entity (Show tree view) (kevalbhatt18 via sumasai)
+ATLAS-877 CreateTime of an entity(for example hive table) changes for every update (sumasai)
+ATLAS-642 import-hive should create the lineage for external tables (svimal2106 via sumasai)
 ATLAS-901 Log messages that cannot be sent to Kafka to a specific log configuration (yhemanth)
 ATLAS-911 Get entity by unique attribute doesn't enforce type (shwethags)
 ATLAS-899 Fix Hive Hook documentation (sumasai via yhemanth)

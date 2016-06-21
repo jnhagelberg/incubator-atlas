@@ -22,8 +22,9 @@ define(['require',
     'utils/Utils',
     'modules/Modal',
     'collection/VCatalogList',
+    'utils/CommonViewFunction',
     'utils/Messages'
-], function(require, Backbone, AddTermToEntityLayoutViewTmpl, Utils, Modal, VCatalogList, Messages) {
+], function(require, Backbone, AddTermToEntityLayoutViewTmpl, Utils, Modal, VCatalogList, CommonViewFunction, Messages) {
     'use strict';
 
     var AddTermToEntityLayoutView = Backbone.Marionette.LayoutView.extend(
@@ -34,12 +35,11 @@ define(['require',
             template: AddTermToEntityLayoutViewTmpl,
 
             /** Layout sub regions */
-            regions: {},
-            /** ui selector cache */
-            ui: {
-                termName: '[data-id="termName"]',
-                addTermOptions: '[data-id="addTermOptions"]'
+            regions: {
+                RTreeLayoutView: "#r_treeLayoutView"
             },
+            /** ui selector cache */
+            ui: {},
             /** ui events hash */
             events: function() {
                 var events = {};
@@ -50,95 +50,61 @@ define(['require',
              * @constructs
              */
             initialize: function(options) {
-                _.extend(this, _.pick(options, 'guid', 'modalCollection', 'callback'));
+                _.extend(this, _.pick(options, 'guid', 'modalCollection', 'callback', 'multiple', 'showLoader'));
                 this.vCatalogList = new VCatalogList();
                 var that = this;
                 this.modal = new Modal({
-                    title: 'Add Term',
+                    title: 'Assign Term',
                     content: this,
-                    okText: 'Save',
+                    okText: 'Assign',
                     cancelText: "Cancel",
                     allowCancel: true,
                 }).open();
                 this.on('ok', function() {
-                    that.saveTermToAsset();
+                    if (that.multiple) {
+                        for (var i = 0; i < that.multiple.length; i++) {
+                            if (i == 0) {
+                                that.showLoader();
+                            }
+                            var obj = {
+                                termName: this.modal.$el.find('.taxonomyTree li.active a').data('name').split("`").join(""),
+                                guid: that.multiple[i].id.id
+                            }
+                            if (that.multiple.length - 1 == i) {
+                                obj['callback'] = function() {
+                                    that.callback();
+                                }
+                            }
+                            // if (that.multiple[i].model.get("$traits$") && !that.multiple[i].model.get("$traits$")[obj.termName]) {
+                            CommonViewFunction.saveTermToAsset(obj);
+                            // / }
+                        }
+                    } else {
+                        CommonViewFunction.saveTermToAsset({
+                            termName: this.modal.$el.find('.taxonomyTree li.active a').data('name').split("`").join(""),
+                            guid: this.guid,
+                            callback: function() {
+                                that.callback();
+                            }
+                        });
+                    }
                 });
                 this.on('closeModal', function() {
                     this.modal.trigger('cancel');
                 });
-                this.fetchTaxonomy = true;
-                this.bindEvents();
-            },
-            bindEvents: function() {
-                this.listenTo(this.vCatalogList, 'reset', function() {
-                    var url = "",
-                        that = this;
-                    _.each(this.vCatalogList.models, function(obj) {
-                        if (that.fetchTaxonomy && obj.get('href').search("terms") == -1) {
-                            url = obj.get('href');
-                            that.fetchTaxonomy = false;
-                        }
-                    });
-                    if (url.length == 0) {
-                        this.generateTerm();
-                    } else {
-                        url = "/api" + url.split("/api")[1] + "/terms";
-                        this.fetchTerms(url);
-                    }
-                }, this);
             },
             onRender: function() {
-                this.fetchTerms();
+                this.renderTreeLayoutView();
             },
-            fetchTerms: function(url) {
-                if (url) {
-                    this.vCatalogList.url = url;
-                }
-                this.vCatalogList.fetch({ reset: true });
-            },
-            generateTerm: function() {
-                var terms = '<option selected="selected" disabled="disabled">-- Select Term --</option>';
-                _.each(this.vCatalogList.fullCollection.models, function(obj, key) {
-                    terms += '<option value="' + obj.get('name') + '">' + obj.get('name') + '</option>';
-                });
-                this.ui.addTermOptions.html(terms);
-                this.ui.addTermOptions.select2({
-                    placeholder: "Select Term",
-                    allowClear: true
-                });
-            },
-            saveTermToAsset: function() {
+            renderTreeLayoutView: function() {
                 var that = this;
-                var VCatalog = new this.vCatalogList.model();
-                VCatalog.url = function() {
-                    return "api/atlas/v1/entities/" + that.guid + "/tags/" + that.ui.addTermOptions.val();
-                }
-                VCatalog.save(null, {
-                    beforeSend: function() {},
-                    success: function(data) {
-                        Utils.notifySuccess({
-                            content: "Term " + that.ui.addTermOptions.val() + Messages.addTermToEntitySuccessMessage
-                        });
-                        if (that.callback) {
-                            that.callback();
-                        }
-                        if (that.modalCollection) {
-                            that.modalCollection.fetch({ reset: true });
-                        }
-                    },
-                    error: function(error, data, status) {
-                        if (data && data.responseText) {
-                            var data = JSON.parse(data.responseText);
-                            Utils.notifyError({
-                                content: data.messages
-                            });
-                        }
-                    },
-                    complete: function() {}
+                require(['views/business_catalog/TreeLayoutView'], function(TreeLayoutView) {
+                    that.RTreeLayoutView.show(new TreeLayoutView({
+                        url: that.url,
+                        viewBased: false
+                    }));
                 });
-
             }
         });
     return AddTermToEntityLayoutView;
-
 });

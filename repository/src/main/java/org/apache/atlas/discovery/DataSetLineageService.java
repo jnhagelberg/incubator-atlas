@@ -120,6 +120,7 @@ public class DataSetLineageService implements LineageService {
     }
 
     @Override
+    @GraphTransaction
     public String getInputsGraphForEntity(String guid) throws AtlasException {
         LOG.info("Fetching lineage inputs graph for entity={}", guid);
         ParamChecker.notEmpty(guid, "Entity id");
@@ -137,6 +138,7 @@ public class DataSetLineageService implements LineageService {
     }
 
     @Override
+    @GraphTransaction
     public String getOutputsGraphForEntity(String guid) throws AtlasException {
         LOG.info("Fetching lineage outputs graph for entity guid={}", guid);
         ParamChecker.notEmpty(guid, "Entity id");
@@ -175,6 +177,7 @@ public class DataSetLineageService implements LineageService {
     }
 
     @Override
+    @GraphTransaction
     public String getSchemaForEntity(String guid) throws AtlasException {
         ParamChecker.notEmpty(guid, "Entity id");
         LOG.info("Fetching schema for entity guid={}", guid);

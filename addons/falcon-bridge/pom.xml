@@ -22,7 +22,7 @@
     <parent>
         <artifactId>apache-atlas</artifactId>
         <groupId>org.apache.atlas</groupId>
-        <version>0.7-graphdb-SNAPSHOT</version>
+        <version>0.8-graphdb-SNAPSHOT</version>
         <relativePath>../../</relativePath>
     </parent>
     <artifactId>falcon-bridge</artifactId>
@@ -240,6 +240,10 @@
                             <name>atlas.graphdb.backend</name>
                             <value>${plugin.class}</value>
                         </systemProperty>
+                         <systemProperty>
+                            <key>atlas.conf</key>
+                            <value>${project.build.directory}/../../../typesystem/target/test-classes</value>
+                        </systemProperty>
                     </systemProperties>
                     <stopKey>atlas-stop</stopKey>
                     <stopPort>31001</stopPort>
@@ -299,6 +303,12 @@
                     <execution>
                         <configuration>
                             <mainClass>org.apache.atlas.falcon.model.FalconDataModelGenerator</mainClass>
+                            <systemProperties>
+                                <systemProperty>
+                                    <key>atlas.conf</key>
+                                    <value>${project.build.directory}/../../../typesystem/target/test-classes</value>
+                                </systemProperty>
+                            </systemProperties>
                             <arguments>
                                 <argument>${project.build.directory}/models/falcon_model.json</argument>
                             </arguments>

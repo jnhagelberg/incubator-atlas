@@ -23,7 +23,7 @@
     <parent>
         <artifactId>apache-atlas</artifactId>
         <groupId>org.apache.atlas</groupId>
-        <version>0.7-graphdb-SNAPSHOT</version>
+        <version>0.8-graphdb-SNAPSHOT</version>
     </parent>
 
     <artifactId>atlas-graphdb</artifactId>
@@ -34,7 +34,7 @@
     <modules>
         <module>api</module>
         <module>graphdb-impls</module>
-	<module>titan0</module>
+        <module>titan0</module>
     </modules>
 
     <profiles>

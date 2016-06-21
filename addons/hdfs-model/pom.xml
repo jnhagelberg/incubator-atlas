@@ -22,7 +22,7 @@
     <parent>
         <artifactId>apache-atlas</artifactId>
         <groupId>org.apache.atlas</groupId>
-        <version>0.7-graphdb-SNAPSHOT</version>
+        <version>0.8-graphdb-SNAPSHOT</version>
         <relativePath>../../</relativePath>
     </parent>
     <artifactId>hdfs-model</artifactId>
@@ -91,6 +91,13 @@
             <artifactId>atlas-repository</artifactId>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.atlas</groupId>
+            <artifactId>atlas-typesystem</artifactId>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -129,6 +136,12 @@
                     <execution>
                         <configuration>
                             <mainClass>org.apache.atlas.fs.model.FSDataModelGenerator</mainClass>
+                            <systemProperties>
+                                <systemProperty>
+                                    <key>atlas.conf</key>
+                                    <value>${project.build.directory}/../../../typesystem/src/test/resources/</value>
+                                </systemProperty>
+                            </systemProperties>
                             <arguments>
                                 <argument>${project.build.directory}/models/fs_model.json</argument>
                             </arguments>

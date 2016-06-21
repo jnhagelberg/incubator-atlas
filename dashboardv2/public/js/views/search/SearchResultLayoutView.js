@@ -46,7 +46,9 @@ define(['require',
             ui: {
                 tagClick: '[data-id="tagClick"]',
                 addTag: '[data-id="addTag"]',
-                addTerm: '[data-id="addTerm"]'
+                addTerm: '[data-id="addTerm"]',
+                showMoreLess: '[data-id="showMoreLess"]',
+                showMoreLessTerm: '[data-id="showMoreLessTerm"]'
             },
 
             /** ui events hash */
@@ -76,8 +78,25 @@ define(['require',
                     }
                 };
                 events["click " + this.ui.addTag] = 'addTagModalView';
-                events["click " + this.ui.addTerm] = 'addTermModalView';
-                events["click " + this.ui.tagCrossIcon] = function(e) {};
+                events["click " + this.ui.addTerm] = 'checkedValue';
+                events["click " + this.ui.showMoreLess] = function(e) {
+                    $(e.currentTarget).find('i').toggleClass('fa fa-angle-right fa fa-angle-up');
+                    $(e.currentTarget).parents('.searchTag').find('a').toggleClass('hide show');
+                    if ($(e.currentTarget).find('i').hasClass('fa-angle-right')) {
+                        $(e.currentTarget).find('span').text('Show More');
+                    } else {
+                        $(e.currentTarget).find('span').text('Show less');
+                    }
+                };
+                events["click " + this.ui.showMoreLessTerm] = function(e) {
+                    $(e.currentTarget).find('i').toggleClass('fa fa-angle-right fa fa-angle-up');
+                    $(e.currentTarget).parents('.searchTerm').find('div.termTableBreadcrumb>div.showHideDiv').toggleClass('hide');
+                    if ($(e.currentTarget).find('i').hasClass('fa-angle-right')) {
+                        $(e.currentTarget).find('span').text('Show More');
+                    } else {
+                        $(e.currentTarget).find('span').text('Show less');
+                    }
+                };
                 return events;
             },
             /**
@@ -104,9 +123,30 @@ define(['require',
                     paginatorOpts: {}
                 };
                 this.bindEvents();
-
+                this.bradCrumbList = [];
+                this.arr = [];
             },
             bindEvents: function() {
+                this.listenTo(this.searchCollection, 'backgrid:selected', function(model, checked) {
+                    if (checked === true) {
+                        model.set("isEnable", true);
+                        this.$('.searchResult').find(".inputAssignTag.multiSelect").show();
+                    } else {
+                        model.set("isEnable", false);
+                        this.$('.searchResult').find(".inputAssignTag.multiSelect").hide();
+                    }
+                    this.arr = [];
+                    var that = this;
+                    this.searchCollection.find(function(item) {
+                        if (item.get('isEnable')) {
+                            var term = [];
+                            that.arr.push({
+                                id: item.get("$id$"),
+                                model: item
+                            });
+                        }
+                    });
+                });
                 this.listenTo(this.vent, "show:searchResult", function(value) {
                     this.fetchCollection(value);
                     this.REntityTableLayoutView.reset();
@@ -116,7 +156,9 @@ define(['require',
                         this.checkTableFetch();
                     }
                     this.renderTableLayoutView();
-                    this.$('.searchResult').html(this.searchCollection.fullCollection.length + ' result for <b>' + this.searchCollection.queryParams.query + '</b>');
+                    var resultData = this.searchCollection.fullCollection.length + ' result for <b>' + this.searchCollection.queryParams.query + '</b>'
+                    var multiAssignData = '<a href="javascript:void(0)" class="inputAssignTag multiSelect" style="display:none" data-id="addTerm"><i class="fa fa-folder-o">' + " " + 'Assign Term</i></a>'
+                    this.$('.searchResult').html(resultData + multiAssignData);
                 }, this);
                 this.listenTo(this.searchCollection, "error", function(value, responseData) {
                     this.$('.fontLoader').hide();
@@ -160,7 +202,7 @@ define(['require',
             },
             renderTableLayoutView: function() {
                 var that = this,
-                    count = 4;
+                    count = 5;
                 require(['utils/TableLayout'], function(TableLayout) {
                     var columnCollection = Backgrid.Columns.extend({
                         sortKey: "position",
@@ -170,18 +212,15 @@ define(['require',
                         setPositions: function() {
                             _.each(this.models, function(model, index) {
                                 if (model.get('name') == "name") {
-                                    model.set("position", 1, { silent: true });
+                                    model.set("position", 2, { silent: true });
                                     model.set("label", "Name");
                                 } else if (model.get('name') == "description") {
-                                    model.set("position", 2, { silent: true });
+                                    model.set("position", 3, { silent: true });
                                     model.set("label", "Description");
                                 } else if (model.get('name') == "owner") {
-                                    model.set("position", 3, { silent: true });
+                                    model.set("position", 4, { silent: true });
                                     model.set("label", "Owner");
                                 }
-                                /*else {
-                                                                   model.set("position", ++count, { silent: true });
-                                                               }*/
                             });
                             return this;
                         }
@@ -193,6 +232,17 @@ define(['require',
                         columns: columns,
                         includeOrderAbleColumns: true
                     })));
+                    that.$('.searchResult').find(".inputAssignTag.multiSelect").hide();
+                    that.renderBreadcrumb();
+                });
+            },
+            renderBreadcrumb: function() {
+                var that = this;
+                _.each(this.bradCrumbList, function(object) {
+                    _.each(object.value, function(subObj) {
+                        var scopeObject = that.$('[dataterm-id="' + object.scopeId + '"]').find('[dataterm-name="' + subObj.name + '"] .liContent');
+                        CommonViewFunction.breadcrumbMaker({ urlList: subObj.valueUrl, scope: scopeObject });
+                    });
                 });
             },
             checkTableFetch: function() {
@@ -210,6 +260,13 @@ define(['require',
                         if (responseData.dataType.attributeDefinitions.length == 2 && responseData.dataType.attributeDefinitions[1].name == "instanceInfo") {
                             return this.getFixedColumn();
                         } else {
+                            col['Check'] = {
+                                name: "selected",
+                                label: "",
+                                cell: "select-row",
+                                headerCell: "select-all",
+                                position: 1
+                            };
                             var modelJSON = this.searchCollection.toJSON()[0];
                             _.keys(modelJSON).map(function(key) {
                                 if (key.indexOf("$") == -1 && typeof modelJSON[key] != "object") {
@@ -232,10 +289,17 @@ define(['require',
                                                             return new Date(rawValue);
                                                         }
                                                         if (model.get('name') == rawValue) {
+                                                            var nameHtml = "";
                                                             if (model.get('$id$')) {
-                                                                return '<a href="#!/detailPage/' + model.get('$id$').id + '">' + rawValue + '</a>';
+                                                                nameHtml = '<a href="#!/detailPage/' + model.get('$id$').id + '">' + rawValue + '</a>';
                                                             } else {
-                                                                return '<a>' + rawValue + '</a>';
+                                                                nameHtml = '<a>' + rawValue + '</a>';
+                                                            }
+                                                            if (Globals.entityStateReadOnly[model.get('$id$').state]) {
+                                                                nameHtml += '<button title="Deleted" class="btn btn-atlasAction btn-atlas deleteBtn"><i class="fa fa-trash"></i></button>';
+                                                                return '<div class="readOnly readOnlyLink">' + nameHtml + '</div>';
+                                                            } else {
+                                                                return nameHtml;
                                                             }
                                                         } else {
                                                             return rawValue;
@@ -253,24 +317,15 @@ define(['require',
                                 editable: false,
                                 sortable: false,
                                 orderable: true,
+                                className: 'searchTag',
                                 formatter: _.extend({}, Backgrid.CellFormatter.prototype, {
                                     fromRaw: function(rawValue, model) {
-                                        var traits = model.get('$traits$');
-                                        var atags = "",
-                                            addTag = "";
-                                        _.keys(model.get('$traits$')).map(function(key) {
-                                            var tagName = Utils.checkTagOrTerm(traits[key].$typeName$);
-                                            if (!tagName.term) {
-                                                atags += '<a class="inputTag" data-id="tagClick">' + traits[key].$typeName$ + '<i class="fa fa-times" data-id="delete" data-name="' + tagName.name + '" data-guid="' + model.get('$id$').id + '" ></i></a>';
-                                            }
-                                        });
-                                        if (model.get('$id$')) {
-                                            addTag += '<a href="javascript:void(0)" data-id="addTag" class="inputTag" data-guid="' + model.get('$id$').id + '" ><i style="right:0" class="fa fa-plus"></i></a>';
+                                        if (Globals.entityStateReadOnly[model.get('$id$').state]) {
+                                            return '<div class="readOnly">' + CommonViewFunction.tagForTable(model); + '</div>';
                                         } else {
-                                            addTag += '<a href="javascript:void(0)" data-id="addTag" class="inputTag"><i style="right:0" class="fa fa-plus"></i></a>';
-
+                                            return CommonViewFunction.tagForTable(model);
                                         }
-                                        return '<div class="tagList">' + atags + addTag + '</div>';
+
                                     }
                                 })
                             };
@@ -280,23 +335,18 @@ define(['require',
                                 editable: false,
                                 sortable: false,
                                 orderable: true,
+                                className: 'searchTerm',
                                 formatter: _.extend({}, Backgrid.CellFormatter.prototype, {
                                     fromRaw: function(rawValue, model) {
-                                        var traits = model.get('$traits$');
-                                        var aterm = "",
-                                            addTerm = "";
-                                        _.keys(model.get('$traits$')).map(function(key) {
-                                            var tagName = Utils.checkTagOrTerm(traits[key].$typeName$);
-                                            if (tagName.term) {
-                                                aterm += '<a class="inputTag term" data-id="tagClick" data-href="' + traits[key].$typeName$ + '">' + traits[key].$typeName$ + '<i class="fa fa-times" data-id="delete" data-name="' + traits[key].$typeName$ + '" data-guid="' + model.get('$id$').id + '" ></i></a>';
-                                            }
-                                        });
-                                        if (model.get('$id$')) {
-                                            addTerm += '<a href="javascript:void(0)" data-id="addTerm" class="inputTag" data-guid="' + model.get('$id$').id + '" ><i style="right:0" class="fa fa-plus"></i></a>';
-                                        } else {
-                                            addTerm += '<a href="javascript:void(0)" data-id="addTerm" class="inputTag"><i style="right:0" class="fa fa-plus"></i></a>';
+                                        var returnObject = CommonViewFunction.termTableBreadcrumbMaker(model);
+                                        if (returnObject.object) {
+                                            that.bradCrumbList.push(returnObject.object);
                                         }
-                                        return '<div class="tagList">' + aterm + addTerm + '</div>';
+                                        if (Globals.entityStateReadOnly[model.get('$id$').state]) {
+                                            return '<div class="readOnly">' + returnObject.html + '</div>';
+                                        } else {
+                                            return returnObject.html;
+                                        }
                                     }
                                 })
                             };
@@ -341,10 +391,18 @@ define(['require',
                                     model.getEntity(guid, {
                                         beforeSend: function() {},
                                         success: function(data) {
-                                            if (data.definition && data.definition.values && data.definition.values.name) {
-                                                return that.$('td a[data-id="' + guid + '"]').html(data.definition.values.name);
-                                            } else {
-                                                return that.$('td a[data-id="' + guid + '"]').html(data.definition.id.id);
+                                            if (data.definition) {
+                                                if (data.definition.id && data.definition.id.state) {
+                                                    if (Globals.entityStateReadOnly[data.definition.id.state]) {
+                                                        that.$('td a[data-id="' + guid + '"]').parent().addClass('readOnly readOnlyLink');
+                                                        that.$('td a[data-id="' + guid + '"]').parent().append('<button title="Deleted" class="btn btn-atlasAction btn-atlas deleteBtn"><i class="fa fa-trash"></i></button>');
+                                                    }
+                                                }
+                                                if (data.definition.values && data.definition.values.name) {
+                                                    return that.$('td a[data-id="' + guid + '"]').html(data.definition.values.name);
+                                                } else {
+                                                    return that.$('td a[data-id="' + guid + '"]').html(data.definition.id.id);
+                                                }
                                             }
                                         },
                                         error: function(error, data, status) {},
@@ -353,17 +411,25 @@ define(['require',
                                             that.checkTableFetch();
                                         }
                                     });
-                                    return '<a href="#!/detailPage/' + guid + '" data-id="' + guid + '"></a>';
+                                    return '<div><a href="#!/detailPage/' + guid + '" data-id="' + guid + '"></a></div>';
                                 } else if (!modelObject.$typeName$) {
                                     var guid = model.toJSON().guid;
                                     ++that.fetchList;
                                     model.getEntity(guid, {
                                         beforeSend: function() {},
                                         success: function(data) {
-                                            if (data.definition && data.definition.values && data.definition.values.name) {
-                                                return that.$('td a[data-id="' + guid + '"]').html(data.definition.values.name);
-                                            } else {
-                                                return that.$('td a[data-id="' + guid + '"]').html(data.definition.id.id);
+                                            if (data.definition) {
+                                                if (data.definition.id && data.definition.id.state) {
+                                                    if (Globals.entityStateReadOnly[data.definition.id.state]) {
+                                                        that.$('td a[data-id="' + guid + '"]').parent().addClass('readOnly readOnlyLink');
+                                                        that.$('td a[data-id="' + guid + '"]').parent().append('<button title="Deleted" class="btn btn-atlasAction btn-atlas deleteBtn"><i class="fa fa-trash"></i></button>');
+                                                    }
+                                                }
+                                                if (data.definition.values && data.definition.values.name) {
+                                                    return that.$('td a[data-id="' + guid + '"]').html(data.definition.values.name);
+                                                } else {
+                                                    return that.$('td a[data-id="' + guid + '"]').html(data.definition.id.id);
+                                                }
                                             }
                                         },
                                         error: function(error, data, status) {},
@@ -372,7 +438,7 @@ define(['require',
                                             that.checkTableFetch();
                                         }
                                     });
-                                    return '<a href="#!/detailPage/' + guid + '" data-id="' + guid + '"></a>';
+                                    return '<div><a href="#!/detailPage/' + guid + '" data-id="' + guid + '"></a></div>';
                                 }
                             }
                         })
@@ -393,25 +459,40 @@ define(['require',
                     // }
                 });
             },
-            addTermModalView: function(e) {
+            checkedValue: function(e) {
+                var guid = "",
+                    that = this;
+                if (this.arr && this.arr.length) {
+                    that.addTermModalView(guid, this.arr);
+                } else {
+                    guid = that.$(e.currentTarget).data("guid");
+                    that.addTermModalView(guid);
+                }
+            },
+            addTermModalView: function(guid, multiple) {
                 var that = this;
                 require([
                     'views/business_catalog/AddTermToEntityLayoutView',
                 ], function(AddTermToEntityLayoutView) {
                     var view = new AddTermToEntityLayoutView({
-                        guid: that.$(e.currentTarget).data("guid"),
-                        callback: function() {
+                        guid: guid,
+                        multiple: multiple,
+                        callback: function(termName) {
                             that.fetchCollection();
+                            that.arr = [];
+                        },
+                        showLoader: function() {
+                            that.$('.fontLoader').show();
+                            that.$('.searchTable').hide();
                         }
                     });
                 });
-
             },
             onClickTagCross: function(e) {
                 var tagName = $(e.target).data("name"),
                     guid = $(e.target).data("guid"),
                     that = this,
-                    modal = CommonViewFunction.deleteTagModel(tagName);
+                    modal = CommonViewFunction.deleteTagModel(tagName, "assignTerm");
                 modal.on('ok', function() {
                     that.deleteTagData(e);
                 });

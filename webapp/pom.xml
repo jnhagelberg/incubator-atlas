@@ -24,7 +24,7 @@
     <parent>
         <groupId>org.apache.atlas</groupId>
         <artifactId>apache-atlas</artifactId>
-        <version>0.7-graphdb-SNAPSHOT</version>
+        <version>0.8-graphdb-SNAPSHOT</version>
     </parent>
     <artifactId>atlas-webapp</artifactId>
     <description>Apache Atlas Web Application</description>
@@ -34,6 +34,7 @@
     <properties>
         <projectBaseDir>${project.basedir}/..</projectBaseDir>
         <debug.jetty.daemon>true</debug.jetty.daemon>
+        <packages.to.exclude />
     </properties>
 
     <profiles>
@@ -63,6 +64,26 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <profile>
+            <!-- default profile is for external HBase and Solr - hence not packaging those jars -->
+            <id>dist</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <packages.to.exclude>WEB-INF/lib/titan-berkeleyje-${titan.version}.jar,WEB-INF/lib/je-*.jar,WEB-INF/lib/titan-es-${titan.version}.jar,WEB-INF/lib/elasticsearch-*.jar</packages.to.exclude>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>berkeley-elasticsearch</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <packages.to.exclude>WEB-INF/lib/je-*.jar</packages.to.exclude>
+            </properties>
         </profile>
     </profiles>
 
@@ -307,6 +328,13 @@
             <version>3.4</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.atlas</groupId>
+            <artifactId>atlas-typesystem</artifactId>
+            <classifier>tests</classifier>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -331,6 +359,9 @@
                             <addClasspath>true</addClasspath>
                         </manifest>
                     </archive>
+                    <packagingExcludes>
+                        ${packages.to.exclude}
+                    </packagingExcludes>
                 </configuration>
             </plugin>
 
@@ -460,6 +491,10 @@
                         <systemProperty>
                             <name>atlas.graphdb.backend</name>
                             <value>${plugin.class}</value>
+                        </systemProperty>
+                        <systemProperty>
+                            <key>atlas.conf</key>
+                            <value>${project.build.directory}/../../typesystem/target/test-classes</value>
                         </systemProperty>
                     </systemProperties>
                     <stopKey>atlas-stop</stopKey>

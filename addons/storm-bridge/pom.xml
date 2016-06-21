@@ -21,7 +21,7 @@
     <parent>
         <artifactId>apache-atlas</artifactId>
         <groupId>org.apache.atlas</groupId>
-        <version>0.7-graphdb-SNAPSHOT</version>
+        <version>0.8-graphdb-SNAPSHOT</version>
         <relativePath>../../</relativePath>
     </parent>
     <artifactId>storm-bridge</artifactId>
@@ -128,6 +128,13 @@
             <groupId>org.apache.atlas</groupId>
             <artifactId>atlas-graphdb-impls</artifactId>
             <type>pom</type>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.atlas</groupId>
+            <artifactId>atlas-typesystem</artifactId>
+            <classifier>tests</classifier>
             <scope>test</scope>
         </dependency>
 
@@ -361,6 +368,10 @@
                             <name>atlas.graphdb.backend</name>
                             <value>${plugin.class}</value>
                         </systemProperty>
+                        <systemProperty>
+                            <key>atlas.conf</key>
+                            <value>${project.build.directory}/../../../typesystem/target/test-classes</value>
+                        </systemProperty>
                     </systemProperties>
                     <stopKey>atlas-stop</stopKey>
                     <stopPort>31001</stopPort>
@@ -421,6 +432,12 @@
                     <execution>
                         <configuration>
                             <mainClass>org.apache.atlas.storm.model.StormDataModelGenerator</mainClass>
+                            <systemProperties>
+                                <systemProperty>
+                                    <key>atlas.conf</key>
+                                    <value>${project.build.directory}/../../../typesystem/target/test-classes</value>
+                                </systemProperty>
+                            </systemProperties>
                             <arguments>
                                 <argument>${project.build.directory}/models/storm_model.json</argument>
                             </arguments>

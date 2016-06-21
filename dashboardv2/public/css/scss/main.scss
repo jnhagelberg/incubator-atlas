@@ -83,6 +83,7 @@ $color_mountain_mist_approx: #999;
 $color_suva_gray_approx: #868686;
 // $tag_color:#9599a0;
 $tag_color:#4A90E2;
+$delete_link:#BB5838;
 //urls
 $url_0: url(../img/loading.gif);
 .card {
@@ -117,10 +118,6 @@ a {
         color: $color_puerto_rico_approx;
         text-decoration: none;
     }
-}
-
-hr {
-    border-top: 1px solid $color_mirage_approx
 }
 
 th {
@@ -172,7 +169,116 @@ ul {
     border: 1px solid $color_jungle_green_approx;
     cursor: pointer;
 }
+
 .add-seperator {
     margin-bottom: 10px;
     border-bottom: 1px solid $color_mirage_approx
+}
+
+.termTableBreadcrumb {
+    min-width: 200px;
+    /*   width: 200px; */
+    /*  display: inline-block; */
+    i {
+        cursor: pointer;
+    }
+    >div {
+        display: inline-block;
+        // padding: 10px 0px;
+        width: 100%;
+    }
+    .hide {
+        opacity: 0;
+        overflow: hidden;
+        height: 0px;
+        display: block !important;
+    }
+    .show {
+        opacity: 1;
+        overflow: visible;
+        height: auto;
+    }
+    .liContent {
+        /*  width: 150px; */
+        float: left;
+        line-height: 21px !important;
+        padding: 0px 10px 0px 0px !important;
+    }
+}
+
+.table-quickMenu > tbody > tr > td {
+    &.searchTerm {
+        overflow: visible;
+    }
+    &.searchTag {}
+}
+
+.tab-content >.tab-pane {
+    display: block;
+    opacity: 0;
+    height: 0;
+    padding: 0px;
+    overflow: hidden;
+    &.active {
+        padding: 25px;
+        opacity: 1;
+        height: auto;
+        overflow: auto;
+    }
+}
+
+.ellipsis {
+    text-overflow: ellipsis;
+    max-width: 98%;
+    overflow: hidden;
+}
+
+.modal-body {
+    .table {
+        table-layout: fixed;
+        word-wrap: break-word;
+    }
+}
+
+.readOnly {
+    .addTag-dropdown {
+        display: none;
+    }
+    span {
+        &.inputTag[data-id="tagClick"] {
+            i.fa-close[data-id="deleteTag"] {
+                display: none;
+            }
+        }
+    }
+    &.readOnlyLink {
+        display: inline-block;
+        .deleteBtn {
+            padding: 0px 5px;
+        }
+        a {
+            color: $delete_link;
+        }
+    }
+    a {
+        &.inputTag[data-id="addTag"] {
+            display: none;
+        }
+        &.inputTag[data-id="tagClick"] {
+            i.fa-times[data-id="delete"] {
+                display: none;
+            }
+        }
+        i {
+            &.fa-trash[data-guid] {
+                display: none;
+            }
+            &.fa-trash[data-id="delete"] {
+                display: none;
+            }
+        }
+        &.inputAssignTag[data-id="addTerm"] {
+            display: none;
+        }
+    }
 }

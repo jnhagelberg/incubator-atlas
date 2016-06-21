@@ -40,15 +40,16 @@ define(['require',
             ui: {
                 tagClick: '[data-id="tagClick"]',
                 addTag: "[data-id='addTag']",
-                addTerm: '[data-id="addTerm"]'
-
+                addTerm: '[data-id="addTerm"]',
+                showMoreLess: '[data-id="showMoreLess"]',
+                showMoreLessTerm: '[data-id="showMoreLessTerm"]'
             },
             /** ui events hash */
             events: function() {
                 var events = {};
 
                 events["click " + this.ui.addTag] = 'addTagModalView';
-                events["click " + this.ui.addTerm] = 'addTermModalView';
+                events["click " + this.ui.addTerm] = 'checkedValue';
                 events["click " + this.ui.tagClick] = function(e) {
                     if (e.target.nodeName.toLocaleLowerCase() == "i") {
                         this.onClickTagCross(e);
@@ -59,6 +60,24 @@ define(['require',
                             mergeBrowserUrl: false,
                             trigger: true
                         });
+                    }
+                };
+                events["click " + this.ui.showMoreLess] = function(e) {
+                    $(e.currentTarget).find('i').toggleClass('fa fa-angle-right fa fa-angle-up');
+                    $(e.currentTarget).parents('.searchTag').find('a').toggleClass('hide show');
+                    if ($(e.currentTarget).find('i').hasClass('fa-angle-right')) {
+                        $(e.currentTarget).find('span').text('Show More');
+                    } else {
+                        $(e.currentTarget).find('span').text('Show less');
+                    }
+                };
+                events["click " + this.ui.showMoreLessTerm] = function(e) {
+                    $(e.currentTarget).find('i').toggleClass('fa fa-angle-right fa fa-angle-up');
+                    $(e.currentTarget).parents('.searchTerm').find('div.termTableBreadcrumb>div.showHideDiv').toggleClass('hide');
+                    if ($(e.currentTarget).find('i').hasClass('fa-angle-right')) {
+                        $(e.currentTarget).find('span').text('Show More');
+                    } else {
+                        $(e.currentTarget).find('span').text('Show less');
                     }
                 };
                 return events;
@@ -85,8 +104,29 @@ define(['require',
                     paginatorOpts: {}
                 };
                 this.bindEvents();
+                this.bradCrumbList = [];
             },
             bindEvents: function() {
+                this.listenTo(this.schemaCollection, 'backgrid:selected', function(model, checked) {
+                    if (checked === true) {
+                        model.set("isEnable", true);
+                        this.$('.multiSelect').show();
+                    } else {
+                        model.set("isEnable", false);
+                        this.$('.multiSelect').hide();
+                    }
+                    this.arr = [];
+                    var that = this;
+                    this.schemaCollection.find(function(item) {
+                        if (item.get('isEnable')) {
+                            var term = [];
+                            that.arr.push({
+                                id: item.get("$id$"),
+                                model: item
+                            });
+                        }
+                    });
+                });
                 this.listenTo(this.schemaCollection, "reset", function(value) {
                     this.renderTableLayoutView();
                     $('.schemaTable').show();
@@ -106,13 +146,47 @@ define(['require',
                 this.schemaCollection.fetch({ reset: true });
             },
             renderTableLayoutView: function() {
-                var that = this;
+                var that = this,
+                    count = 5;
                 require(['utils/TableLayout'], function(TableLayout) {
-                    var cols = new Backgrid.Columns(that.getSchemaTableColumns());
+                    var columnCollection = Backgrid.Columns.extend({
+                        sortKey: "position",
+                        comparator: function(item) {
+                            return item.get(this.sortKey) || 999;
+                        },
+                        setPositions: function() {
+                            _.each(this.models, function(model, index) {
+                                if (model.get('name') == "name") {
+                                    model.set("position", 2, { silent: true });
+                                    model.set("label", "Name");
+                                } else if (model.get('name') == "description") {
+                                    model.set("position", 3, { silent: true });
+                                    model.set("label", "Description");
+                                } else if (model.get('name') == "owner") {
+                                    model.set("position", 4, { silent: true });
+                                    model.set("label", "Owner");
+                                }
+                            });
+                            return this;
+                        }
+                    });
+                    var columns = new columnCollection(that.getSchemaTableColumns());
+                    columns.setPositions().sort();
                     that.RTagLayoutView.show(new TableLayout(_.extend({}, that.commonTableOptions, {
                         globalVent: that.globalVent,
-                        columns: cols
+                        columns: columns
                     })));
+                    that.$('.multiSelect').hide();
+                    that.renderBreadcrumb();
+                });
+            },
+            renderBreadcrumb: function() {
+                var that = this;
+                _.each(this.bradCrumbList, function(object) {
+                    _.each(object.value, function(subObj) {
+                        var scopeObject = that.$('[dataterm-id="' + object.scopeId + '"]').find('[dataterm-name="' + subObj.name + '"] .liContent');
+                        CommonViewFunction.breadcrumbMaker({ urlList: subObj.valueUrl, scope: scopeObject });
+                    });
                 });
             },
             getSchemaTableColumns: function() {
@@ -158,22 +232,22 @@ define(['require',
                             })
                         };
                     });
+                    col['Check'] = {
+                        name: "selected",
+                        label: "",
+                        cell: "select-row",
+                        headerCell: "select-all",
+                        position: 1
+                    };
                     col['tag'] = {
                         label: "Tags",
                         cell: "Html",
                         editable: false,
                         sortable: false,
+                        className: 'searchTag',
                         formatter: _.extend({}, Backgrid.CellFormatter.prototype, {
                             fromRaw: function(rawValue, model) {
-                                var traits = model.get('$traits$');
-                                var atags = "";
-                                _.keys(model.get('$traits$')).map(function(key) {
-                                    var tagName = Utils.checkTagOrTerm(traits[key].$typeName$);
-                                    if (!tagName.term) {
-                                        atags += '<a class="inputTag" data-id="tagClick">' + traits[key].$typeName$ + '<i class="fa fa-times" data-id="delete" data-name="' + traits[key].$typeName$ + '" data-guid="' + model.get('$id$').id + '" ></i></a>';
-                                    }
-                                });
-                                return '<div class="tagList">' + atags + '<a href="javascript:void(0);" class="inputTag" data-id="addTag" data-guid="' + model.get('$id$').id + '"><i style="right:0" class="fa fa-plus"></i></a></div>';
+                                return CommonViewFunction.tagForTable(model);
                             }
                         })
                     };
@@ -183,24 +257,32 @@ define(['require',
                         editable: false,
                         sortable: false,
                         orderable: true,
+                        className: 'searchTerm',
                         formatter: _.extend({}, Backgrid.CellFormatter.prototype, {
                             fromRaw: function(rawValue, model) {
-                                var traits = model.get('$traits$');
-                                var aterms = "";
-                                _.keys(model.get('$traits$')).map(function(key) {
-                                    var tagName = Utils.checkTagOrTerm(traits[key].$typeName$);
-                                    if (tagName.term) {
-                                        aterms += '<a class="inputTag" data-id="tagClick">' + traits[key].$typeName$ + '<i class="fa fa-times" data-id="delete" data-name="' + traits[key].$typeName$ + '" data-guid="' + model.get('$id$').id + '" ></i></a>';
-                                    }
-                                });
-                                return '<div class="tagList">' + aterms + '<a href="javascript:void(0);" class="inputTag" data-id="addTerm" data-guid="' + model.get('$id$').id + '"><i style="right:0" class="fa fa-plus"></i></a></div>';
+                                var returnObject = CommonViewFunction.termTableBreadcrumbMaker(model, "schema");
+                                if (returnObject.object) {
+                                    that.bradCrumbList.push(returnObject.object);
+                                }
+                                return returnObject.html;
                             }
                         })
                     };
                 }
-
-
                 return this.schemaCollection.constructor.getTableCols(col, this.schemaCollection);
+            },
+            checkedValue: function(e) {
+                if (e) {
+                    e.stopPropagation();
+                }
+                var guid = "",
+                    that = this;
+                if (this.arr && this.arr.length) {
+                    that.addTermModalView(guid, this.arr);
+                } else {
+                    guid = that.$(e.currentTarget).data("guid");
+                    that.addTermModalView(guid);
+                }
             },
             addTagModalView: function(e) {
                 if (e) {
@@ -219,27 +301,30 @@ define(['require',
                     // }
                 });
             },
-            addTermModalView: function(e) {
-                if (e) {
-                    e.stopPropagation();
-                }
+            addTermModalView: function(guid, multiple) {
+
                 var that = this;
                 require([
                     'views/business_catalog/AddTermToEntityLayoutView',
                 ], function(AddTermToEntityLayoutView) {
                     var view = new AddTermToEntityLayoutView({
-                        guid: that.$(e.currentTarget).data("guid"),
-                        callback: function() {
+                        guid: guid,
+                        multiple: multiple,
+                        callback: function(termName) {
                             that.fetchCollection();
+                            that.arr = [];
+                        },
+                        showLoader: function() {
+                            that.$('.fontLoader').show();
+                            that.$('.searchTable').hide();
                         }
                     });
                 });
-
             },
             onClickTagCross: function(e) {
                 var tagName = $(e.target).data("name"),
                     that = this,
-                    modal = CommonViewFunction.deleteTagModel(tagName);
+                    modal = CommonViewFunction.deleteTagModel(tagName, "assignTerm");
                 modal.on('ok', function() {
                     that.deleteTagData(e);
                 });

@@ -7,7 +7,7 @@ git clone https://git-wip-us.apache.org/repos/asf/incubator-atlas.git atlas
 
 cd atlas
 
-export MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=512m" && mvn clean install
+export MAVEN_OPTS="-Xmx1536m -XX:MaxPermSize=512m" && mvn clean install
 </verbatim>
 
 Once the build successfully completes, artifacts can be packaged for deployment.
@@ -42,6 +42,21 @@ mvn clean package -Pdist,embedded-hbase-solr
 
 Using the embedded-hbase-solr profile will configure Atlas so that an HBase instance and a Solr instance will be started
 and stopped along with the Atlas server by default.
+
+Atlas also supports building a distribution that can use BerkeleyDB and Elastic search as the graph and index backends.
+To build a distribution that is configured for these backends, build with the berkeley-elasticsearch profile.
+
+<verbatim>
+
+mvn clean package -Pdist,berkeley-elasticsearch
+
+</verbatim>
+
+An additional step is required for the binary built using this profile to be used along with the Atlas distribution.
+Due to licensing requirements, Atlas does not bundle the BerkeleyDB Java Edition in the tarball.
+
+You can download the Berkeley DB jar file from the URL: <verbatim>http://download.oracle.com/otn/berkeley-db/je-5.0.73.zip</verbatim>
+and copy the je-5.0.73.jar to the ${atlas_home}/libext directory.
 
 Tar can be found in atlas/distro/target/apache-atlas-${project.version}-bin.tar.gz
 

@@ -28,7 +28,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.apache.atlas</groupId>
     <artifactId>apache-atlas</artifactId>
-    <version>0.7-graphdb-SNAPSHOT</version>
+    <version>0.8-graphdb-SNAPSHOT</version>
     <description>Metadata Management and Data Governance Platform over Hadoop</description>
     <name>apache-atlas</name>
     <packaging>pom</packaging>
@@ -370,7 +370,7 @@
         <hadoop.version>2.7.0</hadoop.version>
         <hbase.version>1.1.2</hbase.version>
         <solr.version>5.1.0</solr.version>
-        <kafka.version>0.9.0.0</kafka.version>
+        <kafka.version>0.10.0.0</kafka.version>
         <!-- scala versions -->
         <scala.version>2.10.4</scala.version>
         <scala.binary.version>2.10</scala.binary.version>
@@ -1055,6 +1055,14 @@
 
             <dependency>
                 <groupId>org.apache.atlas</groupId>
+                <artifactId>atlas-typesystem</artifactId>
+                <version>${project.version}</version>
+                <classifier>tests</classifier>
+                <scope>test</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.atlas</groupId>
                 <artifactId>atlas-graphdb-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1131,6 +1139,12 @@
             <dependency>
                 <groupId>org.apache.atlas</groupId>
                 <artifactId>hive-bridge</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.apache.atlas</groupId>
+                <artifactId>storm-bridge</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -1392,6 +1406,10 @@
         <testResources>
             <testResource>
                 <directory>src/test/resources</directory>
+                <filtering>true</filtering>
+            </testResource>
+            <testResource>
+                <directory>typesystem/src/test/resources</directory>
                 <filtering>true</filtering>
             </testResource>
         </testResources>
