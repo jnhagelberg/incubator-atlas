@@ -45,18 +45,14 @@ public class DeleteContext {
 
     // maintain a list of the actions so that the operations get applied
     // in the same order as they came in at
-    private List<DeleteAction> deleteActions_ = new ArrayList<DeleteAction>(); 
+    private List<DeleteAction> deleteActions_ = new ArrayList<DeleteAction>();
     private Set<Vertex> processedVertices_ = new HashSet<Vertex>();
     private Map<Element, UpdatedElement> updateElements_ = new HashMap<>();
-    
+
     public DeleteContext(GraphHelper helper) {
         graphHelper_ = helper;
     }
 
-    //
-    //update methods (use getOrCreatedUpdatedElement)
-    //
-    
     /**
      * Records that the given element has been soft deleted so
      * that is is treated as deleted by the delete context.
@@ -81,7 +77,7 @@ public class DeleteContext {
         deleteActions_.add(new VertexRemoval(vertex));
         getUpdatedElement(vertex).delete();
     }
-    
+
     /**
     * Records that the specified Edge should be deleted.  It will be deleted
     * when commitDelete() is called.
@@ -95,7 +91,7 @@ public class DeleteContext {
         deleteActions_.add(new EdgeRemoval(edge));
         getUpdatedElement(edge).delete();
     }
-    
+
     /**
      * Records that a property needs to be set in an Element.  The change will take place
      * when commitDelete() is called.
@@ -124,15 +120,12 @@ public class DeleteContext {
         updateElements_.clear();
         processedVertices_.clear();
     }
-    
-    //
-    // read methods (use getReadOnlyUpdatedElement)
-    //
+
     /**
      * Gets the value of the specified property on the given element, taking into
      * account change that have been applied to the DeleteContext but have not
      * yet been committed into the graph.
-     * 
+     *
      * @param element
      * @param property
      * @param clazz
@@ -140,8 +133,8 @@ public class DeleteContext {
      */
     public <T> T getProperty(Element element, String property) {
         return getReadOnlyUpdatedElement(element).getProperty(property);
-    }        
-    
+    }
+
 
     /**
     * Returns true if either:
@@ -166,15 +159,15 @@ public class DeleteContext {
      * @return
      */
     public boolean isActive(Element element) {
-        
+
         EntityState state = GraphHelper.getState(element);
         return state == EntityState.ACTIVE && !isDeleted(element);
     }
-   
+
     private boolean isDeleted(Element instanceVertex) {
         return getReadOnlyUpdatedElement(instanceVertex).isDeleted();
     }
-    
+
     /**
      * Returns true if the given Vertex has been previously processed
      * by the delete algorithm.
@@ -194,27 +187,27 @@ public class DeleteContext {
         processedVertices_.add(vertex);
     }
 
-    
+
     /**
      * This returns an UpdatedElement that corresponds to the given element.  If there are no changes
      * to the given element, a temporary UpdatedElement is created (but not cached).  No changes should be applied
      * to UpdatedElements returned here, since they may not be saved.
      */
     private UpdatedElement getReadOnlyUpdatedElement(Element element) {
-       return getOrCreateUpdatedElement(element, false);        
+       return getOrCreateUpdatedElement(element, false);
     }
 
-    
+
     /**
      * This returns an UpdatedElement that corresponds to the given element.  If there are no changes
      * to the given element, an UpdatedElement is created and added to the cache.
      */
     private UpdatedElement getUpdatedElement(Element element) {
-        return getOrCreateUpdatedElement(element, true);        
+        return getOrCreateUpdatedElement(element, true);
     }
 
     private UpdatedElement getOrCreateUpdatedElement(Element element, boolean updateCache) {
-        
+
         UpdatedElement result = updateElements_.get(element);
         if(result == null) {
             result = new UpdatedElement(element);
@@ -224,7 +217,7 @@ public class DeleteContext {
         }
         return result;
     }
-    
+
     /**
      * Interface for delete actions that are accumulated by this
      * class to be executed later.
@@ -281,36 +274,58 @@ public class DeleteContext {
             helper.removeEdge(toDelete_);
         }
     }
-    
+
+    /**
+     * Represents the updated state of an AtlasElement, with
+     * the property changes through the DeleteContext applied.
+     *
+     */
     private static class UpdatedElement {
-        
+
         private Element wrapped_;
         private boolean deleted_ = false;
         private Map<String,Object> propertyChanges_ = new HashMap<String,Object>();
-        
+
         public UpdatedElement(Element element) {
             wrapped_ = element;
         }
-        
+
+        /**
+         * Records a property value change.
+         */
         public void setProperty(String key, Object value) {
             propertyChanges_.put(key, value);
         }
 
+        /**
+         * Gets the value of the given property, taking into account uncommitted
+         * changes made through the delete context.
+         *
+         * @param key the property name
+         * @return the value of the property.
+         */
         public <T> T getProperty(String key) {
             if(propertyChanges_.containsKey(key)) {
                 return (T)propertyChanges_.get(key);
             }
             return wrapped_.getProperty(key);
         }
-        
+
+        /**
+         * Records that this element has been deleted.
+         */
         public void delete() {
             deleted_ = true;
             propertyChanges_.clear();
         }
-        
+
+        /**
+         * Whether or not this element has been deleted.
+         *
+         */
         public boolean isDeleted() {
             return deleted_;
-        }      
-    }   
+        }
+    }
 
 }
