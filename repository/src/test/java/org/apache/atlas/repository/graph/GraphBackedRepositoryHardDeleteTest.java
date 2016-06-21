@@ -104,16 +104,6 @@ public class GraphBackedRepositoryHardDeleteTest extends GraphBackedMetadataRepo
     }
 
     @Override
-    protected void assertEntityNotDeleted(String id) throws Exception {
-        try {
-            repositoryService.getEntityDefinition(id);
-        } catch(EntityNotFoundException e) {
-            fail("Entity should still exist");
-        }
-
-    }
-
-    @Override
     protected void assertDeletedColumn(ITypedReferenceableInstance tableInstance) throws AtlasException {
         assertEquals(((List<IReferenceableInstance>) tableInstance.get(COLUMNS_ATTR_NAME)).size(), 2);
     }

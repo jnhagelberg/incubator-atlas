@@ -107,12 +107,6 @@ public class GraphBackedRepositorySoftDeleteTest extends GraphBackedMetadataRepo
     }
 
     @Override
-    protected void assertEntityNotDeleted(String id) throws Exception {
-        ITypedReferenceableInstance entity = repositoryService.getEntityDefinition(id);
-        assertEquals(entity.getId().getState(), Id.EntityState.ACTIVE);
-    }
-
-    @Override
     protected void assertDeletedColumn(ITypedReferenceableInstance tableInstance) throws AtlasException {
         List<IReferenceableInstance> columns = (List<IReferenceableInstance>) tableInstance.get(COLUMNS_ATTR_NAME);
         assertEquals(columns.size(), 3);

@@ -59,7 +59,7 @@ public class DeleteContext {
      *
      * @param AtlasElement
      */
-    public void softDeleteAtlasElement(AtlasElement AtlasElement) {
+    public void softDeleteElement(AtlasElement AtlasElement) {
         getUpdatedElement(AtlasElement).delete();
     }
 
@@ -69,7 +69,7 @@ public class DeleteContext {
      *
      * @param AtlasVertex The AtlasVertex to delete.
      */
-    public void removeAtlasVertex(AtlasVertex AtlasVertex) {
+    public void removeVertex(AtlasVertex AtlasVertex) {
 
         if (isDeleted(AtlasVertex)) {
             throw new IllegalStateException("Cannot delete a AtlasVertex that has already been deleted");
@@ -84,7 +84,7 @@ public class DeleteContext {
     *
     * @param AtlasVertex The AtlasVertex to delete.
     */
-    public void removeAtlasEdge(AtlasEdge AtlasEdge) {
+    public void removeEdge(AtlasEdge AtlasEdge) {
         if (isDeleted(AtlasEdge)) {
             throw new IllegalStateException("Cannot delete an AtlasEdge that has already been deleted");
         }
@@ -198,7 +198,7 @@ public class DeleteContext {
      *
      * @param AtlasVertex
      */
-    public void addProcessedAtlasVertex(AtlasVertex AtlasVertex) {
+    public void addProcessedVertex(AtlasVertex AtlasVertex) {
         processedVertices_.add(AtlasVertex);
     }
 
