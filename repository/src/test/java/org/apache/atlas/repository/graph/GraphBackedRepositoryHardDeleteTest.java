@@ -83,7 +83,7 @@ public class GraphBackedRepositoryHardDeleteTest extends GraphBackedMetadataRepo
             //expected
         }
     }
-    
+
     @Override
     protected void assertEntityNotDeleted(String id) throws Exception {
         try {
@@ -91,7 +91,7 @@ public class GraphBackedRepositoryHardDeleteTest extends GraphBackedMetadataRepo
         } catch(EntityNotFoundException e) {
             fail("Entity should still exist");
         }
-        
+
     }
 
     @Override
