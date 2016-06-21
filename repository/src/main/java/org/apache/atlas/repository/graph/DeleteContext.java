@@ -45,94 +45,67 @@ public class DeleteContext {
 
     // maintain a list of the actions so that the operations get applied
     // in the same order as they came in at
-    private List<DeleteAction> deleteActions_ = new ArrayList<DeleteAction>(); 
+    private List<DeleteAction> deleteActions_ = new ArrayList<DeleteAction>();
     private Set<AtlasVertex> processedVertices_ = new HashSet<AtlasVertex>();
-    private Map<AtlasElement, UpdatedElement> updateElements_ = new HashMap<>();
-    
+    private Map<AtlasElement, UpdatedAtlasElement> updatedAtlasElements_ = new HashMap<>();
+
     public DeleteContext(GraphHelper helper) {
         graphHelper_ = helper;
     }
 
     /**
-     * Records that the given element has been soft deleted so
+     * Records that the given AtlasElement has been soft deleted so
      * that is is treated as deleted by the delete context.
      *
-     * @param element
+     * @param AtlasElement
      */
-    public void softDeleteElement(AtlasElement element) {
-        getOrCreateUpdatedElement(element, true).delete();
+    public void softDeleteAtlasElement(AtlasElement AtlasElement) {
+        getUpdatedElement(AtlasElement).delete();
     }
 
     /**
-     * Records that the specified Vertex should be deleted.  It will be deleted
+     * Records that the specified AtlasVertex should be deleted.  It will be deleted
      * when commitDelete() is called.
      *
-     * @param vertex The vertex to delete.
+     * @param AtlasVertex The AtlasVertex to delete.
      */
-    public void removeVertex(AtlasVertex vertex) {
+    public void removeAtlasVertex(AtlasVertex AtlasVertex) {
 
-        if (isDeleted(vertex)) {
-            throw new IllegalStateException("Cannot delete a vertex that has already been deleted");
+        if (isDeleted(AtlasVertex)) {
+            throw new IllegalStateException("Cannot delete a AtlasVertex that has already been deleted");
         }
-        deleteActions_.add(new VertexRemoval(vertex));
-        getOrCreateUpdatedElement(vertex).delete();
+        deleteActions_.add(new AtlasVertexRemoval(AtlasVertex));
+        getUpdatedElement(AtlasVertex).delete();
     }
-    
+
     /**
-     * Gets the value of the specified property on the given element, taking into
-     * account change that have been applied to the DeleteContext but have not
-     * yet been committed into the graph.
-     * 
-     * @param element
-     * @param property
-     * @param clazz
-     * @return
-     */
-    public <T> T getProperty(AtlasElement element, String property, Class<T> clazz) {
-        return getUpdatedElement(element).getProperty(property, clazz);
-    }
-    
-    /**
-     * Gets the value of the specified property on the given element, taking into
-     * account change that have been applied to the DeleteContext but have not
-     * yet been committed into the graph.
-     * 
-     * @param element
-     * @param property
-     * @return
-     */
-    public List<String> getListProperty(AtlasElement element, String property) throws AtlasException {
-        return getUpdatedElement(element).getListProperty(property);
-    }
-    
-    /**
-    * Records that the specified Edge should be deleted.  It will be deleted
+    * Records that the specified AtlasEdge should be deleted.  It will be deleted
     * when commitDelete() is called.
     *
-    * @param vertex The vertex to delete.
+    * @param AtlasVertex The AtlasVertex to delete.
     */
-    public void removeEdge(AtlasEdge edge) {
-        if (isDeleted(edge)) {
-            throw new IllegalStateException("Cannot delete an edge that has already been deleted");
+    public void removeAtlasEdge(AtlasEdge AtlasEdge) {
+        if (isDeleted(AtlasEdge)) {
+            throw new IllegalStateException("Cannot delete an AtlasEdge that has already been deleted");
         }
-        deleteActions_.add(new EdgeRemoval(edge));
-        getOrCreateUpdatedElement(edge).delete();
+        deleteActions_.add(new AtlasEdgeRemoval(AtlasEdge));
+        getUpdatedElement(AtlasEdge).delete();
     }
 
     /**
-     * Records that a property needs to be set in an Element.  The change will take place
+     * Records that a property needs to be set in an AtlasElement.  The change will take place
      * when commitDelete() is called.
      *
-     * @param element the element to update
+     * @param AtlasElement the AtlasElement to update
      * @param name the name of the property to set
      * @param value the value to set the property to
      */
-    public void setProperty(AtlasElement element, String name, Object value) {
-        if (isDeleted(element)) {
-            throw new IllegalStateException("Cannot update an element that has been deleted.");
+    public void setProperty(AtlasElement AtlasElement, String name, Object value) {
+        if (isDeleted(AtlasElement)) {
+            throw new IllegalStateException("Cannot update an AtlasElement that has been deleted.");
         }
-        deleteActions_.add(new PropertyUpdate(element, name, value));
-        getOrCreateUpdatedElement(element).setProperty(name, value);
+        deleteActions_.add(new PropertyUpdate(AtlasElement, name, value));
+        getUpdatedElement(AtlasElement).setProperty(name, value);
     }
 
     /**
@@ -144,78 +117,120 @@ public class DeleteContext {
             action.perform(graphHelper_);
         }
         deleteActions_.clear();
-        updateElements_.clear();
+        updatedAtlasElements_.clear();
         processedVertices_.clear();
     }
 
     /**
-    * Returns true if either:
-    *
-    *  1) the given vertex has been previously processed by the delete algoritm or
-    *  2) the given element has been deleted, either through the DeleteContext or previously through the soft
-    * delete mechanism.
-    *
-    * @param element
-    * @return
-    */
-    public boolean isProcessedOrDeleted(AtlasVertex vertex) {
-        return isProcessed(vertex) || ! isActive(vertex);
+     * Gets the value of the specified property on the given AtlasElement, taking into
+     * account change that have been applied to the DeleteContext but have not
+     * yet been committed into the graph.
+     *
+     * @param AtlasElement
+     * @param property
+     * @param clazz
+     * @return
+     */
+    public <T> T getProperty(AtlasElement AtlasElement, String property, Class<T> clazz) {
+        return getReadOnlyUpdatedElement(AtlasElement).getProperty(property, clazz);
     }
 
     /**
-     * Returns true if the given element has not been deleted, either
+     * Gets the value of the specified property on the given AtlasElement, taking into
+     * account change that have been applied to the DeleteContext but have not
+     * yet been committed into the graph.
+     *
+     * @param AtlasElement
+     * @param property
+     * @param clazz
+     * @return
+     * @throws AtlasException 
+     */
+    public List<String> getListProperty(AtlasElement AtlasElement, String property) throws AtlasException {
+        return getReadOnlyUpdatedElement(AtlasElement).getListProperty(property);
+    }
+    
+    
+    /**
+    * Returns true if either:
+    *
+    *  1) the given AtlasVertex has been previously processed by the delete algoritm or
+    *  2) the given AtlasElement has been deleted, either through the DeleteContext or previously through the soft
+    * delete mechanism.
+    *
+    * @param AtlasElement
+    * @return
+    */
+    public boolean isProcessedOrDeleted(AtlasVertex AtlasVertex) {
+        return isProcessed(AtlasVertex) || ! isActive(AtlasVertex);
+    }
+
+    /**
+     * Returns true if the given AtlasElement has not been deleted, either
      * through the DeleteContext or previously through the soft
      * delete mechanism.
      *
-     * @param element
+     * @param AtlasElement
      * @return
      */
-    public boolean isActive(AtlasElement element) {
-        
-        EntityState state = GraphHelper.getState(element);
-        return state == EntityState.ACTIVE && !isDeleted(element);
-    }
-    /**
-     * Returns true if the given Vertex has been previsouly processed
-     * by the delete algorithm.
-     *
-     * @param vertex
-     * @return
-     */
-    public boolean isProcessed(AtlasVertex vertex) {
-        return processedVertices_.contains(vertex);
-    }
-    /**
-     * Records that a given Vertex has been processed by the delete algorithm.
-     *
-     * @param vertex
-     */
-    public void addProcessedVertex(AtlasVertex vertex) {
-        processedVertices_.add(vertex);
+    public boolean isActive(AtlasElement AtlasElement) {
+
+        EntityState state = GraphHelper.getState(AtlasElement);
+        return state == EntityState.ACTIVE && !isDeleted(AtlasElement);
     }
 
-    private boolean isDeleted(AtlasElement instanceVertex) {
-        return getUpdatedElement(instanceVertex).isDeleted();
+    private boolean isDeleted(AtlasElement instanceAtlasVertex) {
+        return getReadOnlyUpdatedElement(instanceAtlasVertex).isDeleted();
     }
-    
-    private UpdatedElement getOrCreateUpdatedElement(AtlasElement element, boolean updateCache) {
-        
-        UpdatedElement result = updateElements_.get(element);
+
+    /**
+     * Returns true if the given AtlasVertex has been previously processed
+     * by the delete algorithm.
+     *
+     * @param AtlasVertex
+     * @return
+     */
+    public boolean isProcessed(AtlasVertex AtlasVertex) {
+        return processedVertices_.contains(AtlasVertex);
+    }
+    /**
+     * Records that a given AtlasVertex has been processed by the delete algorithm.
+     *
+     * @param AtlasVertex
+     */
+    public void addProcessedAtlasVertex(AtlasVertex AtlasVertex) {
+        processedVertices_.add(AtlasVertex);
+    }
+
+
+    /**
+     * This returns an UpdatedAtlasElement that corresponds to the given AtlasElement.  If there are no changes
+     * to the given AtlasElement, a temporary UpdatedAtlasElement is created (but not cached).  No changes should be applied
+     * to UpdatedAtlasElements returned here, since they may not be saved.
+     */
+    private UpdatedAtlasElement getReadOnlyUpdatedElement(AtlasElement AtlasElement) {
+       return getOrCreateUpdatedElement(AtlasElement, false);
+    }
+
+
+    /**
+     * This returns an UpdatedAtlasElement that corresponds to the given AtlasElement.  If there are no changes
+     * to the given AtlasElement, an UpdatedAtlasElement is created and added to the cache.
+     */
+    private UpdatedAtlasElement getUpdatedElement(AtlasElement AtlasElement) {
+        return getOrCreateUpdatedElement(AtlasElement, true);
+    }
+
+    private UpdatedAtlasElement getOrCreateUpdatedElement(AtlasElement AtlasElement, boolean updateCache) {
+
+        UpdatedAtlasElement result = updatedAtlasElements_.get(AtlasElement);
         if(result == null) {
-            result = new UpdatedElement(element);
+            result = new UpdatedAtlasElement(AtlasElement);
             if(updateCache) {
-                updateElements_.put(element, result);
+                updatedAtlasElements_.put(AtlasElement, result);
             }
         }
         return result;
-    }
-    
-    private UpdatedElement getUpdatedElement(AtlasElement element) {
-       return getOrCreateUpdatedElement(element, false);        
-    }
-
-    private UpdatedElement getOrCreateUpdatedElement(AtlasElement element) {
-        return getOrCreateUpdatedElement(element, true);        
     }
 
     /**
@@ -229,27 +244,27 @@ public class DeleteContext {
 
     private static class PropertyUpdate implements DeleteAction {
 
-        private AtlasElement element_;
+        private AtlasElement AtlasElement_;
         private String property_;
         private Object newValue_;
 
-        public PropertyUpdate(AtlasElement element_, String property_, Object newValue_) {
+        public PropertyUpdate(AtlasElement AtlasElement_, String property_, Object newValue_) {
             super();
-            this.element_ = element_;
+            this.AtlasElement_ = AtlasElement_;
             this.property_ = property_;
             this.newValue_ = newValue_;
         }
 
         @Override
         public void perform(GraphHelper helper) {
-            GraphHelper.setProperty(element_, property_, newValue_);
+            GraphHelper.setProperty(AtlasElement_, property_, newValue_);
         }
     }
 
-    private static class VertexRemoval implements DeleteAction {
+    private static class AtlasVertexRemoval implements DeleteAction {
         private AtlasVertex toDelete_;
 
-        public VertexRemoval(AtlasVertex toDelete) {
+        public AtlasVertexRemoval(AtlasVertex toDelete) {
             super();
             this.toDelete_ = toDelete;
         }
@@ -260,11 +275,11 @@ public class DeleteContext {
         }
     }
 
-    private static class EdgeRemoval implements DeleteAction {
+    private static class AtlasEdgeRemoval implements DeleteAction {
 
         private AtlasEdge toDelete_;
 
-        public EdgeRemoval(AtlasEdge toDelete) {
+        public AtlasEdgeRemoval(AtlasEdge toDelete) {
             super();
             this.toDelete_ = toDelete;
         }
@@ -274,44 +289,72 @@ public class DeleteContext {
             helper.removeEdge(toDelete_);
         }
     }
-    
-    private static class UpdatedElement {
-        
+
+    /**
+     * Represents the updated state of an AtlasAtlasElement, with
+     * the property changes through the DeleteContext applied.
+     *
+     */
+    private static class UpdatedAtlasElement {
+
         private AtlasElement wrapped_;
         private boolean deleted_ = false;
-        private Map<String,Object> propertyChanges_ = new HashMap<String,Object>();
-        
-        public UpdatedElement(AtlasElement element) {
-            wrapped_ = element;
-        }
-        
-        public void setProperty(String key, Object value) {
-            propertyChanges_.put(key, value);
+        private Map<String,Object> updatedPropertyValues_ = new HashMap<String,Object>();
+
+        public UpdatedAtlasElement(AtlasElement AtlasElement) {
+            wrapped_ = AtlasElement;
         }
 
+        /**
+         * Records a property value change.
+         */
+        public void setProperty(String key, Object value) {
+            updatedPropertyValues_.put(key, value);
+        }
+
+        /**
+         * Gets the value of the given property, taking into account uncommitted
+         * changes made through the delete context.
+         *
+         * @param key the property name
+         * @return the value of the property.
+         */
         public <T> T getProperty(String key, Class<T> clazz) {
-            if(propertyChanges_.containsKey(key)) {
-                return (T)propertyChanges_.get(key);
+            if(updatedPropertyValues_.containsKey(key)) {
+                return (T)updatedPropertyValues_.get(key);
             }
             return wrapped_.getProperty(key, clazz);
         }
         
-        public void delete() {
-            deleted_ = true;
-            propertyChanges_.clear();
-        }
-        
-        public boolean isDeleted() {
-            return deleted_;
-        }
-        
+        /**
+         * Gets the value of the given property, taking into account uncommitted
+         * changes made through the delete context.
+         *
+         * @param key the property name
+         * @return the value of the property.
+         */
         public List<String> getListProperty(String key) throws AtlasException {
             
-            if(propertyChanges_.containsKey(key)) {
-                return (List<String>)propertyChanges_.get(key);
+            if(updatedPropertyValues_.containsKey(key)) {
+                return (List<String>)updatedPropertyValues_.get(key);
             }
             return wrapped_.getListProperty(key);
         }
-    }   
+        /**
+         * Records that this AtlasElement has been deleted.
+         */
+        public void delete() {
+            deleted_ = true;
+            updatedPropertyValues_.clear();
+        }
+
+        /**
+         * Whether or not this AtlasElement has been deleted.
+         *
+         */
+        public boolean isDeleted() {
+            return deleted_;
+        }
+    }
 
 }

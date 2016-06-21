@@ -151,7 +151,11 @@ public abstract class DeleteHandler {
 
                 if (valueTypeCategory == DataTypes.TypeCategory.STRUCT ||
                         valueTypeCategory == DataTypes.TypeCategory.CLASS) {
+<<<<<<< HEAD
                     List<String> keys = deleteContext.getListProperty(instanceVertex, propertyName);
+=======
+                    List<String> keys = deleteContext.getProperty(instanceVertex, propertyName);
+>>>>>>> local-atlas/delete-transactions
                     if (keys != null) {
                         for (String key : keys) {
                             String mapEdgeLabel = GraphHelper.getQualifiedNameForMapKey(edgeLabel, key);
@@ -291,7 +295,11 @@ public abstract class DeleteHandler {
 
         case ARRAY:
             //If its array attribute, find the right edge between the two vertices and update array property
+<<<<<<< HEAD
             List<String> elements = deleteContext.getListProperty(outVertex, propertyName);
+=======
+            List<String> elements = deleteContext.getProperty(outVertex,propertyName);
+>>>>>>> local-atlas/delete-transactions
             if (elements != null) {
                 elements = new ArrayList<>(elements);   //Make a copy, else list.remove reflects on titan.getProperty()
                 for (String elementEdgeId : elements) {
@@ -332,14 +340,24 @@ public abstract class DeleteHandler {
 
         case MAP:
             //If its map attribute, find the right edge between two vertices and update map property
+<<<<<<< HEAD
             List<String> keys = deleteContext.getListProperty(outVertex, propertyName);
+=======
+            List<String> keys = deleteContext.getProperty(outVertex, propertyName);
+>>>>>>> local-atlas/delete-transactions
             if (keys != null) {
                 keys = new ArrayList<>(keys);   //Make a copy, else list.remove reflects on titan.getProperty()
                 for (String key : keys) {
                     String keyPropertyName = GraphHelper.getQualifiedNameForMapKey(propertyName, key);
+<<<<<<< HEAD
                     String mapEdgeId = deleteContext.getProperty(outVertex, keyPropertyName, String.class);
                     AtlasEdge<?,?> mapEdge = graphHelper.getEdgeByEdgeId(outVertex, keyPropertyName, mapEdgeId);
                     AtlasVertex<?,?> mapVertex = mapEdge.getInVertex();
+=======
+                    String mapEdgeId = deleteContext.getProperty(outVertex, keyPropertyName);
+                    Edge mapEdge = graphHelper.getEdgeByEdgeId(outVertex, keyPropertyName, mapEdgeId);
+                    Vertex mapVertex = mapEdge.getVertex(Direction.IN);
+>>>>>>> local-atlas/delete-transactions
                     if (mapVertex.getId().toString().equals(inVertex.getId().toString())) {
                         //TODO keys.size includes deleted items as well. should exclude
                         if (attributeInfo.multiplicity.nullAllowed() || keys.size() > attributeInfo.multiplicity.lower) {
