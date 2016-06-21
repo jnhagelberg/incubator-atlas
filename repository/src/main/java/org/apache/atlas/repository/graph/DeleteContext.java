@@ -284,7 +284,7 @@ public class DeleteContext {
 
         private Element wrapped_;
         private boolean deleted_ = false;
-        private Map<String,Object> propertyChanges_ = new HashMap<String,Object>();
+        private Map<String,Object> updatedPropertyValues_ = new HashMap<String,Object>();
 
         public UpdatedElement(Element element) {
             wrapped_ = element;
@@ -294,7 +294,7 @@ public class DeleteContext {
          * Records a property value change.
          */
         public void setProperty(String key, Object value) {
-            propertyChanges_.put(key, value);
+            updatedPropertyValues_.put(key, value);
         }
 
         /**
@@ -305,8 +305,8 @@ public class DeleteContext {
          * @return the value of the property.
          */
         public <T> T getProperty(String key) {
-            if(propertyChanges_.containsKey(key)) {
-                return (T)propertyChanges_.get(key);
+            if(updatedPropertyValues_.containsKey(key)) {
+                return (T)updatedPropertyValues_.get(key);
             }
             return wrapped_.getProperty(key);
         }
@@ -316,7 +316,7 @@ public class DeleteContext {
          */
         public void delete() {
             deleted_ = true;
-            propertyChanges_.clear();
+            updatedPropertyValues_.clear();
         }
 
         /**
