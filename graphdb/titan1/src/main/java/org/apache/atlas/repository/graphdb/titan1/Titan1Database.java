@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
+import org.apache.atlas.repository.ITenantRegisterListener;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.GraphDatabase;
 import org.apache.atlas.repository.graphdb.titan1.serializer.BigDecimalSerializer;
@@ -166,4 +167,10 @@ public class Titan1Database implements GraphDatabase<Titan1Vertex, Titan1Edge> {
 	@Override
 	public void initialize(Map<String, String> initParameters) {
 	}
+
+    @Override
+    public void registerListener(ITenantRegisterListener listener) {
+        // TODO Auto-generated method stub
+        
+    }
 }

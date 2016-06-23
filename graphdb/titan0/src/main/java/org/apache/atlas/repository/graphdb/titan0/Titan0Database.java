@@ -25,6 +25,7 @@ import java.util.Map;
 
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
+import org.apache.atlas.repository.ITenantRegisterListener;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.GraphDatabase;
 import org.apache.commons.configuration.Configuration;
@@ -174,5 +175,11 @@ public class Titan0Database implements GraphDatabase<Titan0Vertex, Titan0Edge> {
 		// TODO Auto-generated method stub
 		
 	}
+
+    @Override
+    public void registerListener(ITenantRegisterListener listener) {
+        // TODO Auto-generated method stub
+        
+    }
 
 }

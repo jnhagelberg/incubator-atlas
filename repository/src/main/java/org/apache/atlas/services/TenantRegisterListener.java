@@ -15,41 +15,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.atlas.repository.graphdb;
+package org.apache.atlas.services;
 
-import java.util.Map;
-
+import org.apache.atlas.AtlasException;
 import org.apache.atlas.repository.ITenantRegisterListener;
 
+import com.google.inject.Inject;
+
 /**
- * Represents a graph database
  *
- * @param <V> vertex class used by the graph database
- * @param <E> edge class used by the graph database
  */
-public interface GraphDatabase<V,E> {
+public class TenantRegisterListener implements ITenantRegisterListener {
 
-    /**
-     * Returns whether the graph has been loaded.
-     * @return
-     */
-    boolean isGraphLoaded();
-
-    /**
-     * Gets the graph, loading it if it has not been loaded already
-     * @return
-     */
-    AtlasGraph<V,E> getGraph();
-
-    /**
-     * Unloads the graph (used testing)
-     */
-    void unloadGraph();
-    /**
-     * set db wiht intial parameters
-     * @param initParameters
-     */
-    void initialize(Map<String, String> initParameters);
+    private static TenantRegisterListener instance = new TenantRegisterListener ();
     
-    void registerListener (ITenantRegisterListener listener);
+    private TenantRegisterListener (){}
+    
+    public static TenantRegisterListener getInstance() {
+        return instance;
+    }
+
+    @Inject
+    DefaultMetadataService metadataService;
+    /* (non-Javadoc)
+     * @see org.apache.atlas.repository.ITypeRegisterListener#registerBootstrapTypes()
+     */
+    @Override
+    public void registerBootstrapTypes() throws AtlasException {
+        metadataService.restoreTypeSystem();
+
+    }
+
 }

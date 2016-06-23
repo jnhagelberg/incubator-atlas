@@ -136,14 +136,14 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
             entityChangeListeners.add(provider.get());
         }
 
-        if (!HAConfiguration.isHAEnabled(configuration)) {
+        if (!HAConfiguration.isHAEnabled(configuration) || !HAConfiguration.isLazyCacheLoading(configuration)) {
             restoreTypeSystem();
         }
 
         maxAuditResults = configuration.getShort(CONFIG_MAX_AUDIT_RESULTS, DEFAULT_MAX_AUDIT_RESULTS);
     }
 
-    private void restoreTypeSystem() throws AtlasException {
+    public void restoreTypeSystem() throws AtlasException {
         LOG.info("Restoring type system from the store");
         TypesDef typesDef = typeStore.restore();
         if (!wasInitialized) {

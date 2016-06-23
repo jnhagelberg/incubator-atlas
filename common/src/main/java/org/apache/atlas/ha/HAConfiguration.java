@@ -62,6 +62,12 @@ public final class HAConfiguration {
         return configuration.getBoolean(ATLAS_SERVER_HA_ENABLED_KEY, false);
     }
 
+    //TODO just for testing should be removed
+    public static boolean isLazyCacheLoading(Configuration configuration)
+    {
+        return configuration.getBoolean("atlas.mt.enabled", true);
+    }
+    
     /**
      * Get the web server address that a server instance with the passed ID is bound to.
      *

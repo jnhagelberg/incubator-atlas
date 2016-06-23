@@ -29,6 +29,7 @@ import org.apache.atlas.RequestContext;
 import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.GraphDatabase;
+import org.apache.atlas.services.TenantRegisterListener;
 
 import com.google.inject.Provides;
 
@@ -47,6 +48,7 @@ public class AtlasGraphProvider implements GraphProvider<AtlasGraph> {
                 if(graphDb_ == null) {
                     Class implClass = ApplicationProperties.getClass(IMPL_PROPERTY, DEFAULT_DATABASE_IMPL_CLASS, GraphDatabase.class);
                     graphDb_ = (GraphDatabase<V, E>)implClass.newInstance();
+                    graphDb_.registerListener(TenantRegisterListener.getInstance());
                 }
                 Map<String, String> initParams = new HashMap <String, String> ();
                 initParams.put(Constants.TENANT_ID, RequestContext.get().getTenantId());
