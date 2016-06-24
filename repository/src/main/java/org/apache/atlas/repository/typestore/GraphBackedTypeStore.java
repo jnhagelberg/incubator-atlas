@@ -64,7 +64,7 @@ import com.google.inject.Singleton;
 public class GraphBackedTypeStore<V,E> implements ITypeStore {
     public static final String VERTEX_TYPE = "typeSystem";
     private static final String PROPERTY_PREFIX = Constants.INTERNAL_PROPERTY_KEY_PREFIX + "type.";
-    public static final String SUPERTYPE_EDGE_LABEL = PROPERTY_PREFIX + ".supertype";
+    public static final String SUPERTYPE_EDGE_LABEL = PROPERTY_PREFIX + "supertype";
 
     private static Logger LOG = LoggerFactory.getLogger(GraphBackedTypeStore.class);
 
