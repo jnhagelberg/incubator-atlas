@@ -21,15 +21,16 @@ package org.apache.atlas.repository.graph;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.RequestContext;
 import org.apache.atlas.repository.Constants;
+import org.apache.atlas.repository.ITenantRegisterListener;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.GraphDatabase;
-import org.apache.atlas.services.TenantRegisterListener;
 
 import com.google.inject.Provides;
 
@@ -41,6 +42,9 @@ public class AtlasGraphProvider implements GraphProvider<AtlasGraph> {
     private static volatile GraphDatabase<?,?> graphDb_;
     private static volatile AtlasGraph<?,?> graph_;
 
+    @Inject
+    static ITenantRegisterListener listener;
+    
     public static <V,E> AtlasGraph<V,E> getGraphInstance() {
 
         if(graph_ == null) {
@@ -48,7 +52,7 @@ public class AtlasGraphProvider implements GraphProvider<AtlasGraph> {
                 if(graphDb_ == null) {
                     Class implClass = ApplicationProperties.getClass(IMPL_PROPERTY, DEFAULT_DATABASE_IMPL_CLASS, GraphDatabase.class);
                     graphDb_ = (GraphDatabase<V, E>)implClass.newInstance();
-                    graphDb_.registerListener(TenantRegisterListener.getInstance());
+                    graphDb_.registerListener(listener);
                 }
                 Map<String, String> initParams = new HashMap <String, String> ();
                 initParams.put(Constants.TENANT_ID, RequestContext.get().getTenantId());

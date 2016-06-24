@@ -44,7 +44,6 @@ import org.apache.atlas.typesystem.exception.EntityExistsException;
 import org.apache.atlas.typesystem.exception.EntityNotFoundException;
 import org.apache.atlas.typesystem.exception.TraitNotFoundException;
 import org.apache.atlas.typesystem.persistence.Id;
-import org.apache.atlas.typesystem.persistence.Id.EntityState;
 import org.apache.atlas.typesystem.types.AttributeInfo;
 import org.apache.atlas.typesystem.types.ClassType;
 import org.apache.atlas.typesystem.types.DataTypes;

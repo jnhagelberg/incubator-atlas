@@ -17,26 +17,25 @@
  */
 package org.apache.atlas.services;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.repository.ITenantRegisterListener;
-
-import com.google.inject.Inject;
 
 /**
  *
  */
+@Singleton
 public class TenantRegisterListener implements ITenantRegisterListener {
 
-    private static TenantRegisterListener instance = new TenantRegisterListener ();
-    
-    private TenantRegisterListener (){}
-    
-    public static TenantRegisterListener getInstance() {
-        return instance;
+    public TenantRegisterListener() {
+        super();
     }
 
     @Inject
     DefaultMetadataService metadataService;
+    
     /* (non-Javadoc)
      * @see org.apache.atlas.repository.ITypeRegisterListener#registerBootstrapTypes()
      */
