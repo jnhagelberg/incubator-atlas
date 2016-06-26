@@ -17,6 +17,8 @@
  */
 package org.apache.atlas.repository.graphdb.titan0;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -65,6 +67,16 @@ public class Titan0Element<T extends Element> implements AtlasElement {
         return wrappedElement.getProperty(propertyName);
     }
 
+    /**
+     * Gets all of the values of the given property.
+     * @param propertyName
+     * @return
+     */
+    @Override
+    public <T> Collection<T> getPropertyValues(String propertyName, Class<T> type) {
+        return Collections.singleton(getProperty(propertyName, type));
+    }
+    
     @Override
     public void removeProperty(String propertyName) {
         wrappedElement.removeProperty(propertyName);

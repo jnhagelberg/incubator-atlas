@@ -57,12 +57,6 @@ public interface AtlasVertex<V,E> extends AtlasElement {
      */
     <T> void addProperty(String propertyName, T value);
 
-   /**
-     * Gets all of the values of the given property.
-     * @param propertyName
-     * @return
-     */
-    <T> Collection<T> getPropertyValues(String propertyName, Class<T> type);
 
     /**
      * Creates a vertex query.

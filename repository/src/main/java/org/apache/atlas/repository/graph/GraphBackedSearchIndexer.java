@@ -41,6 +41,7 @@ import org.apache.atlas.repository.RepositoryException;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.AtlasGraphManagement;
 import org.apache.atlas.repository.graphdb.AtlasPropertyKey;
+import org.apache.atlas.repository.graphdb.GremlinVersion;
 import org.apache.atlas.typesystem.types.AttributeInfo;
 import org.apache.atlas.typesystem.types.ClassType;
 import org.apache.atlas.typesystem.types.DataTypes;
@@ -107,9 +108,10 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
             createIndexes(management, Constants.GUID_PROPERTY_KEY, String.class, true,
                    Multiplicity.OPTIONAL, true);
 
-            createIndexes(management, Constants.STATE_PROPERTY_KEY, String.class, false,
+            if(graph.getSupportedGremlinVersion() == GremlinVersion.THREE) {
+                createIndexes(management, Constants.STATE_PROPERTY_KEY, String.class, false,
                     Multiplicity.OPTIONAL, true);
-
+            }
             // create a composite index for entity creation timestamp
             createIndexes(management, Constants.TIMESTAMP_PROPERTY_KEY, Long.class, false, Multiplicity.OPTIONAL, true);
 

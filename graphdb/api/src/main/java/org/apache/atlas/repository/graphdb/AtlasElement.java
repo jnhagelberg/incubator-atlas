@@ -55,6 +55,13 @@ public interface AtlasElement {
      */
     <T> T getProperty(String propertyName, Class<T> clazz);
 
+    /**
+     * Gets all of the values of the given property.
+     * @param propertyName
+     * @return
+     */
+    <T> Collection<T> getPropertyValues(String propertyName, Class<T> type);
+
 
 
     /**
