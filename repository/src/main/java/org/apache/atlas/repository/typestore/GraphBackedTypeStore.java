@@ -304,7 +304,11 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
             for (String attrName : attrNames) {
                 try {
                     String propertyKey = getPropertyKey(typeName, attrName);
-                    attributes.add(AttributeInfo.fromJson((String) vertex.getJsonProperty(propertyKey)));
+                    AttributeDefinition attrValue = AttributeInfo.fromJson((String) vertex.getJsonProperty(propertyKey));
+                    if (attrValue != null)
+                    {
+                        attributes.add(attrValue);
+                    }
                 } catch (JSONException e) {
                     throw new AtlasException(e);
                 }

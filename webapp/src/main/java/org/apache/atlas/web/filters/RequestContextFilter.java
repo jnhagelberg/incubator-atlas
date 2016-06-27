@@ -12,6 +12,9 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.atlas.RequestContext;
 
+import com.google.inject.Singleton;
+
+@Singleton
 public class RequestContextFilter implements Filter {
 	/* (non-Javadoc)
      * @see javax.servlet.Filter#init(javax.servlet.FilterConfig)

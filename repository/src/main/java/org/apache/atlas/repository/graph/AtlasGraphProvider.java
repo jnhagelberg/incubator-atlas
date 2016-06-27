@@ -28,7 +28,7 @@ import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.RequestContext;
 import org.apache.atlas.repository.Constants;
-import org.apache.atlas.repository.ITenantRegisterListener;
+import org.apache.atlas.repository.ITenantRegisterationListener;
 import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.GraphDatabase;
 
@@ -43,7 +43,7 @@ public class AtlasGraphProvider implements GraphProvider<AtlasGraph> {
     private static volatile AtlasGraph<?,?> graph_;
 
     @Inject
-    static ITenantRegisterListener listener;
+    static ITenantRegisterationListener listener;
     
     public static <V,E> AtlasGraph<V,E> getGraphInstance() {
 

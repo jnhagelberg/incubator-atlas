@@ -15,34 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.atlas.services;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
+package org.apache.atlas.repository;
 
 import org.apache.atlas.AtlasException;
-import org.apache.atlas.repository.ITenantRegisterListener;
 
-/**
- *
- */
-@Singleton
-public class TenantRegisterListener implements ITenantRegisterListener {
-
-    public TenantRegisterListener() {
-        super();
-    }
-
-    @Inject
-    DefaultMetadataService metadataService;
-    
-    /* (non-Javadoc)
-     * @see org.apache.atlas.repository.ITypeRegisterListener#registerBootstrapTypes()
+public interface ITenantRegisterationListener {
+    /**
+     * Callback to register the Atlas bootstrap types for tenant in MT environment.
      */
-    @Override
-    public void registerBootstrapTypes() throws AtlasException {
-        metadataService.restoreTypeSystem();
-
-    }
-
+    public void registerBootstrapTypes() throws AtlasException;
 }

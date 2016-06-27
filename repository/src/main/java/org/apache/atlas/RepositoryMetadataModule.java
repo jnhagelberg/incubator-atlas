@@ -25,7 +25,7 @@ import org.apache.atlas.discovery.LineageService;
 import org.apache.atlas.discovery.graph.GraphBackedDiscoveryService;
 import org.apache.atlas.listener.EntityChangeListener;
 import org.apache.atlas.listener.TypesChangeListener;
-import org.apache.atlas.repository.ITenantRegisterListener;
+import org.apache.atlas.repository.ITenantRegisterationListener;
 import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.audit.EntityAuditListener;
 import org.apache.atlas.repository.audit.EntityAuditRepository;
@@ -44,7 +44,7 @@ import org.apache.atlas.services.DefaultMetadataService;
 import org.apache.atlas.services.IBootstrapTypesRegistrar;
 import org.apache.atlas.services.MetadataService;
 import org.apache.atlas.services.ReservedTypesRegistrar;
-import org.apache.atlas.services.TenantRegisterListener;
+import org.apache.atlas.services.TenantRegisterationListener;
 import org.apache.atlas.typesystem.types.TypeSystem;
 import org.apache.atlas.typesystem.types.TypeSystemProvider;
 
@@ -92,7 +92,7 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
         bind(DiscoveryService.class).to(GraphBackedDiscoveryService.class).asEagerSingleton();
 
         // bind the DiscoveryService interface to an implementation
-        bind(ITenantRegisterListener.class).to(TenantRegisterListener.class).asEagerSingleton();
+        bind(ITenantRegisterationListener.class).to(TenantRegisterationListener.class).asEagerSingleton();
         
         bind(LineageService.class).to(DataSetLineageService.class).asEagerSingleton();
 

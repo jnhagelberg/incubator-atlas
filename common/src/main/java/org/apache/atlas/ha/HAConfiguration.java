@@ -65,7 +65,7 @@ public final class HAConfiguration {
     //TODO just for testing should be removed
     public static boolean isLazyCacheLoading(Configuration configuration)
     {
-        return configuration.getBoolean("atlas.mt.enabled", true);
+        return configuration.getBoolean("atlas.mt.enabled", false);
     }
     
     /**

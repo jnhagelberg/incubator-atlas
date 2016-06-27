@@ -139,13 +139,21 @@ public class AttributeInfo {
     }
 
     public static AttributeDefinition fromJson(String jsonStr) throws JSONException {
-        JSONObject json = new JSONObject(jsonStr);
-        String reverseAttr = null;
-        if (json.has("reverseAttributeName")) {
-            reverseAttr = json.getString("reverseAttributeName");
+        
+        if (jsonStr != null && !jsonStr.isEmpty())
+        {
+            JSONObject json = new JSONObject(jsonStr);
+            String reverseAttr = null;
+            if (json.has("reverseAttributeName")) {
+                reverseAttr = json.getString("reverseAttributeName");
+            }
+            return new AttributeDefinition(json.getString("name"),
+                    json.getString("dataType"), Multiplicity.fromJson(json
+                            .getString("multiplicity")),
+                    json.getBoolean("isComposite"),
+                    json.getBoolean("isUnique"),
+                    json.getBoolean("isIndexable"), reverseAttr);
         }
-        return new AttributeDefinition(json.getString("name"), json.getString("dataType"),
-                Multiplicity.fromJson(json.getString("multiplicity")), json.getBoolean("isComposite"),
-                json.getBoolean("isUnique"), json.getBoolean("isIndexable"), reverseAttr);
+        return null;
     }
 }

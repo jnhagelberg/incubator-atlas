@@ -19,7 +19,7 @@ package org.apache.atlas.repository.graphdb;
 
 import java.util.Map;
 
-import org.apache.atlas.repository.ITenantRegisterListener;
+import org.apache.atlas.repository.ITenantRegisterationListener;
 
 /**
  * Represents a graph database
@@ -51,5 +51,5 @@ public interface GraphDatabase<V,E> {
      */
     void initialize(Map<String, String> initParameters);
     
-    void registerListener (ITenantRegisterListener listener);
+    void registerListener (ITenantRegisterationListener listener);
 }
