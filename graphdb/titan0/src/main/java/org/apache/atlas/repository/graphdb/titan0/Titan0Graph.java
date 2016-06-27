@@ -247,4 +247,14 @@ public class Titan0Graph implements AtlasGraph<Titan0Vertex, Titan0Edge> {
         
         return false;
     }
+    
+    @Override
+    public boolean requiresInitialIndexedPredicate() {        
+        return false;
+    }
+
+    @Override
+    public String getInitialIndexedPredicate() {
+        return "";
+    }
 }

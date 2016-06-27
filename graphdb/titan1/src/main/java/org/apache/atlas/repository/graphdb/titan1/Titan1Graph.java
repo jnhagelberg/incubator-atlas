@@ -294,8 +294,17 @@ public class Titan1Graph implements AtlasGraph<Titan1Vertex, Titan1Edge> {
     }
 
     @Override
-    public boolean isPropertyValueConversionNeeded(IDataType<?> type) {
-        
+    public boolean isPropertyValueConversionNeeded(IDataType<?> type) {        
         return false;
+    }
+
+    @Override
+    public boolean requiresInitialIndexedPredicate() {        
+        return false;
+    }
+
+    @Override
+    public String getInitialIndexedPredicate() {
+        return "";
     }
 }
