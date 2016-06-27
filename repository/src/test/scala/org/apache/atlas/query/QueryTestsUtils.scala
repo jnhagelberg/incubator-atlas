@@ -18,73 +18,71 @@
 
 package org.apache.atlas.query
 
-import java.io.File
-import javax.script.{Bindings, ScriptEngine, ScriptEngineManager}
-import com.google.common.collect.ImmutableList
-import org.apache.atlas.repository.graphdb.AtlasVertex
-import org.apache.atlas.repository.graphdb.AtlasGraph
-import org.apache.atlas.ApplicationProperties;
+import java.net.URL
+
+import org.apache.atlas.ApplicationProperties
+import org.apache.atlas.repository.MetadataRepository
 import org.apache.atlas.repository.graph.AtlasGraphProvider
+import org.apache.atlas.repository.graphdb.AtlasGraph
+import org.apache.atlas.services.JSONImporter
+import org.apache.atlas.typesystem.TypesDef
 import org.apache.atlas.typesystem.types._
-import com.typesafe.config.{Config, ConfigFactory}
-import org.apache.commons.configuration.{Configuration, ConfigurationException, MapConfiguration}
-import org.apache.commons.io.FileUtils
-import org.apache.commons.lang.RandomStringUtils
+import org.apache.atlas.typesystem.types.AttributeDefinition
+import org.apache.atlas.typesystem.types.AttributeDefinition
+import org.apache.atlas.typesystem.types.AttributeDefinition
+import org.apache.atlas.typesystem.types.AttributeDefinition
+import org.apache.atlas.typesystem.types.AttributeDefinition
+import org.apache.atlas.typesystem.types.ClassType
+import org.apache.atlas.typesystem.types.ClassType
+import org.apache.atlas.typesystem.types.ClassType
+import org.apache.atlas.typesystem.types.DataTypes
+import org.apache.atlas.typesystem.types.DataTypes
+import org.apache.atlas.typesystem.types.DataTypes
+import org.apache.atlas.typesystem.types.DataTypes
+import org.apache.atlas.typesystem.types.DataTypes
+import org.apache.atlas.typesystem.types.EnumTypeDefinition
+import org.apache.atlas.typesystem.types.EnumTypeDefinition
+import org.apache.atlas.typesystem.types.EnumTypeDefinition
+import org.apache.atlas.typesystem.types.EnumTypeDefinition
+import org.apache.atlas.typesystem.types.EnumTypeDefinition
+import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition
+import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition
+import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition
+import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition
+import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition
+import org.apache.atlas.typesystem.types.IDataType
+import org.apache.atlas.typesystem.types.IDataType
+import org.apache.atlas.typesystem.types.IDataType
+import org.apache.atlas.typesystem.types.IDataType
+import org.apache.atlas.typesystem.types.IDataType
+import org.apache.atlas.typesystem.types.Multiplicity
+import org.apache.atlas.typesystem.types.Multiplicity
+import org.apache.atlas.typesystem.types.Multiplicity
+import org.apache.atlas.typesystem.types.StructTypeDefinition
+import org.apache.atlas.typesystem.types.StructTypeDefinition
+import org.apache.atlas.typesystem.types.StructTypeDefinition
+import org.apache.atlas.typesystem.types.StructTypeDefinition
+import org.apache.atlas.typesystem.types.StructTypeDefinition
+import org.apache.atlas.typesystem.types.TraitType
+import org.apache.atlas.typesystem.types.TraitType
+import org.apache.atlas.typesystem.types.TraitType
+import org.apache.atlas.typesystem.types.TraitType
+import org.apache.atlas.typesystem.types.TraitType
+import org.apache.atlas.typesystem.types.TypeSystem
+import org.apache.atlas.typesystem.types.TypeSystem
+import org.apache.atlas.typesystem.types.TypeSystem
+import org.apache.atlas.typesystem.types.TypeSystem
+import org.apache.atlas.typesystem.types.TypeSystem
+import org.apache.commons.configuration.Configuration
+import org.apache.commons.configuration.ConfigurationException
+import org.apache.commons.configuration.MapConfiguration
 import org.json.JSONObject
 import org.skyscreamer.jsonassert.JSONAssert
-import scala.util.Random
-import org.apache.atlas.typesystem.types.EnumTypeDefinition
-import org.apache.atlas.typesystem.types.StructTypeDefinition
-import org.apache.atlas.typesystem.types.IDataType
-import org.apache.atlas.typesystem.types.TypeSystem
-import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition
-import org.apache.atlas.typesystem.types.TraitType
-import org.apache.atlas.typesystem.types.AttributeDefinition
-import org.apache.atlas.typesystem.types.DataTypes
-import org.apache.atlas.typesystem.types.ClassType
-import org.apache.atlas.typesystem.types.Multiplicity
-import org.apache.atlas.typesystem.types.EnumTypeDefinition
-import org.apache.atlas.typesystem.types.StructTypeDefinition
-import org.apache.atlas.typesystem.types.IDataType
-import org.apache.atlas.typesystem.types.TypeSystem
-import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition
-import org.apache.atlas.typesystem.types.TraitType
-import org.apache.atlas.typesystem.types.AttributeDefinition
-import org.apache.atlas.typesystem.types.DataTypes
-import org.apache.atlas.typesystem.types.ClassType
-import org.apache.atlas.typesystem.types.Multiplicity
-import org.apache.atlas.typesystem.types.EnumTypeDefinition
-import org.apache.atlas.typesystem.types.StructTypeDefinition
-import org.apache.atlas.typesystem.types.IDataType
-import org.apache.atlas.typesystem.types.TypeSystem
-import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition
-import org.apache.atlas.typesystem.types.TraitType
-import org.apache.atlas.typesystem.types.AttributeDefinition
-import org.apache.atlas.typesystem.types.DataTypes
-import org.apache.atlas.typesystem.types.ClassType
-import org.apache.atlas.typesystem.types.Multiplicity
-import org.apache.atlas.typesystem.types.EnumTypeDefinition
-import org.apache.atlas.typesystem.types.StructTypeDefinition
-import org.apache.atlas.typesystem.types.IDataType
-import org.apache.atlas.typesystem.types.TypeSystem
-import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition
-import org.apache.atlas.typesystem.types.TraitType
-import org.apache.atlas.typesystem.types.AttributeDefinition
-import org.apache.atlas.typesystem.types.DataTypes
-import org.apache.atlas.typesystem.types.EnumTypeDefinition
-import org.apache.atlas.typesystem.types.StructTypeDefinition
-import org.apache.atlas.typesystem.types.IDataType
-import org.apache.atlas.typesystem.types.TypeSystem
-import org.apache.atlas.typesystem.types.HierarchicalTypeDefinition
-import org.apache.atlas.repository.graph.GraphProvider
-import org.apache.atlas.typesystem.types.TraitType
-import org.apache.atlas.typesystem.types.AttributeDefinition
-import org.apache.atlas.typesystem.types.DataTypes
-import org.apache.atlas.repository.graphdb.GremlinVersion
-import org.apache.atlas.services.JSONImporter
-import java.net.URL
-import org.apache.atlas.repository.MetadataRepository
-import org.apache.atlas.RequestContext
+
+import com.typesafe.config.Config
+import org.apache.atlas.services.MetadataService
+import org.apache.atlas.typesystem.json.TypesSerialization
+import org.apache.atlas.repository.graph.GraphBackedSearchIndexer
 
 
 trait GraphUtils {
@@ -119,7 +117,21 @@ trait GraphUtils {
 
 object QueryTestsUtils extends GraphUtils {
 
+    
+    def setupTypesAndIndices(gProvider : AtlasGraphProvider) : Unit = {
+        val indexer = new GraphBackedSearchIndexer(gProvider);
+        val typesDef : TypesDef = defineTypes;
+        val newTypes = TypeSystem.getInstance.defineTypes(typesDef);
+        indexer.onAdd(newTypes.values());        
+    }
+    
     def setupTypes: Unit = {
+        
+        val types : TypesDef = defineTypes;
+        TypeSystem.getInstance.defineTypes(types);
+    }
+    
+    def defineTypes: TypesDef = {
         def attrDef(name: String, dT: IDataType[_],
                     m: Multiplicity = Multiplicity.OPTIONAL,
                     isComposite: Boolean = false,
@@ -194,23 +206,23 @@ object QueryTestsUtils extends GraphUtils {
             Array[AttributeDefinition]())
         def jdbcTraitDef = new HierarchicalTypeDefinition[TraitType](classOf[TraitType], "JdbcAccess", null, null,
             Array[AttributeDefinition]())
-
-        TypeSystem.getInstance().defineTypes(ImmutableList.of[EnumTypeDefinition],
-            ImmutableList.of[StructTypeDefinition](hiveOrderDef),
-            ImmutableList.of[HierarchicalTypeDefinition[TraitType]](dimTraitDef, piiTraitDef,
+        
+        TypesDef(Seq[EnumTypeDefinition](),
+           Seq[StructTypeDefinition](hiveOrderDef),
+            Seq[HierarchicalTypeDefinition[TraitType]](dimTraitDef, piiTraitDef,
                 metricTraitDef, etlTraitDef, jdbcTraitDef),
-            ImmutableList.of[HierarchicalTypeDefinition[ClassType]](dbClsDef, storageDescClsDef, columnClsDef, tblClsDef,
+            Seq[HierarchicalTypeDefinition[ClassType]](dbClsDef, storageDescClsDef, columnClsDef, tblClsDef,
                 partitionClsDef, loadProcessClsDef, viewClsDef))
 
-        ()
+        
     }
 
     def setupTestGraph(repo : MetadataRepository, gp: AtlasGraphProvider): AtlasGraph[_,_] = {
 
         //start with a clean graph
-        AtlasGraphProvider.unloadGraph();
+        //AtlasGraphProvider.unloadGraph(); cannot unload graph, MetadataRepository has a reference to it and will use it for the import.
         val g = AtlasGraphProvider.getGraphInstance();
-
+        g.clear();
         var cl : ClassLoader = Thread.currentThread().getContextClassLoader;
         var instancesJsonUrl : URL =  cl.getResource("hive-instances.json")
 

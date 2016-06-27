@@ -758,6 +758,7 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
             if (typeSystem.isRegistered(type.typeName)) {
                 return;
             }
+            LOG.info("Registering type={}",type);
 
             TypesDef typesDef = TypesUtil.getTypesDef(
                     ImmutableList.<EnumTypeDefinition>of(),

@@ -57,46 +57,16 @@ class GremlinTest extends BaseGremlinTest {
     RequestContext.createContext();
   }
 
-
   @BeforeClass
   def beforeAll() {
     TypeSystem.getInstance().reset()
-    QueryTestsUtils.setupTypes
     gProvider = new AtlasGraphProvider()
+    QueryTestsUtils.setupTypesAndIndices(gProvider)    
     var repo = new GraphBackedMetadataRepository(gProvider, null);
     gp = new DefaultGraphPersistenceStrategy(repo)
-    g = QueryTestsUtils.setupTestGraph(repo, gProvider)
+    g = QueryTestsUtils.setupTestGraph(repo, gProvider)    
     g
-  }
-  //from DefaultMetadataService.  TBD - move this to utility method?
-  def deserializeClassInstances(entityInstanceDefinition: String, typeSystem : TypeSystem) : Array[ITypedReferenceableInstance] = {
-        try {
-            var referableInstances : JSONArray = new JSONArray(entityInstanceDefinition);
-            var instances : Array[ITypedReferenceableInstance] = new Array[ITypedReferenceableInstance](referableInstances.length());
-            for (index <- 0 to referableInstances.length() - 1) {
-                var entityInstance : Referenceable =
-                        InstanceSerialization.fromJsonReferenceable(referableInstances.getString(index), true);
-                val entityTypeName : String = entityInstance.getTypeName();
-                ParamChecker.notEmpty(entityTypeName, "Entity type cannot be null");
-
-                var entityType : ClassType = typeSystem.getDataType(classOf[ClassType], entityTypeName);
-
-                //Both assigned id and values are required for full update
-                //classtype.convert() will remove values if id is assigned. So, set temp id, convert and
-                // then replace with original id
-                var origId : Id = entityInstance.getId();
-                entityInstance.replaceWithNewId(new Id(entityInstance.getTypeName()));
-                var typedInstrance : ITypedReferenceableInstance = entityType.convert(entityInstance, Multiplicity.REQUIRED);
-                typedInstrance.asInstanceOf[ReferenceableInstance].replaceWithNewId(origId);
-                instances(index) = typedInstrance;
-            }
-            return instances;
-        } catch {
-            case ex : ValueConversionException => throw ex
-            case ex : TypeNotFoundException => throw ex
-            case ex : Exception => throw new IllegalArgumentException("Unable to deserialize json", ex)
-        }
-    }
+  }  
 
   @AfterClass
   def afterAll() {

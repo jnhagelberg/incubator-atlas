@@ -314,8 +314,8 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
               propertyKey = management.makePropertyKey(propertyName, propertyClass, cardinality);
 
       		  enhanceMixedIndex(management, propertyName, propertyClass, cardinality, propertyKey);
-
- 	        if (isSystemProperty) {
+      		  //graphdb needs these indices in order to be able to execute queries
+ 	        if (isSystemProperty || graph.getSupportedGremlinVersion() == GremlinVersion.THREE) {
  	         	LOG.debug("Creating composite index for property {} of type {} ", propertyName,
                 	propertyClass.getName());
             	    management.createCompositeIndex(propertyName, propertyKey, isUnique);

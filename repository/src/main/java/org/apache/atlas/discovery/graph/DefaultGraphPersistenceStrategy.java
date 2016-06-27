@@ -32,6 +32,7 @@ import org.apache.atlas.repository.Constants;
 import org.apache.atlas.repository.MetadataRepository;
 import org.apache.atlas.repository.graph.GraphBackedMetadataRepository;
 import org.apache.atlas.repository.graph.GraphHelper;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.repository.graphdb.AtlasVertex;
 import org.apache.atlas.repository.graphdb.GremlinVersion;
 import org.apache.atlas.typesystem.ITypedReferenceableInstance;
@@ -254,20 +255,30 @@ public class DefaultGraphPersistenceStrategy implements GraphPersistenceStrategi
     public boolean addGraphVertexPrefix(scala.collection.Traversable<String> preStatements) {
         return GraphPersistenceStrategies$class.addGraphVertexPrefix(this, preStatements);
     }
-
+    
     @Override
     public GremlinVersion getSupportedGremlinVersion() {
-        return metadataRepository.getSupportedGremlinVersion();
+        return GraphPersistenceStrategies$class.getSupportedGremlinVersion(this);
     }
 
     @Override
     public String generatePersisentToLogicalConversionExpression(String expr, IDataType<?> t) {
-    	return metadataRepository.generatePersisentToLogicalConversionExpression(expr, t);
+        return GraphPersistenceStrategies$class.generatePersisentToLogicalConversionExpression(this,expr, t);
+    }
+    
+    @Override
+    public String initialQueryCondition() {
+        return GraphPersistenceStrategies$class.initialQueryCondition(this);
     }
     
     @Override
     public boolean isPropertyValueConversionNeeded(IDataType<?> t) {
-        return metadataRepository.isPropertyValueConversionNeeded(t);
+        return GraphPersistenceStrategies$class.isPropertyValueConversionNeeded(this, t);
+    }
+
+    @Override
+    public AtlasGraph getGraph() {
+        return metadataRepository.getGraph();
     }
 
 }

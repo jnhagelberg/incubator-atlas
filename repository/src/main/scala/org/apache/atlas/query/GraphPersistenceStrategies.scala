@@ -20,21 +20,23 @@ package org.apache.atlas.query
 
 import java.util
 import java.util.Date
-import scala.collection.JavaConversions._
-import org.apache.atlas.query.Expressions.ComparisonExpression
-import org.apache.atlas.query.Expressions.ExpressionException
+
+import scala.collection.JavaConversions.seqAsJavaList
+
+import org.apache.atlas.query.Expressions.{ComparisonExpression, ExpressionException}
 import org.apache.atlas.query.TypeUtils.FieldInfo
-import org.apache.atlas.repository.graph.GraphHelper
-import org.apache.atlas.repository.graphdb.AtlasEdgeDirection
-import org.apache.atlas.repository.graphdb.AtlasVertex
-import org.apache.atlas.repository.graphdb.GremlinVersion
-import org.apache.atlas.typesystem.ITypedInstance
-import org.apache.atlas.typesystem.ITypedReferenceableInstance
+import org.apache.atlas.repository.graph.{GraphHelper, GraphBackedMetadataRepository}
+import org.apache.atlas.repository.graphdb._
+import org.apache.atlas.typesystem.persistence.Id
+import org.apache.atlas.typesystem.types.DataTypes._
 import org.apache.atlas.typesystem.persistence.Id
 import org.apache.atlas.typesystem.types._
-import org.apache.atlas.typesystem.types.DataTypes._
-import org.apache.atlas.repository.graphdb.GremlinVersion
-import org.apache.atlas.repository.graphdb.AtlasGraph
+import org.apache.atlas.typesystem.{ITypedInstance, ITypedReferenceableInstance}
+
+
+import scala.collection.JavaConversions._
+import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 /**
  * Represents the Bridge between the QueryProcessor and the Graph Persistence scheme used.
@@ -47,9 +49,13 @@ import org.apache.atlas.repository.graphdb.AtlasGraph
  */
 trait GraphPersistenceStrategies {
 
-    def getSupportedGremlinVersion() : GremlinVersion
-    def generatePersisentToLogicalConversionExpression(expr: String, t: IDataType[_]) : String
-    def isPropertyValueConversionNeeded(attrType: IDataType[_]) : Boolean
+    def getGraph() : AtlasGraph[_,_]
+    def getSupportedGremlinVersion() : GremlinVersion = getGraph().getSupportedGremlinVersion;
+    def generatePersisentToLogicalConversionExpression(expr: String, t: IDataType[_]) : String = getGraph().generatePersisentToLogicalConversionExpression(expr, t);
+    def isPropertyValueConversionNeeded(attrType: IDataType[_]) : Boolean = getGraph().isPropertyValueConversionNeeded(attrType);
+    
+    def initialQueryCondition = if (getGraph().requiresInitialIndexedPredicate()) { s""".${getGraph().getInitialIndexedPredicate}""" } else {""};
+   
     /**
      * Name of attribute used to store typeName in vertex
      */
@@ -247,7 +253,7 @@ trait GraphPersistenceStrategies {
                 //to g.V().  This is needed because Gremlin 3 does not support
                 // _()
                 //s"g.V(${varName}.collect{it.id()} as String[])"
-                s"g.V(${varName} as Object[])"
+                s"g.V(${varName} as Object[])${initialQueryCondition}"
             }
         )
     }
@@ -273,17 +279,9 @@ case class GraphPersistenceStrategy1[V,E](g: AtlasGraph[V,E]) extends GraphPersi
     val superTypeAttributeName = "superTypeNames"
     val idAttributeName = "guid"
 
-    override def getSupportedGremlinVersion() : GremlinVersion =  {
-        return g.getSupportedGremlinVersion();
-    }
-    
-    override def generatePersisentToLogicalConversionExpression(expr: String, t: IDataType[_]) : String = {
-        return g.generatePersisentToLogicalConversionExpression(expr, t);
-    }  
-
-    override def isPropertyValueConversionNeeded(t : IDataType[_]) : Boolean = {
-      return g.isPropertyValueConversionNeeded(t)
-    }
+    override def getGraph() : AtlasGraph[_,_] =  {
+        return g;
+    }   
     
     def edgeLabel(dataType: IDataType[_], aInfo: AttributeInfo) = s"__${dataType.getName}.${aInfo.name}"
 

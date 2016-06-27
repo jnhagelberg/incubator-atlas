@@ -371,9 +371,9 @@ object HiveTitanSample {
 }
 
 object TestApp extends App with GraphUtils {
-    AtlasGraphProvider.unloadGraph()
+    
     val g = AtlasGraphProvider.getGraphInstance
-
+    g.clear();
     val hiveGraphFile = FileUtils.getTempDirectory().getPath + File.separator + System.nanoTime() + ".gson"
     HiveTitanSample.writeGson(hiveGraphFile)
 

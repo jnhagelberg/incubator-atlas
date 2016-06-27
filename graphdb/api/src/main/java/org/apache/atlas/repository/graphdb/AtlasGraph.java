@@ -261,6 +261,10 @@ public interface AtlasGraph<V,E> {
      * @return
      */
     GremlinVersion getSupportedGremlinVersion();
+    
+    boolean requiresInitialIndexedPredicate();
+    
+    String getInitialIndexedPredicate();
 
     /**
      * Executes a gremlin query, returns an object with the raw

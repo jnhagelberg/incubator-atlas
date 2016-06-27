@@ -498,7 +498,7 @@ class GremlinTranslator(expr: Expression,
     def genFullQuery(expr: Expression): String = {
         var q = genQuery(expr, false)
         if(gPersistenceBehavior.addGraphVertexPrefix(preStatements)) {
-            q = s"g.V.$q"
+            q = s"g.V()${gPersistenceBehavior.initialQueryCondition}.$q"
         }
 
         q = s"$q.toList()"

@@ -357,19 +357,7 @@ public class GraphBackedMetadataRepository implements MetadataRepository {
                 requestContext.getUpdatedEntityIds(), requestContext.getDeletedEntityIds());
     }
 
-    public GremlinVersion getSupportedGremlinVersion() {
-        return graph.getSupportedGremlinVersion();
-    }
-
-    private <V,E> AtlasGraph<V,E> getGraph() {
+    public <V,E> AtlasGraph<V,E> getGraph() {
         return (AtlasGraph<V,E>)graph;
-    }
-
-	public String generatePersisentToLogicalConversionExpression(String expr, IDataType<?> t) {
-		return graph.generatePersisentToLogicalConversionExpression(expr, t);
-	}
-
-    public boolean isPropertyValueConversionNeeded(IDataType<?> t) {
-        return graph.isPropertyValueConversionNeeded(t);
     }
 }
