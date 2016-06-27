@@ -315,13 +315,13 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
 
       		  enhanceMixedIndex(management, propertyName, propertyClass, cardinality, propertyKey);
       		  //graphdb needs these indices in order to be able to execute queries
- 	        if (isSystemProperty || graph.getSupportedGremlinVersion() == GremlinVersion.THREE) {
+ 	        if (isSystemProperty) {
  	         	LOG.debug("Creating composite index for property {} of type {} ", propertyName,
                 	propertyClass.getName());
             	    management.createCompositeIndex(propertyName, propertyKey, isUnique);
 
         	}
-        	else if(isUnique) {
+        	else if(isUnique || graph.getSupportedGremlinVersion() == GremlinVersion.THREE) {
         	    // send uniqueness as false because there can be many vertexes with the same property value
                 // but state can be active / deleted
         		   	LOG.debug("Creating composite index for property {} of type {} ", propertyName,
