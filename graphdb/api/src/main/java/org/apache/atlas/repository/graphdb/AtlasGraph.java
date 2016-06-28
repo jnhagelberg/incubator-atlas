@@ -262,6 +262,12 @@ public interface AtlasGraph<V,E> {
      */
     GremlinVersion getSupportedGremlinVersion();
     
+    /**
+     * Whether or not an initial predicate needs to be added to gremlin queries
+     * in order for them to run successfully.  This is needed for some graph database where
+     * graph scans are disabled.
+     * @return
+     */
     boolean requiresInitialIndexedPredicate();
     
     String getInitialIndexedPredicate();
