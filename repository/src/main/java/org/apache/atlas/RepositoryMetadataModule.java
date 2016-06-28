@@ -91,7 +91,7 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
         // bind the DiscoveryService interface to an implementation
         bind(DiscoveryService.class).to(GraphBackedDiscoveryService.class).asEagerSingleton();
 
-        // bind the DiscoveryService interface to an implementation
+        // bind the tenant registration listener interface to an implementation
         bind(ITenantRegisterationListener.class).to(TenantRegisterationListener.class).asEagerSingleton();
         
         bind(LineageService.class).to(DataSetLineageService.class).asEagerSingleton();

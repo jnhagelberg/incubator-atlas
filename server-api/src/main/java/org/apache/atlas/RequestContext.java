@@ -130,9 +130,6 @@ public class RequestContext {
 	}
 
 	public void setTenantId(String tenantId) {
-        if (tenantId != null) {
-            tenantId = tenantId.toLowerCase(); //ibm graph db id can only be in lowercase
-        }
 		this.tenantId = tenantId;
 	}
 }
