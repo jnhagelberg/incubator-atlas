@@ -303,7 +303,7 @@ public class GraphBackedDiscoveryServiceTest extends BaseRepositoryTest {
             {"Person where (salary > 0)", 2},
             {"Person where (salary > 100000)", 2},
             {"Person where (salary >= 200000)", 1},
-            {"Person where (salary < 13364)", 0},
+            {"Person where (salary < 13364)", 1},
             {"Person where (salary <= 150000)", 2},
             {"Person where (salary =  12334)", 0},
             {"Person where (salary != 12344)", 3},
