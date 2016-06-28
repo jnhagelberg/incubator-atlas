@@ -355,6 +355,8 @@
 
     <properties>
 		<plugin.class>org.apache.atlas.repository.graphdb.titan0.Titan0Database</plugin.class>
+        <surefire.options></surefire.options>
+        <plugin.class>org.apache.atlas.repository.graphdb.titan0.Titan0Database</plugin.class>
         <!-- platform encoding override -->
         <skipTests>false</skipTests>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -1664,8 +1666,8 @@
                     <forkMode>always</forkMode>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <argLine>-Djava.awt.headless=true -Dproject.version=${project.version}
-                        -Dhadoop.tmp.dir="${project.build.directory}/tmp-hadoop-${user.name}"
-                        -Xmx1024m -XX:MaxPermSize=512m -Djava.net.preferIPv4Stack=true
+                    -Dhadoop.tmp.dir="${project.build.directory}/tmp-hadoop-${user.name}"
+                    -Xmx1024m -XX:MaxPermSize=512m -Djava.net.preferIPv4Stack=true ${surefire.options}
                     </argLine>
                     <skip>${skipUTs}</skip>
                 </configuration>
