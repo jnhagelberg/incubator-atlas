@@ -43,7 +43,7 @@ public class AtlasGraphProvider implements GraphProvider<AtlasGraph> {
     private static volatile AtlasGraph<?,?> graph_;
 
     @Inject
-    static ITenantRegisterationListener listener;
+    private static ITenantRegisterationListener listener;
     
     public static <V,E> AtlasGraph<V,E> getGraphInstance() {
 
