@@ -169,4 +169,9 @@ public class Titan0Element<T extends Element> implements AtlasElement {
     public <T> T getJsonProperty(String propertyName) {
         return (T) getProperty(propertyName, String.class);
     }
+
+    @Override
+    public String getIdForDisplay() {
+        return getId().toString();
+    }
 }

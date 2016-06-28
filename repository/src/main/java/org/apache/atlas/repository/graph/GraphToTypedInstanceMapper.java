@@ -146,8 +146,9 @@ public final class GraphToTypedInstanceMapper {
             break;
 
         case CLASS:
+            AtlasEdge nullEdge = null;
             Object idOrInstance = mapVertexToClassReference(instanceVertex, attributeInfo, relationshipLabel,
-                attributeInfo.dataType(), null);
+                attributeInfo.dataType(), nullEdge);
             if (idOrInstance != null) {
                 typedInstance.set(attributeInfo.name, idOrInstance);
             }
@@ -159,14 +160,21 @@ public final class GraphToTypedInstanceMapper {
     }
 
     private <V,E> Object mapVertexToClassReference(AtlasVertex<V,E> instanceVertex, AttributeInfo attributeInfo,
-        String relationshipLabel, IDataType dataType, String edgeId) throws AtlasException {
+            String relationshipLabel, IDataType dataType, String edgeId) throws AtlasException {
+        
+        AtlasEdge<V,E> edge = graphHelper.getEdgeByEdgeId(instanceVertex, relationshipLabel, edgeId);
+        return mapVertexToClassReference(instanceVertex, attributeInfo, relationshipLabel, dataType, edge);
+        
+    }
+    private <V,E> Object mapVertexToClassReference(AtlasVertex<V,E> instanceVertex, AttributeInfo attributeInfo,
+        String relationshipLabel, IDataType dataType, AtlasEdge<V,E> theEdge) throws AtlasException {
         LOG.debug("Finding edge for {} -> label {} ", instanceVertex, relationshipLabel);
 
- 		AtlasEdge<V,E> edge;
-        if (edgeId == null) {
+ 		AtlasEdge<V,E> edge = null;
+        if (theEdge == null) {
             edge = GraphHelper.getEdgeForLabel(instanceVertex, relationshipLabel);
         } else {
-            edge = graphHelper.getEdgeByEdgeId(instanceVertex, relationshipLabel, edgeId);
+            edge = theEdge;
         }
 
         if (GraphHelper.elementExists(edge)) {

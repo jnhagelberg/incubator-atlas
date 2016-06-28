@@ -112,6 +112,7 @@ public class GraphBackedSearchIndexer implements SearchIndexer, ActiveStateChang
                 createIndexes(management, Constants.STATE_PROPERTY_KEY, String.class, false,
                     Multiplicity.OPTIONAL, true);
             }
+            
             // create a composite index for entity creation timestamp
             createIndexes(management, Constants.TIMESTAMP_PROPERTY_KEY, Long.class, false, Multiplicity.OPTIONAL, true);
 

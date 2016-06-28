@@ -260,18 +260,25 @@ public final class GraphHelper {
     }
 
     public static <T extends AtlasElement> void setProperty(T element, String propertyName, Object value) {
-        String elementStr = string(element);
-        LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, elementStr);
+        
+        if(LOG.isDebugEnabled()) {
+            String elementStr = string(element);
+            LOG.debug("Setting property {} = \"{}\" to vertex {}", propertyName, value, elementStr);
+        }
         Object existValue = element.getProperty(propertyName, Object.class);
         if(value == null || (value instanceof Collection && ((Collection) value).isEmpty())) {
             if(existValue != null) {
-                LOG.info("Removing property - {} value from {}", propertyName, elementStr);
+                if(LOG.isInfoEnabled()) {
+                    LOG.info("Removing property - {} value from {}", propertyName, string(element));
+                }
                 element.removeProperty(propertyName);
             }
         } else {
             if (!value.equals(existValue)) {
                 element.setProperty(propertyName, value);
-                LOG.debug("Set property {} = \"{}\" to {}", propertyName, value, elementStr);
+                if(LOG.isDebugEnabled()) {
+                    LOG.debug("Set property {} = \"{}\" to {}", propertyName, value, string(element));
+                }
             }
         }
     }
@@ -448,19 +455,19 @@ public final class GraphHelper {
 
     public static String string(AtlasVertex<?,?> vertex) {
         if (LOG.isDebugEnabled()) {
-            return String.format("vertex[id=%s type=%s guid=%s]", vertex.getId().toString(), getTypeName(vertex),
+            return String.format("vertex[id=%s type=%s guid=%s]", vertex.getIdForDisplay(), getTypeName(vertex),
                     getIdFromVertex(vertex));
         } else {
-            return String.format("vertex[id=%s]", vertex.getId().toString());
+            return String.format("vertex[id=%s]", vertex.getIdForDisplay());
         }
     }
 
     public static String string(AtlasEdge<?,?> edge) {
    		if (LOG.isDebugEnabled()) {
-            return String.format("edge[id=%s label=%s from %s -> to %s]", edge.getId().toString(), edge.getLabel(),
+            return String.format("edge[id=%s label=%s from %s -> to %s]", edge.getIdForDisplay(), edge.getLabel(),
                     string(edge.getOutVertex()), string(edge.getInVertex()));
         } else {
-            return String.format("edge[id=%s]", edge.getId().toString());
+            return String.format("edge[id=%s]", edge.getIdForDisplay());
         }
     }
 

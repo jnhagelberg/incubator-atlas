@@ -123,5 +123,11 @@ public interface AtlasElement {
      */
     <T> T getJsonProperty(String propertyName);
 
-
+    /**
+     * Gets a human-readable id without forcing the element to
+     * be created if it does not exist in the graph yet.
+     * 
+     * @return
+     */
+    public String getIdForDisplay();
 }
