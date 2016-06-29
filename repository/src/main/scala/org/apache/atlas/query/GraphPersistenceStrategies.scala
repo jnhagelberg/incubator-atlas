@@ -72,6 +72,11 @@ trait GraphPersistenceStrategies {
     def idAttributeName : String
 
     /**
+      * Name of attribute used to store state in vertex
+      */
+    def stateAttributeName : String
+
+    /**
      * Given a dataType and a reference attribute, how is edge labeled
      */
     def edgeLabel(iDataType: IDataType[_], aInfo: AttributeInfo): String
@@ -278,6 +283,7 @@ case class GraphPersistenceStrategy1[V,E](g: AtlasGraph[V,E]) extends GraphPersi
     val typeAttributeName = "typeName"
     val superTypeAttributeName = "superTypeNames"
     val idAttributeName = "guid"
+    val stateAttributeName = "state"
 
     override def getGraph() : AtlasGraph[_,_] =  {
         return g;

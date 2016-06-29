@@ -59,6 +59,17 @@ import org.testng.Assert;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+
+import static org.apache.atlas.typesystem.types.utils.TypesUtil.createClassTypeDef;
+import static org.apache.atlas.typesystem.types.utils.TypesUtil.createOptionalAttrDef;
+import static org.apache.atlas.typesystem.types.utils.TypesUtil.createRequiredAttrDef;
+import static org.apache.atlas.typesystem.types.utils.TypesUtil.createStructTypeDef;
+import static org.apache.atlas.typesystem.types.utils.TypesUtil.createTraitTypeDef;
+import static org.apache.atlas.typesystem.types.utils.TypesUtil.createUniqueRequiredAttrDef;
 
 /**
  * Test utility class.
@@ -401,7 +412,7 @@ public final class TestUtils {
             TypesDef typesDef = defineHiveTypes();
             return typeSystem.defineTypes(typesDef).values();
         }
-        return null;
+        return new ArrayList<>();
     }
 
     public static final String randomString() {

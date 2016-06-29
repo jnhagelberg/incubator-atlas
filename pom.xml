@@ -366,10 +366,11 @@
         <jetty.version>9.2.12.v20150709</jetty.version>
         <jersey.version>1.19</jersey.version>
         <jackson.version>1.8.3</jackson.version>
-
+  		<tinkerpop.version>2.6.0</tinkerpop.version>
+        <titan.version>0.5.4</titan.version>
         <hadoop.version>2.7.0</hadoop.version>
         <hbase.version>1.1.2</hbase.version>
-        <solr.version>5.1.0</solr.version>
+        <solr.version>5.5.1</solr.version>
         <kafka.version>0.10.0.0</kafka.version>
         <!-- scala versions -->
         <scala.version>2.10.4</scala.version>
@@ -424,7 +425,7 @@
             </activation>
             <properties>
                 <titan.storage.backend>hbase</titan.storage.backend>
-                <titan.index.backend>solr</titan.index.backend>
+                <titan.index.backend>solr5</titan.index.backend>
                 <solr.zk.address>localhost:9983</solr.zk.address>
                 <titan.storage.hostname>localhost</titan.storage.hostname>
 		        <entity.repository.impl>org.apache.atlas.repository.audit.HBaseBasedAuditRepository</entity.repository.impl>
@@ -539,11 +540,11 @@
         <module>server-api</module>
         <module>notification</module>
         <module>client</module>
-	<module>graphdb</module>
+		<module>graphdb</module>
+	 	 <module>titan</module>
         <module>repository</module>
         <module>authorization</module>
-
-        <!-- <module>dashboard</module> -->
+        <module>catalog</module>
         <module>dashboardv2</module>
         <module>webapp</module>
 	
@@ -929,7 +930,59 @@
                 <version>1.3.2</version>
             </dependency>
 
-            
+                        <!-- Graph DB -->
+            <dependency>
+                <groupId>com.tinkerpop.blueprints</groupId>
+                <artifactId>blueprints-core</artifactId>
+                <version>${tinkerpop.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.thinkaurelius.titan</groupId>
+                <artifactId>titan-core</artifactId>
+                <version>${titan.version}</version>
+                <exclusions>
+                    <!-- rexster does not work with servlet-api -->
+                    <exclusion>
+                        <groupId>com.tinkerpop.rexster</groupId>
+                        <artifactId>rexster-core</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.tinkerpop.rexster</groupId>
+                        <artifactId>rexster-server</artifactId>
+                    </exclusion>
+                    <!-- asm 4.0 does not work with jersey asm 3.1 -->
+                    <exclusion>
+                        <groupId>com.tinkerpop</groupId>
+                        <artifactId>frames</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>com.esotericsoftware.reflectasm</groupId>
+                        <artifactId>reflectasm</artifactId>
+                    </exclusion>
+                    <exclusion>
+                        <groupId>org.ow2.asm</groupId>
+                        <artifactId>asm</artifactId>
+                    </exclusion>
+                    <exclusion> <!-- GPL license imported from ganglia -->
+                        <groupId>org.acplt</groupId>
+                        <artifactId>oncrpc</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>com.thinkaurelius.titan</groupId>
+                <artifactId>titan-berkeleyje</artifactId>
+                <version>${titan.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>com.thinkaurelius.titan</groupId>
+                <artifactId>titan-hbase</artifactId>
+                <version>${titan.version}</version>
+            </dependency>
+
             <dependency>
                 <groupId>org.apache.hbase</groupId>
                 <artifactId>hbase-client</artifactId>
@@ -1063,6 +1116,7 @@
 
             <dependency>
                 <groupId>org.apache.atlas</groupId>
+                <artifactId>atlas-titan</artifactId>
                 <artifactId>atlas-graphdb-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1723,7 +1777,8 @@
                     <useEclipseDefaultExcludes>true</useEclipseDefaultExcludes>
                     <excludeSubProjects>true</excludeSubProjects>
                     <excludes>
-		        <exclude>dependency-reduced-pom.xml</exclude>
+                        <exclude>dependency-reduced-pom.xml</exclude>
+                        <exclude>3party-licenses/**</exclude>
                         <exclude>*.txt</exclude>
                         <exclude>**/*.json</exclude>
                         <exclude>.pc/**</exclude>
@@ -1756,11 +1811,12 @@
                         <exclude>dev-support/**</exclude>
                         <exclude>**/users-credentials.properties</exclude>
                         <exclude>**/public/css/animate.min.css</exclude>
+                        <exclude>**/public/css/bootstrap-sidebar.css</exclude>
                         <exclude>**/public/css/fonts/**</exclude>
                         <exclude>**/public/css/font-awesome.min.css</exclude>
                         <exclude>**/public/js/require-handlebars-plugin/**</exclude>
                         <exclude>**/node_modules/**</exclude>
-                        <exclude>**/public/css/scss/**</exclude>
+                         <exclude>**/public/css/scss/**</exclude>
                         <!-- All the npm plugins are copied here, so exclude it -->
                         <exclude>**/public/js/libs/**</exclude>
 

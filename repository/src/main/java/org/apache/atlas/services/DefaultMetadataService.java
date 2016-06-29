@@ -18,15 +18,10 @@
 
 package org.apache.atlas.services;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
+import com.google.inject.Provider;
 
 import org.apache.atlas.ApplicationProperties;
 import org.apache.atlas.AtlasClient;
@@ -66,6 +61,8 @@ import org.apache.atlas.typesystem.types.Multiplicity;
 import org.apache.atlas.typesystem.types.StructTypeDefinition;
 import org.apache.atlas.typesystem.types.TraitType;
 import org.apache.atlas.typesystem.types.TypeSystem;
+import org.apache.atlas.typesystem.types.ValueConversionException;
+import org.apache.atlas.typesystem.types.cache.TypeCache;
 import org.apache.atlas.typesystem.types.utils.TypesUtil;
 import org.apache.atlas.utils.ParamChecker;
 import org.apache.commons.configuration.Configuration;
@@ -78,6 +75,14 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Provider;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 
 import static org.apache.atlas.AtlasClient.PROCESS_ATTRIBUTE_INPUTS;
 import static org.apache.atlas.AtlasClient.PROCESS_ATTRIBUTE_OUTPUTS;
@@ -109,23 +114,34 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
 
     @Inject
     DefaultMetadataService(final MetadataRepository repository, final ITypeStore typeStore,
-            final IBootstrapTypesRegistrar typesRegistrar,
-            final Collection<Provider<TypesChangeListener>> typeListenerProviders,
-            final Collection<Provider<EntityChangeListener>> entityListenerProviders)
-                    throws AtlasException {
+                           final IBootstrapTypesRegistrar typesRegistrar,
+                           final Collection<Provider<TypesChangeListener>> typeListenerProviders,
+                           final Collection<Provider<EntityChangeListener>> entityListenerProviders, TypeCache typeCache)
+            throws AtlasException {
         this(repository, typeStore, typesRegistrar, typeListenerProviders, entityListenerProviders,
-                TypeSystem.getInstance(), ApplicationProperties.get());
+                TypeSystem.getInstance(), ApplicationProperties.get(), typeCache);
     }
 
     DefaultMetadataService(final MetadataRepository repository, final ITypeStore typeStore,
-            final IBootstrapTypesRegistrar typesRegistrar,
-            final Collection<Provider<TypesChangeListener>> typeListenerProviders,
-            final Collection<Provider<EntityChangeListener>> entityListenerProviders,
-            final TypeSystem typeSystem,
-            final Configuration configuration) throws AtlasException {
+                           final IBootstrapTypesRegistrar typesRegistrar,
+                           final Collection<Provider<TypesChangeListener>> typeListenerProviders,
+                           final Collection<Provider<EntityChangeListener>> entityListenerProviders,
+                           final TypeSystem typeSystem,
+                           final Configuration configuration, TypeCache typeCache) throws AtlasException {
         this.typeStore = typeStore;
         this.typesRegistrar = typesRegistrar;
         this.typeSystem = typeSystem;
+        /**
+         * Ideally a TypeCache implementation should have been injected in the TypeSystemProvider,
+         * but a singleton of TypeSystem is constructed privately within the class so that
+         * clients of TypeSystem would never instantiate a TypeSystem object directly in
+         * their code. As soon as a client makes a call to TypeSystem.getInstance(), they
+         * should have the singleton ready for consumption. Manually inject TypeSystem with
+         * the Guice-instantiated type cache here, before types are restored.
+         * This allows cache implementations to participate in Guice dependency injection.
+         */
+        this.typeSystem.setTypeCache(typeCache);
+
         this.repository = repository;
 
         for (Provider<TypesChangeListener> provider : typeListenerProviders) {

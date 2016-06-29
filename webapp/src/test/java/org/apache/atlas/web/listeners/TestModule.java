@@ -19,13 +19,15 @@
 package org.apache.atlas.web.listeners;
 
 import com.google.inject.Binder;
+
 import org.apache.atlas.RepositoryMetadataModule;
 import org.apache.atlas.repository.audit.EntityAuditRepository;
 import org.apache.atlas.repository.audit.InMemoryEntityAuditRepository;
+import org.apache.commons.configuration.Configuration;
 
 public class TestModule extends RepositoryMetadataModule {
     @Override
-    protected void bindAuditRepository(Binder binder) {
+    protected void bindAuditRepository(Binder binder, Configuration configuration) {
         //Map EntityAuditRepository interface to hbase based implementation
         binder.bind(EntityAuditRepository.class).to(InMemoryEntityAuditRepository.class).asEagerSingleton();
     }
