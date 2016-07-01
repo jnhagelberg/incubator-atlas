@@ -1,21 +1,21 @@
 <?xml version="1.0"?>
 <!--
-~ Licensed to the Apache Software Foundation (ASF) under one
-~ or more contributor license agreements.  See the NOTICE file
-~ distributed with this work for additional information
-~ regarding copyright ownership.  The ASF licenses this file
-~ to you under the Apache License, Version 2.0 (the
-~ "License"); you may not use this file except in compliance
-~ with the License.  You may obtain a copy of the License at
-~
-~     http://www.apache.org/licenses/LICENSE-2.0
-~
-~ Unless required by applicable law or agreed to in writing, software
-~ distributed under the License is distributed on an "AS IS" BASIS,
-~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-~ See the License for the specific language governing permissions and
-~ limitations under the License.
--->
+  ~ Licensed to the Apache Software Foundation (ASF) under one
+  ~ or more contributor license agreements.  See the NOTICE file
+  ~ distributed with this work for additional information
+  ~ regarding copyright ownership.  The ASF licenses this file
+  ~ to you under the Apache License, Version 2.0 (the
+  ~ "License"); you may not use this file except in compliance
+  ~ with the License.  You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
@@ -354,8 +354,7 @@
     </developers>
 
     <properties>
-        <plugin.class>org.apache.atlas.repository.graphdb.titan0.Titan0Database</plugin.class>
-
+		<plugin.class>org.apache.atlas.repository.graphdb.titan0.Titan0Database</plugin.class>
         <!-- platform encoding override -->
         <skipTests>false</skipTests>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -366,7 +365,7 @@
         <jetty.version>9.2.12.v20150709</jetty.version>
         <jersey.version>1.19</jersey.version>
         <jackson.version>1.8.3</jackson.version>
-  		<tinkerpop.version>2.6.0</tinkerpop.version>
+        <tinkerpop.version>2.6.0</tinkerpop.version>
         <titan.version>0.5.4</titan.version>
         <hadoop.version>2.7.0</hadoop.version>
         <hbase.version>1.1.2</hbase.version>
@@ -457,7 +456,7 @@
                 <skipDocs>false</skipDocs>
             </properties>
         </profile>
-	<profile>
+<profile>
 	  <id>titan0</id>
 	  <activation>
 	    <!--
@@ -540,8 +539,8 @@
         <module>server-api</module>
         <module>notification</module>
         <module>client</module>
-		<module>graphdb</module>
-	 	 <module>titan</module>
+        <module>graphdb</module>
+        <!--<module>titan</module>-->
         <module>repository</module>
         <module>authorization</module>
         <module>catalog</module>
@@ -609,7 +608,6 @@
 
     <dependencyManagement>
         <dependencies>
-
             <dependency>
                 <groupId>org.eclipse.jetty</groupId>
                 <artifactId>jetty-jsp</artifactId>
@@ -750,12 +748,6 @@
             <dependency>
                 <groupId>org.apache.hadoop</groupId>
                 <artifactId>hadoop-annotations</artifactId>
-                <version>${hadoop.version}</version>
-            </dependency>
-
-	    <dependency>
-                <groupId>org.apache.hadoop</groupId>
-                <artifactId>hadoop-auth</artifactId>
                 <version>${hadoop.version}</version>
             </dependency>
 
@@ -930,7 +922,7 @@
                 <version>1.3.2</version>
             </dependency>
 
-                        <!-- Graph DB -->
+            <!-- Graph DB -->
             <dependency>
                 <groupId>com.tinkerpop.blueprints</groupId>
                 <artifactId>blueprints-core</artifactId>
@@ -1036,13 +1028,13 @@
                 </exclusions>
             </dependency>
 
-            <!--
+		<!--
             <dependency>
                 <groupId>com.thinkaurelius.titan</groupId>
                 <artifactId>titan-es</artifactId>
                 <version>${titan.version}</version>
             </dependency>
-            -->
+	-->
 
             <dependency>
                 <groupId>com.vividsolutions</groupId>
@@ -1084,21 +1076,24 @@
                 <version>${solr.version}</version>
             </dependency>
 
-            <!--
+			
+                   <!--
             <dependency>
                 <groupId>com.thinkaurelius.titan</groupId>
                 <artifactId>titan-lucene</artifactId>
                 <version>${titan.version}</version>
                 < ! - - <scope>test</scope> - - >
             </dependency>
-            -->
-            <!-- 
+			-->
+			
+			<!--
             <dependency>
                 <groupId>com.tinkerpop.gremlin</groupId>
                 <artifactId>gremlin-java</artifactId>
                 <version>${tinkerpop.version}</version>
             </dependency>
-            -->
+			-->
+
             <!--  atlas modules -->
             <dependency>
                 <groupId>org.apache.atlas</groupId>
@@ -1116,7 +1111,6 @@
 
             <dependency>
                 <groupId>org.apache.atlas</groupId>
-                <artifactId>atlas-titan</artifactId>
                 <artifactId>atlas-graphdb-api</artifactId>
                 <version>${project.version}</version>
             </dependency>
@@ -1151,13 +1145,6 @@
                 <version>${project.version}</version>
             </dependency>
 
-            <!-- <dependency>
-                <groupId>org.apache.atlas</groupId>
-                <artifactId>atlas-dashboard</artifactId>
-                <version>${project.version}</version>
-                <type>war</type>
-            </dependency> -->
-
             <dependency>
                 <groupId>org.apache.atlas</groupId>
                 <artifactId>atlas-dashboardv2</artifactId>
@@ -1172,12 +1159,12 @@
                 <type>war</type>
             </dependency>
 
-            <!-- use titan 0 by default -->
+	   <!-- use titan 0 by default -->
             <dependency>
                 <groupId>org.apache.atlas</groupId>
                 <artifactId>atlas-graphdb-impls</artifactId>
                 <version>${project.version}</version>
-		<type>pom</type>
+					<type>pom</type>
                 <exclusions>
                     <exclusion>
                         <groupId>org.apache.atlas</groupId>
@@ -1189,7 +1176,7 @@
                     </exclusion>
                 </exclusions>
             </dependency>
-
+			
             <dependency>
                 <groupId>org.apache.atlas</groupId>
                 <artifactId>hive-bridge</artifactId>
@@ -1216,7 +1203,7 @@
 
             <dependency>
                 <groupId>org.apache.atlas</groupId>
-                <artifactId>sqoop-bridge</artifactId>
+				 <artifactId>sqoop-bridge</artifactId>
                 <version>${project.version}</version>
             </dependency>
 
@@ -1452,8 +1439,8 @@
                 <directory>..</directory>
                 <targetPath>META-INF</targetPath>
                 <includes>
-                    <include>LICENSE.txt</include>
-                    <include>NOTICE.txt</include>
+                    <include>LICENSE</include>
+                    <include>NOTICE</include>
                 </includes>
             </resource>
         </resources>
@@ -1606,22 +1593,22 @@
                             <jvmArg>-XX:MaxPermSize=128m</jvmArg>
                         </jvmArgs>
                         <!--
-                            <javacArgs>
+                        <javacArgs>
                             <javacArg>-source</javacArg>
                             <javacArg>${java.version}</javacArg>
                             <javacArg>-target</javacArg>
                             <javacArg>${java.version}</javacArg>
-                            </javacArgs>
+                        </javacArgs>
                         -->
                         <!-- The following plugin is required to use quasiquotes in Scala 2.10 and is used
                              by Spark SQL for code generation. -->
                         <!--<compilerPlugins>
                             <compilerPlugin>
-                            <groupId>org.scalamacros</groupId>
-                            <artifactId>paradise_${scala.version}</artifactId>
-                            <version>${scala.macros.version}</version>
+                                <groupId>org.scalamacros</groupId>
+                                <artifactId>paradise_${scala.version}</artifactId>
+                                <version>${scala.macros.version}</version>
                             </compilerPlugin>
-                            </compilerPlugins>-->
+                        </compilerPlugins>-->
                     </configuration>
                 </plugin>
 
@@ -1671,14 +1658,14 @@
                         <user.dir>${project.basedir}</user.dir>
                         <atlas.data>${project.build.directory}/data</atlas.data>
                         <log4j.configuration>atlas-log4j.xml</log4j.configuration>
-                        <atlas.graphdb.backend>${plugin.class}</atlas.graphdb.backend>
+						<atlas.graphdb.backend>${plugin.class}</atlas.graphdb.backend>
                     </systemProperties>
                     <skipTests>${skipTests}</skipTests>
                     <forkMode>always</forkMode>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <argLine>-Djava.awt.headless=true -Dproject.version=${project.version}
-                    -Dhadoop.tmp.dir="${project.build.directory}/tmp-hadoop-${user.name}"
-                    -Xmx1024m -XX:MaxPermSize=512m -Djava.net.preferIPv4Stack=true
+                        -Dhadoop.tmp.dir="${project.build.directory}/tmp-hadoop-${user.name}"
+                        -Xmx1024m -XX:MaxPermSize=512m -Djava.net.preferIPv4Stack=true
                     </argLine>
                     <skip>${skipUTs}</skip>
                 </configuration>
@@ -1703,8 +1690,8 @@
                     </systemPropertyVariables>
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <argLine>-Djava.awt.headless=true -Dproject.version=${project.version}
-                    -Dhadoop.tmp.dir="${project.build.directory}/tmp-hadoop-${user.name}"
-                    -Xmx1024m -XX:MaxPermSize=512m
+                        -Dhadoop.tmp.dir="${project.build.directory}/tmp-hadoop-${user.name}"
+                        -Xmx1024m -XX:MaxPermSize=512m
                     </argLine>
                     <skip>${skipITs}</skip>
                     <parallel>none</parallel>
@@ -1777,7 +1764,7 @@
                     <useEclipseDefaultExcludes>true</useEclipseDefaultExcludes>
                     <excludeSubProjects>true</excludeSubProjects>
                     <excludes>
-                        <exclude>dependency-reduced-pom.xml</exclude>
+						 <exclude>dependency-reduced-pom.xml</exclude>
                         <exclude>3party-licenses/**</exclude>
                         <exclude>*.txt</exclude>
                         <exclude>**/*.json</exclude>
@@ -1812,11 +1799,8 @@
                         <exclude>**/users-credentials.properties</exclude>
                         <exclude>**/public/css/animate.min.css</exclude>
                         <exclude>**/public/css/bootstrap-sidebar.css</exclude>
-                        <exclude>**/public/css/fonts/**</exclude>
-                        <exclude>**/public/css/font-awesome.min.css</exclude>
                         <exclude>**/public/js/require-handlebars-plugin/**</exclude>
                         <exclude>**/node_modules/**</exclude>
-                         <exclude>**/public/css/scss/**</exclude>
                         <!-- All the npm plugins are copied here, so exclude it -->
                         <exclude>**/public/js/libs/**</exclude>
 
@@ -1938,21 +1922,4 @@
             </plugin>
         </plugins>
     </build>
-
- <distributionManagement>
-                <repository>
-                    <id>releases</id>
-                    <url>http://iis-repo.swg.usma.ibm.com:8080/archiva/repository/releases/</url>
-                </repository>
-                <snapshotRepository>
-                    <id>snapshots</id>
-                    <url>http://iis-repo.swg.usma.ibm.com:8080/archiva/repository/snapshots</url>
-                </snapshotRepository>
-                <site>
-                    <id>site-website</id>
-                    <name>Maven Site</name>
-                    <url>scp://wb-xmeta-rh-bld2.swg.usma.ibm.com/u3/oms-site/${version.for.maven.site}
-                    </url>
-                </site>
-            </distributionManagement>
 </project>

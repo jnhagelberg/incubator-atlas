@@ -25,7 +25,9 @@ import javax.inject.Inject;
 import org.apache.atlas.AtlasException;
 import org.apache.atlas.RepositoryMetadataModule;
 import org.apache.atlas.TestUtils;
+import org.apache.atlas.repository.graph.AtlasGraphProvider;
 import org.apache.atlas.repository.graph.GraphProvider;
+import org.apache.atlas.repository.graphdb.AtlasGraph;
 import org.apache.atlas.typesystem.types.AttributeInfo;
 import org.apache.atlas.typesystem.types.ClassType;
 import org.apache.atlas.typesystem.types.DataTypes.TypeCategory;
@@ -54,7 +56,7 @@ import com.thinkaurelius.titan.core.util.TitanCleanup;
 public class StoreBackedTypeCacheTest {
 
     @Inject
-    private GraphProvider<TitanGraph> graphProvider;
+    private AtlasGraphProvider graphProvider;
 
     @Inject
     private ITypeStore typeStore;
@@ -94,7 +96,7 @@ public class StoreBackedTypeCacheTest {
         }
 
         try {
-            TitanCleanup.clear(graphProvider.get());
+            graphProvider.get().clear();
         }
         catch(Exception e) {
             e.printStackTrace();

@@ -18,12 +18,6 @@
 
 package org.apache.atlas;
 
-import com.google.inject.Binder;
-import com.google.inject.Singleton;
-import com.google.inject.matcher.Matchers;
-import com.google.inject.multibindings.Multibinder;
-import com.google.inject.throwingproviders.ThrowingProviderBinder;
-import com.thinkaurelius.titan.core.TitanGraph;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.apache.atlas.discovery.DataSetLineageService;
 import org.apache.atlas.discovery.DiscoveryService;
@@ -58,8 +52,6 @@ import org.apache.atlas.typesystem.types.cache.TypeCache;
 import org.apache.commons.configuration.Configuration;
 
 import com.google.inject.Binder;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
 import com.google.inject.Singleton;
 import com.google.inject.matcher.Matchers;
 import com.google.inject.multibindings.Multibinder;
@@ -108,9 +100,9 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
         Configuration configuration = getConfiguration();
         bindAuditRepository(binder(), configuration);
 
-        bind(DeleteHandler.class).to(getDeleteHandlerImpl(configuration)).asEagerSingleton();
+        bind(DeleteHandler.class).to(getDeleteHandlerImpl()).asEagerSingleton();
 
-        bind(TypeCache.class).to(getTypeCache(configuration)).asEagerSingleton();
+        bind(TypeCache.class).to(getTypeCache()).asEagerSingleton();
 
         //Add EntityAuditListener as EntityChangeListener
         Multibinder<EntityChangeListener> entityChangeListenerBinder =
@@ -133,7 +125,7 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
 
     protected void bindAuditRepository(Binder binder, Configuration configuration) {
 
-        Class<? extends EntityAuditRepository> auditRepoImpl = getAuditRepositoryImpl(getConfiguration());
+        Class<? extends EntityAuditRepository> auditRepoImpl = getAuditRepositoryImpl();
 
         //Map EntityAuditRepository interface to configured implementation
         binder.bind(EntityAuditRepository.class).to(auditRepoImpl).asEagerSingleton();
@@ -149,9 +141,9 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
 
     private static final String AUDIT_REPOSITORY_IMPLEMENTATION_PROPERTY = "atlas.EntityAuditRepository.impl";
 
-    private Class<? extends EntityAuditRepository> getAuditRepositoryImpl(Configuration configuration) {
+    private Class<? extends EntityAuditRepository> getAuditRepositoryImpl() {
         try {
-            return ApplicationProperties.getClass(configuration,
+            return ApplicationProperties.getClass(
                     AUDIT_REPOSITORY_IMPLEMENTATION_PROPERTY, HBaseBasedAuditRepository.class.getName(), EntityAuditRepository.class);
         } catch (AtlasException e) {
             throw new RuntimeException(e);
@@ -160,9 +152,9 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
 
     private static final String DELETE_HANDLER_IMPLEMENTATION_PROPERTY = "atlas.DeleteHandler.impl";
 
-    private Class<? extends DeleteHandler> getDeleteHandlerImpl(Configuration configuration) {
+    private Class<? extends DeleteHandler> getDeleteHandlerImpl() {
         try {
-            return ApplicationProperties.getClass(configuration,
+            return ApplicationProperties.getClass(
                     DELETE_HANDLER_IMPLEMENTATION_PROPERTY, SoftDeleteHandler.class.getName(), DeleteHandler.class);
         } catch (AtlasException e) {
             throw new RuntimeException(e);
@@ -171,11 +163,11 @@ public class RepositoryMetadataModule extends com.google.inject.AbstractModule {
 
     public static final String TYPE_CACHE_IMPLEMENTATION_PROPERTY = "atlas.TypeCache.impl";
 
-    protected Class<? extends TypeCache> getTypeCache(Configuration configuration) {
+    protected Class<? extends TypeCache> getTypeCache() {
 
         // Get the type cache implementation class from Atlas configuration.
         try {
-            return ApplicationProperties.getClass(configuration, TYPE_CACHE_IMPLEMENTATION_PROPERTY,
+            return ApplicationProperties.getClass(TYPE_CACHE_IMPLEMENTATION_PROPERTY,
                 DefaultTypeCache.class.getName(), TypeCache.class);
         } catch (AtlasException e) {
             throw new RuntimeException("Error getting TypeCache implementation class", e);

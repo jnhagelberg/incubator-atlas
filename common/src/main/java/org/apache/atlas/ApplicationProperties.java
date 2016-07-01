@@ -108,16 +108,21 @@ public final class ApplicationProperties extends PropertiesConfiguration {
         return inConf.subset(prefix);
     }
 
-    public static Class getClass(Configuration configuration, String propertyName, String defaultValue,
-                                 Class assignableClass) throws AtlasException {
+    public static Class getClass(String propertyName, String defaultValue, Class assignableClass)
+            throws AtlasException {
         try {
-            String propertyValue = configuration.getString(propertyName, defaultValue);
+            Configuration configuration = get();
+            String propertyValue = configuration.getString(propertyName,
+                    defaultValue);
             Class<?> clazz = Class.forName(propertyValue);
-            if (assignableClass == null || assignableClass.isAssignableFrom(clazz)) {
+            if (assignableClass == null
+                    || assignableClass.isAssignableFrom(clazz)) {
                 return clazz;
             } else {
-                String message = "Class " + clazz.getName() + " specified in property " + propertyName
-                        + " is not assignable to class " + assignableClass.getName();
+                String message = "Class " + clazz.getName()
+                        + " specified in property " + propertyName
+                        + " is not assignable to class "
+                        + assignableClass.getName();
                 LOG.error(message);
                 throw new AtlasException(message);
             }

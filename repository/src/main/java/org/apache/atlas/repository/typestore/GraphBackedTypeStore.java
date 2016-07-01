@@ -233,12 +233,12 @@ public class GraphBackedTypeStore<V,E> implements ITypeStore {
     public TypesDef restoreType(String typeName) throws AtlasException {
         // Get vertex for the specified type name.
         Iterator vertices =
-            titanGraph.query().has(Constants.VERTEX_TYPE_PROPERTY_KEY, VERTEX_TYPE).has(Constants.TYPENAME_PROPERTY_KEY, typeName).vertices().iterator();
+            graph.query().has(Constants.VERTEX_TYPE_PROPERTY_KEY, VERTEX_TYPE).has(Constants.TYPENAME_PROPERTY_KEY, typeName).vertices().iterator();
 
         return getTypesFromVertices(vertices);
     }
 
-    private TypesDef getTypesFromVertices(Iterator vertices) throws AtlasException {
+    private TypesDef getTypesFromVertices(Iterator<AtlasVertex<V,E>> vertices) throws AtlasException {
         ImmutableList.Builder<EnumTypeDefinition> enums = ImmutableList.builder();
         ImmutableList.Builder<StructTypeDefinition> structs = ImmutableList.builder();
         ImmutableList.Builder<HierarchicalTypeDefinition<ClassType>> classTypes = ImmutableList.builder();

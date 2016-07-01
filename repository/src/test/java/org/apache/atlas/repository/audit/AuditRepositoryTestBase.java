@@ -93,6 +93,9 @@ public class AuditRepositoryTestBase {
 
     @Test
     public void testInvalidEntityId() throws Exception {
+        if(! isRepositoryTestable()) {
+            return;
+        }
         List<EntityAuditEvent> events = eventRepository.listEvents(rand(), null, (short) 3);
         assertEquals(events.size(), 0);
     }

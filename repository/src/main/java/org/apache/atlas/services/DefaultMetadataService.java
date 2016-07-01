@@ -75,11 +75,13 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Provider;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -152,7 +154,8 @@ public class DefaultMetadataService implements MetadataService, ActiveStateChang
             entityChangeListeners.add(provider.get());
         }
 
-        if (!HAConfiguration.isHAEnabled(configuration) || !HAConfiguration.isLazyCacheLoading(configuration)) {
+     //   if (!HAConfiguration.isHAEnabled(configuration) || !HAConfiguration.isLazyCacheLoading(configuration)) {
+        if (!HAConfiguration.isHAEnabled(configuration)) {
             restoreTypeSystem();
         }
 
